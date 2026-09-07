@@ -49,18 +49,39 @@ function QuizScreen({ go }) {
   const [subjects, setSubjects] = React.useState([]);
   const [value, setValue] = React.useState(null);
   const [sent, setSent] = React.useState(false);
+  const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState(false);
 
   const toggleSubject = (s) => setSubjects(prev => prev.includes(s) ? prev.filter(x=>x!==s) : (prev.length<4 ? [...prev,s] : prev));
 
   const top5 = React.useMemo(() => (step >= 4 ? scoreFields(interest, subjects, value) : []), [step, interest, subjects, value]);
 
-  const sendResults = () => {
-    const subject = encodeURIComponent("My UniBridge NL field shortlist");
-    const body = encodeURIComponent(
-      `Visitor email: ${email}\n\nInterest: ${interest}\nBest subjects: ${subjects.join(", ")}\nWhat they value: ${value}\n\nTop 5 shortlisted fields:\n${top5.map((f,i)=>`${i+1}. ${f}`).join("\n")}`
-    );
-    window.location.href = `mailto:unibridgenl@gmail.com?subject=${subject}&body=${body}`;
-    setSent(true);
+  const sendResults = async () => {
+    setSending(true);
+    setError(false);
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          access_key: "a828545d-4f6f-4f85-8ddf-888a55281203",
+          subject: "New Find My Field shortlist — UniBridge NL",
+          from_name: "UniBridge NL website",
+          email: email,
+          "Visitor email": email,
+          "Interest": interest,
+          "Best subjects": subjects.join(", "),
+          "What they value": value,
+          "Top 5 shortlisted fields": top5.map((f,i)=>`${i+1}. ${f}`).join(" | ")
+        })
+      });
+      const data = await res.json();
+      if (data.success) { setSent(true); } else { setError(true); }
+    } catch (e) {
+      setError(true);
+    } finally {
+      setSending(false);
+    }
   };
 
   const OptionButton = ({ active, onClick, children }) => (
@@ -157,10 +178,11 @@ function QuizScreen({ go }) {
               ))}
             </div>
             <Alert tone="info" title="Want to see which universities offer these?" style={{marginTop:'var(--space-6)'}}>Browse the Universities page and filter by any of the fields above.</Alert>
+            {error && <Alert tone="warning" title="Something went wrong sending your shortlist" style={{marginTop:'var(--space-4)'}}>Please try again, or reach us directly on WhatsApp 06 25 29 40 80.</Alert>}
             <div style={{display:'flex',gap:'var(--space-3)',marginTop:'var(--space-6)',flexWrap:'wrap'}}>
               {!sent
-                ? <Button onClick={sendResults} iconLeft={<Icon name="mail" size={16}/>}>Email me this shortlist</Button>
-                : <Badge tone="success" dot>Opening your email app…</Badge>}
+                ? <Button onClick={sendResults} disabled={sending} iconLeft={<Icon name="mail" size={16}/>}>{sending ? "Sending…" : "Email me this shortlist"}</Button>
+                : <Badge tone="success" dot>Shortlist sent to {email}</Badge>}
               <Button variant="secondary" onClick={()=>go('universities')}>Browse universities</Button>
               <Button variant="ghost" onClick={()=>go('call')}>Talk it through on a free call</Button>
             </div>
