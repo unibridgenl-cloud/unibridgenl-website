@@ -12,7 +12,42 @@ function BookCallScreen({ go }) {
   const [day, setDay] = React.useState(0);
   const [slot, setSlot] = React.useState(null);
   const [booked, setBooked] = React.useState(false);
+  const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState(false);
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [language, setLanguage] = React.useState("English");
   const active = DAYS[day];
+
+  const canBook = name && email.includes('@') && slot;
+
+  const submitBooking = async () => {
+    if (!canBook) return;
+    setSending(true);
+    setError(false);
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          access_key: "a828545d-4f6f-4f85-8ddf-888a55281203",
+          subject: "New call booking — UniBridge NL",
+          from_name: "UniBridge NL website",
+          email: email,
+          "Name": name,
+          "Requested day": `${active.d} ${active.n}`,
+          "Requested time (CET)": slot,
+          "Language": language
+        })
+      });
+      const data = await res.json();
+      if (data.success) { setBooked(true); } else { setError(true); }
+    } catch (e) {
+      setError(true);
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (booked) {
     return (
@@ -20,16 +55,8 @@ function BookCallScreen({ go }) {
         <Card rule padding="var(--space-8)">
           <div className="ub-overline">Booked</div>
           <h1 style={{fontSize:'var(--text-h2)',margin:'var(--space-3) 0 var(--space-2)'}}>You're in for {active.d} {active.n}, {slot} CET</h1>
-          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)'}}>Harsh Raj will meet you on Google Meet. The invite and link are in your inbox — add it to your calendar so the reminder reaches you.</p>
-          <div style={{display:'flex',alignItems:'center',gap:12,background:'var(--surface-sunken)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md)',padding:'var(--space-4) var(--space-5)',margin:'var(--space-6) 0'}}>
-            <Icon name="video" size={20} color="var(--gold-700)"/>
-            <div style={{flex:1}}>
-              <div style={{fontSize:'var(--text-body-sm)',fontWeight:700,color:'var(--text-heading)'}}>Google Meet</div>
-              <div style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>meet.google.com/ubn-{active.n.replace(' ','')}-{slot.replace(':','')}</div>
-            </div>
-            <Button size="sm">Join link</Button>
-          </div>
-          <div style={{display:'flex',gap:'var(--space-3)'}}>
+          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)'}}>Harsh Raj has been notified and will send a Google Meet invite to {email} shortly — add it to your calendar so the reminder reaches you.</p>
+          <div style={{display:'flex',gap:'var(--space-3)',marginTop:'var(--space-5)'}}>
             <Button variant="secondary" onClick={()=>{setBooked(false);setSlot(null);}}>Pick another time</Button>
             <Button variant="ghost" onClick={()=>go('apply')}>Start my application instead</Button>
           </div>
@@ -89,12 +116,13 @@ function BookCallScreen({ go }) {
                 <div style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>Advisor · Amsterdam</div>
               </div>
             </div>
-            <Field label="Your name" required style={{marginBottom:'var(--space-4)'}}><Input placeholder="Your full name"/></Field>
-            <Field label="Email" required hint="The Google Meet invite goes here." style={{marginBottom:'var(--space-4)'}}><Input type="email" placeholder="you@example.com"/></Field>
-            <Field label="Language" style={{marginBottom:'var(--space-5)'}}><Select defaultValue="English" options={["English","Nederlands","Hindi","Français"]}/></Field>
-            <Button full disabled={!slot} onClick={()=>setBooked(true)} iconLeft={<Icon name="video" size={17}/>}>
-              {slot ? `Book ${active.d} ${slot}` : 'Pick a time first'}
+            <Field label="Your name" required style={{marginBottom:'var(--space-4)'}}><Input placeholder="Your full name" value={name} onChange={e=>setName(e.target.value)}/></Field>
+            <Field label="Email" required hint="The Google Meet invite goes here." style={{marginBottom:'var(--space-4)'}}><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
+            <Field label="Language" style={{marginBottom:'var(--space-5)'}}><Select value={language} onChange={e=>setLanguage(e.target.value)} options={["English","Nederlands","Hindi","Français"]}/></Field>
+            <Button full disabled={!canBook || sending} onClick={submitBooking} iconLeft={<Icon name="video" size={17}/>}>
+              {sending ? "Booking…" : (slot ? `Book ${active.d} ${slot}` : 'Pick a time first')}
             </Button>
+            {error && <Alert tone="warning" title="Something went wrong booking your call" style={{marginTop:'var(--space-4)'}}>Please try again, or reach us directly on WhatsApp 06 25 29 40 80.</Alert>}
             <div style={{display:'flex',alignItems:'center',gap:8,marginTop:'var(--space-4)',fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>
               <Icon name="message-circle" size={14} color="var(--moss-500)"/>Prefer WhatsApp? 06 25 29 40 80
             </div>

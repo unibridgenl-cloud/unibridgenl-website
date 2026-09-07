@@ -5,7 +5,74 @@ const COUNTRIES = ["Afghanistan","Albania","Algeria","Andorra","Angola","Antigua
 function ApplyScreen({ go }) {
   const [step, setStep] = React.useState(0);
   const [sent, setSent] = React.useState(false);
+  const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState(false);
+
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [whatsapp, setWhatsapp] = React.useState("");
+  const [country, setCountry] = React.useState("Ghana");
+  const [diploma, setDiploma] = React.useState("Secondary school");
+
+  const [level, setLevel] = React.useState("Master");
+  const [intake, setIntake] = React.useState("September 2027");
+  const [field, setField] = React.useState("Data Science");
+  const [budget, setBudget] = React.useState("€600 – €800");
+  const [notes, setNotes] = React.useState("");
+
+  const [wantEnrolment, setWantEnrolment] = React.useState(true);
+  const [wantHousing, setWantHousing] = React.useState(true);
+  const [wantVisa, setWantVisa] = React.useState(false);
+  const [wantArrival, setWantArrival] = React.useState(false);
+  const [agreePrivacy, setAgreePrivacy] = React.useState(false);
+
   const steps = [{label:"About you",meta:"2 min"},{label:"Study plan",meta:"1 min"},{label:"Services",meta:"30 sec"}];
+
+  const canSend = firstName && lastName && email.includes('@') && agreePrivacy;
+
+  const submitApplication = async () => {
+    if (!canSend) return;
+    setSending(true);
+    setError(false);
+    try {
+      const services = [
+        wantEnrolment && "University enrolment",
+        wantHousing && "Housing via partner agency",
+        wantVisa && "Visa & BSN",
+        wantArrival && "Arrival week"
+      ].filter(Boolean).join(", ");
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          access_key: "a828545d-4f6f-4f85-8ddf-888a55281203",
+          subject: "New application — UniBridge NL",
+          from_name: "UniBridge NL website",
+          email: email,
+          "First name": firstName,
+          "Last name": lastName,
+          "Applicant email": email,
+          "WhatsApp": whatsapp,
+          "Country of citizenship": country,
+          "Highest diploma": diploma,
+          "Study level": level,
+          "Intake": intake,
+          "Study field": field,
+          "Monthly rent budget": budget,
+          "Notes": notes,
+          "Services requested": services
+        })
+      });
+      const data = await res.json();
+      if (data.success) { setSent(true); } else { setError(true); }
+    } catch (e) {
+      setError(true);
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <main style={{maxWidth:960,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) 0'}}>
       <div className="ub-overline">Free application</div>
@@ -17,31 +84,31 @@ function ApplyScreen({ go }) {
       <Card padding="var(--space-8)">
         {step === 0 && (
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-5)'}}>
-            <Field label="First name" required><Input placeholder="Jane"/></Field>
-            <Field label="Last name" required><Input placeholder="Doe"/></Field>
-            <Field label="Email" required hint="We reply here — check your spam folder once."><Input type="email" placeholder="you@example.com"/></Field>
-            <Field label="WhatsApp number"><Input type="tel" placeholder="+233 …"/></Field>
-            <Field label="Country of citizenship" required><Select defaultValue="Ghana" options={COUNTRIES}/></Field>
-            <Field label="Highest diploma" required><Select defaultValue="Secondary school" options={["Secondary school","Bachelor","Master"]}/></Field>
+            <Field label="First name" required><Input placeholder="Jane" value={firstName} onChange={e=>setFirstName(e.target.value)}/></Field>
+            <Field label="Last name" required><Input placeholder="Doe" value={lastName} onChange={e=>setLastName(e.target.value)}/></Field>
+            <Field label="Email" required hint="We reply here — check your spam folder once."><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
+            <Field label="WhatsApp number"><Input type="tel" placeholder="+233 …" value={whatsapp} onChange={e=>setWhatsapp(e.target.value)}/></Field>
+            <Field label="Country of citizenship" required><Select value={country} onChange={e=>setCountry(e.target.value)} options={COUNTRIES}/></Field>
+            <Field label="Highest diploma" required><Select value={diploma} onChange={e=>setDiploma(e.target.value)} options={["Secondary school","Bachelor","Master"]}/></Field>
           </div>
         )}
         {step === 1 && (
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-5)'}}>
-            <Field label="Study level" required><Radio name="lvl" defaultValue="Master" options={["Bachelor","Master","Exchange"]}/></Field>
-            <Field label="Intake" required><Radio name="intake" defaultValue="September 2027" options={["September 2027","February 2028","Not sure yet"]}/></Field>
-            <Field label="Study field" required><Select defaultValue="Data Science" options={["Business & Economics","Computer Science","Data Science","Engineering","Architecture","Law","International Relations","Health & Medicine","Life Sciences","Psychology","Humanities","Communication","Media & Design","Environment & Food","Arts"]}/></Field>
-            <Field label="Monthly budget for rent" hint="Amsterdam averages €950 for a studio; nearby cities are cheaper."><Select defaultValue="€600 – €800" options={["Under €600","€600 – €800","€800 – €1,000","Over €1,000"]}/></Field>
-            <Field label="Anything we should know?" style={{gridColumn:'1 / -1'}}><Textarea rows={3} placeholder="Scholarships you're applying for, family in NL, health needs…"/></Field>
+            <Field label="Study level" required><Radio name="lvl" value={level} onChange={setLevel} options={["Bachelor","Master","Exchange"]}/></Field>
+            <Field label="Intake" required><Radio name="intake" value={intake} onChange={setIntake} options={["September 2027","February 2028","Not sure yet"]}/></Field>
+            <Field label="Study field" required><Select value={field} onChange={e=>setField(e.target.value)} options={["Business & Economics","Computer Science","Data Science","Engineering","Architecture","Law","International Relations","Health & Medicine","Life Sciences","Psychology","Humanities","Communication","Media & Design","Environment & Food","Arts"]}/></Field>
+            <Field label="Monthly budget for rent" hint="Amsterdam averages €950 for a studio; nearby cities are cheaper."><Select value={budget} onChange={e=>setBudget(e.target.value)} options={["Under €600","€600 – €800","€800 – €1,000","Over €1,000"]}/></Field>
+            <Field label="Anything we should know?" style={{gridColumn:'1 / -1'}}><Textarea rows={3} placeholder="Scholarships you're applying for, family in NL, health needs…" value={notes} onChange={e=>setNotes(e.target.value)}/></Field>
           </div>
         )}
         {step === 2 && (
           <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)'}}>
             <Alert tone="warning" title="September deadlines close 1 May">Nine weeks left. Applications filed after 15 April get a rush fee from the university, not from us.</Alert>
-            <Checkbox defaultChecked label="University enrolment" description="Up to five applications, documents certified and filed."/>
-            <Checkbox defaultChecked label="Housing via our partner agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
-            <Checkbox label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
-            <Checkbox label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
-            <Checkbox label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
+            <Checkbox checked={wantEnrolment} onChange={setWantEnrolment} label="University enrolment" description="Up to five applications, documents certified and filed."/>
+            <Checkbox checked={wantHousing} onChange={setWantHousing} label="Housing via our partner agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
+            <Checkbox checked={wantVisa} onChange={setWantVisa} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
+            <Checkbox checked={wantArrival} onChange={setWantArrival} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
+            <Checkbox checked={agreePrivacy} onChange={setAgreePrivacy} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
           </div>
         )}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'var(--space-8)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)'}}>
@@ -49,8 +116,10 @@ function ApplyScreen({ go }) {
           <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>Step {step+1} of 3 · nothing is charged today</span>
           {step < 2
             ? <Button onClick={()=>setStep(s=>s+1)} iconRight={<Icon name="arrow-right" size={16}/>}>Continue</Button>
-            : <Button onClick={()=>setSent(true)}>Send my application</Button>}
+            : <Button onClick={submitApplication} disabled={sending || !canSend}>{sending ? "Sending…" : "Send my application"}</Button>}
         </div>
+        {step === 2 && !agreePrivacy && <p style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)',textAlign:'right',marginTop:'var(--space-3)'}}>Agree to the privacy statement to send.</p>}
+        {error && <Alert tone="warning" title="Something went wrong sending your application" style={{marginTop:'var(--space-5)'}}>Please try again, or reach us directly on WhatsApp 06 25 29 40 80.</Alert>}
       </Card>
 
       <div style={{display:'flex',gap:'var(--space-6)',margin:'var(--space-6) 0 0',fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
