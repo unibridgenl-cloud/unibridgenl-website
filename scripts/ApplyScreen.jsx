@@ -15,9 +15,9 @@ function ApplyScreen({ go }) {
       <Card padding="var(--space-8)">
         {step === 0 && (
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-5)'}}>
-            <Field label="First name" required><Input defaultValue="Amara"/></Field>
-            <Field label="Last name" required><Input defaultValue="Osei"/></Field>
-            <Field label="Email" required hint="We reply here — check your spam folder once."><Input type="email" defaultValue="amara.osei@mail.com"/></Field>
+            <Field label="First name" required><Input placeholder="Jane"/></Field>
+            <Field label="Last name" required><Input placeholder="Doe"/></Field>
+            <Field label="Email" required hint="We reply here — check your spam folder once."><Input type="email" placeholder="you@example.com"/></Field>
             <Field label="WhatsApp number"><Input type="tel" placeholder="+233 …"/></Field>
             <Field label="Country of citizenship" required><Select defaultValue="Ghana" options={["Ghana","India","Türkiye","Brazil","Nigeria","Other"]}/></Field>
             <Field label="Highest diploma" required><Select defaultValue="Secondary school" options={["Secondary school","Bachelor","Master"]}/></Field>
@@ -38,7 +38,7 @@ function ApplyScreen({ go }) {
             <Checkbox defaultChecked label="University enrolment" description="Up to five applications, documents certified and filed."/>
             <Checkbox defaultChecked label="Housing via our partner agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
             <Checkbox label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
-            <Checkbox label="Arrival week" description="Airport pickup, bike, SIM card, neighbourhood walk."/>
+            <Checkbox label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
             <Checkbox label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
           </div>
         )}

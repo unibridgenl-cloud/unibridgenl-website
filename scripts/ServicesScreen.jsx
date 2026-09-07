@@ -11,7 +11,7 @@ const PLANS = [
     excl:[], cta:"primary" },
   { name:"Bridge Together", tier:"Together", price:"€1,750", note:"one-off",
     who:"Under 18, or parents who want to be walked through every step.",
-    items:[["check","Everything in Bridge Full"],["check","Parent briefing call in your language"],["check","Guardianship paperwork under 18"],["check","Two airport pickups"],["check","Monthly progress call for the family"],["check","Priority WhatsApp, answered same day"]],
+    items:[["check","Everything in Bridge Full"],["check","Parent briefing call in your language"],["check","Guardianship paperwork under 18"],["check","Monthly progress call for the family"],["check","Priority WhatsApp, answered same day"]],
     excl:[], cta:"secondary" }
 ];
 
@@ -19,7 +19,7 @@ const ADDONS = [
   ["file-check","Extra university application","€150","per application beyond your plan"],
   ["house","Housing search only","€450","partner agency referral + contract review"],
   ["id-card","Visa & BSN only","€400","residence permit file and municipality booking"],
-  ["plane-takeoff","Arrival week only","€350","pickup, keys, bank, insurance, bike"],
+  ["plane-takeoff","Arrival week only","€350","keys, bank, insurance, bike"],
   ["languages","Document translation","€60","per certified page, sworn translator"],
   ["message-circle","Single advice call","€75","45 minutes, credited if you book a plan"]
 ];
@@ -33,7 +33,6 @@ const COMPARE = [
   ["Visa & BSN booking","no","yes","yes"],
   ["Bank, insurance, OV card","no","yes","yes"],
   ["Arrival week support","no","yes","yes"],
-  ["Airport pickup","no","1","2"],
   ["Parent briefing call","no","no","yes"],
   ["Guardianship under 18","no","no","yes"],
   ["Support channel","Email","WhatsApp","Priority WhatsApp"]

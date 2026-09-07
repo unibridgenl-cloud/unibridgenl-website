@@ -89,8 +89,8 @@ function BookCallScreen({ go }) {
                 <div style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>Advisor · Amsterdam</div>
               </div>
             </div>
-            <Field label="Your name" required style={{marginBottom:'var(--space-4)'}}><Input defaultValue="Amara Osei"/></Field>
-            <Field label="Email" required hint="The Google Meet invite goes here." style={{marginBottom:'var(--space-4)'}}><Input type="email" defaultValue="amara.osei@mail.com"/></Field>
+            <Field label="Your name" required style={{marginBottom:'var(--space-4)'}}><Input placeholder="Your full name"/></Field>
+            <Field label="Email" required hint="The Google Meet invite goes here." style={{marginBottom:'var(--space-4)'}}><Input type="email" placeholder="you@example.com"/></Field>
             <Field label="Language" style={{marginBottom:'var(--space-5)'}}><Select defaultValue="English" options={["English","Nederlands","Hindi","Français"]}/></Field>
             <Button full disabled={!slot} onClick={()=>setBooked(true)} iconLeft={<Icon name="video" size={17}/>}>
               {slot ? `Book ${active.d} ${slot}` : 'Pick a time first'}

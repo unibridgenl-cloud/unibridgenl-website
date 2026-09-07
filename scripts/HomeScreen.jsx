@@ -6,7 +6,7 @@ function HomeScreen({ go }) {
     ["house","Housing support","We work with a licensed housing intermediary who sources verified rooms, and we check the contract before you sign."],
     ["id-card","Visa & BSN","Residence permit paperwork and a booked BSN appointment in your arrival week."],
     ["wallet","Bank & insurance","A Dutch IBAN, student health insurance and your OV travel card, sorted."],
-    ["bike","Arrival week","Airport pickup, a bike, SIM card and a walk through your new neighbourhood."],
+    ["bike","Arrival week","A bike, SIM card and a walk through your new neighbourhood."],
     ["calendar-check","Deadline tracking","One checklist with every date, so nothing expires in a mailbox."]
   ];
   return (
