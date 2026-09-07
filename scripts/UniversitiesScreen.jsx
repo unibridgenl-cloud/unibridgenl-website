@@ -1,23 +1,31 @@
 const { Card, Tag, Badge, Button, Input, Select, Tabs, Icon, Tooltip } = window.UnibridgeNLDesignSystem_3cb2d1;
 
 const UNIS = [
-  { name:"University of Amsterdam", city:"Amsterdam", level:"Bachelor · Master", fields:["Business","Economics","Health","Communication"], tuition:"€2,530 / €16,900", deadline:"1 May", rate:"High" },
-  { name:"VU Amsterdam", city:"Amsterdam", level:"Bachelor · Master", fields:["Health","Law","Life Sciences"], tuition:"€2,530 / €15,800", deadline:"1 May", rate:"High" },
-  { name:"Amsterdam UAS (HvA)", city:"Amsterdam", level:"Bachelor", fields:["Business","Media & Design","Engineering"], tuition:"€2,530 / €9,600", deadline:"1 May", rate:"High" },
-  { name:"Erasmus University Rotterdam", city:"Rotterdam", level:"Bachelor · Master", fields:["Business","Economics","Health"], tuition:"€2,530 / €16,400", deadline:"1 May", rate:"High" },
-  { name:"Utrecht University", city:"Utrecht", level:"Master", fields:["Data Science","Law","Humanities"], tuition:"€2,530 / €19,400", deadline:"1 April", rate:"Medium" },
-  { name:"TU Delft", city:"Delft", level:"Bachelor · Master", fields:["Engineering","Architecture","Computer Science"], tuition:"€2,530 / €18,750", deadline:"15 January", rate:"Selective" },
-  { name:"Leiden University", city:"Leiden", level:"Bachelor · Master", fields:["Law","Humanities","Life Sciences","Psychology"], tuition:"€2,530 / €17,300", deadline:"1 April", rate:"Medium" },
-  { name:"University of Groningen", city:"Groningen", level:"Bachelor", fields:["Life Sciences","Business","Arts"], tuition:"€2,530 / €15,200", deadline:"1 May", rate:"High" },
-  { name:"Eindhoven University of Technology", city:"Eindhoven", level:"Bachelor · Master", fields:["Engineering","Computer Science","Data Science"], tuition:"€2,530 / €18,100", deadline:"1 April", rate:"Selective" },
-  { name:"Tilburg University", city:"Tilburg", level:"Master", fields:["Economics","Psychology","Data Science"], tuition:"€2,530 / €14,700", deadline:"1 June", rate:"High" },
-  { name:"Maastricht University", city:"Maastricht", level:"Bachelor · Master", fields:["Business","Health","International Relations"], tuition:"€2,530 / €16,000", deadline:"1 May", rate:"High" },
-  { name:"Radboud University", city:"Nijmegen", level:"Bachelor · Master", fields:["Life Sciences","Psychology","Humanities"], tuition:"€2,530 / €14,300", deadline:"1 May", rate:"High" },
-  { name:"Wageningen University", city:"Wageningen", level:"Master", fields:["Life Sciences","Environment & Food"], tuition:"€2,530 / €19,200", deadline:"1 April", rate:"Medium" },
-  { name:"University of Twente", city:"Enschede", level:"Bachelor · Master", fields:["Engineering","Computer Science","Business"], tuition:"€2,530 / €16,750", deadline:"1 May", rate:"High" },
-  { name:"The Hague UAS", city:"The Hague", level:"Bachelor", fields:["International Relations","Business","Media & Design"], tuition:"€2,530 / €8,900", deadline:"1 May", rate:"High" },
-  { name:"Rotterdam UAS", city:"Rotterdam", level:"Bachelor", fields:["Engineering","Business","Health"], tuition:"€2,530 / €9,200", deadline:"1 May", rate:"High" }
+  { name:"University of Amsterdam", initials:"UvA", color:"var(--gold-500)", city:"Amsterdam", level:"Bachelor · Master", fields:["Business","Economics","Health","Communication"], tuition:"€2,530 / €16,900", deadline:"1 May", rate:"High" },
+  { name:"VU Amsterdam", initials:"VU", color:"var(--clay-500)", city:"Amsterdam", level:"Bachelor · Master", fields:["Health","Law","Life Sciences"], tuition:"€2,530 / €15,800", deadline:"1 May", rate:"High" },
+  { name:"Amsterdam UAS (HvA)", initials:"HvA", color:"var(--moss-500)", city:"Amsterdam", level:"Bachelor", fields:["Business","Media & Design","Engineering"], tuition:"€2,530 / €9,600", deadline:"1 May", rate:"High" },
+  { name:"Erasmus University Rotterdam", initials:"EUR", color:"var(--gold-700)", city:"Rotterdam", level:"Bachelor · Master", fields:["Business","Economics","Health"], tuition:"€2,530 / €16,400", deadline:"1 May", rate:"High" },
+  { name:"Utrecht University", initials:"UU", color:"var(--clay-700)", city:"Utrecht", level:"Master", fields:["Data Science","Law","Humanities"], tuition:"€2,530 / €19,400", deadline:"1 April", rate:"Medium" },
+  { name:"TU Delft", initials:"TUD", color:"var(--moss-700)", city:"Delft", level:"Bachelor · Master", fields:["Engineering","Architecture","Computer Science"], tuition:"€2,530 / €18,750", deadline:"15 January", rate:"Selective" },
+  { name:"Leiden University", initials:"LU", color:"var(--gold-500)", city:"Leiden", level:"Bachelor · Master", fields:["Law","Humanities","Life Sciences","Psychology"], tuition:"€2,530 / €17,300", deadline:"1 April", rate:"Medium" },
+  { name:"University of Groningen", initials:"RUG", color:"var(--clay-500)", city:"Groningen", level:"Bachelor", fields:["Life Sciences","Business","Arts"], tuition:"€2,530 / €15,200", deadline:"1 May", rate:"High" },
+  { name:"Eindhoven University of Technology", initials:"TU/e", color:"var(--moss-500)", city:"Eindhoven", level:"Bachelor · Master", fields:["Engineering","Computer Science","Data Science"], tuition:"€2,530 / €18,100", deadline:"1 April", rate:"Selective" },
+  { name:"Tilburg University", initials:"TiU", color:"var(--gold-700)", city:"Tilburg", level:"Master", fields:["Economics","Psychology","Data Science"], tuition:"€2,530 / €14,700", deadline:"1 June", rate:"High" },
+  { name:"Maastricht University", initials:"UM", color:"var(--clay-700)", city:"Maastricht", level:"Bachelor · Master", fields:["Business","Health","International Relations"], tuition:"€2,530 / €16,000", deadline:"1 May", rate:"High" },
+  { name:"Radboud University", initials:"RU", color:"var(--moss-700)", city:"Nijmegen", level:"Bachelor · Master", fields:["Life Sciences","Psychology","Humanities"], tuition:"€2,530 / €14,300", deadline:"1 May", rate:"High" },
+  { name:"Wageningen University", initials:"WUR", color:"var(--gold-500)", city:"Wageningen", level:"Master", fields:["Life Sciences","Environment & Food"], tuition:"€2,530 / €19,200", deadline:"1 April", rate:"Medium" },
+  { name:"University of Twente", initials:"UT", color:"var(--clay-500)", city:"Enschede", level:"Bachelor · Master", fields:["Engineering","Computer Science","Business"], tuition:"€2,530 / €16,750", deadline:"1 May", rate:"High" },
+  { name:"The Hague UAS", initials:"THUAS", color:"var(--moss-500)", city:"The Hague", level:"Bachelor", fields:["International Relations","Business","Media & Design"], tuition:"€2,530 / €8,900", deadline:"1 May", rate:"High" },
+  { name:"Rotterdam UAS", initials:"RUAS", color:"var(--gold-700)", city:"Rotterdam", level:"Bachelor", fields:["Engineering","Business","Health"], tuition:"€2,530 / €9,200", deadline:"1 May", rate:"High" }
 ];
+
+function CrestBadge({ initials, color }) {
+  return (
+    <div style={{aspectRatio:'1 / 1',borderRadius:'var(--radius-md)',background:color,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:15,color:'var(--cream-100)',letterSpacing:'-0.01em'}}>{initials}</span>
+    </div>
+  );
+}
 
 function UniversitiesScreen({ go }) {
   const [city, setCity] = React.useState("All cities");
@@ -50,7 +58,7 @@ function UniversitiesScreen({ go }) {
           <Card tone="sunken" elevation="none">
             <div style={{fontSize:'var(--text-body-sm)',fontWeight:700,color:'var(--text-heading)'}}>Not sure yet?</div>
             <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:'6px 0 var(--space-4)'}}>We'll shortlist five you can realistically get into.</p>
-            <Button size="sm" full onClick={()=>go('apply')}>Get my shortlist</Button>
+            <Button size="sm" full onClick={()=>go('quiz')}>Get my shortlist</Button>
           </Card>
         </aside>
 
@@ -63,7 +71,7 @@ function UniversitiesScreen({ go }) {
           <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)',marginTop:'var(--space-4)'}}>
             {rows.map(u=>(
               <Card key={u.name} interactive style={{display:'grid',gridTemplateColumns:'96px 1fr auto',gap:'var(--space-5)',alignItems:'center'}}>
-                <Placeholder label="Crest" ratio="1 / 1" style={{borderRadius:'var(--radius-md)'}}/>
+                <CrestBadge initials={u.initials} color={u.color}/>
                 <div>
                   <div style={{display:'flex',alignItems:'center',gap:10}}>
                     <h3 style={{fontSize:'var(--text-h4)',margin:0}}>{u.name}</h3>
