@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UniBridge NL — Your bridge to student life in the Netherlands</title>
+<meta name="description" content="UniBridge NL helps international students get into a Dutch university and land: enrolment, housing, residence permit, BSN, bank account and arrival week.">
+<link rel="canonical" href="https://unibridgenl.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="UniBridge NL — Your bridge to student life in the Netherlands">
+<meta property="og:description" content="UniBridge NL helps international students get into a Dutch university and land: enrolment, housing, residence permit, BSN, bank account and arrival week.">
+<meta property="og:url" content="https://unibridgenl.com/">
+<meta property="og:image" content="https://unibridgenl.com/assets/logo-badge.jpg">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/jpeg" href="/assets/logo-badge.jpg">
+<link rel="stylesheet" href="/styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="/ds-bundle.js"></script>
+<style>body{background:var(--surface-card)}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="/scripts/Chrome.jsx"></script>
+<script type="text/babel" src="/scripts/HomeScreen.jsx"></script>
+<script type="text/babel">
+const ROUTE = "home";
+const URL_MAP = {home:"/",universities:"/universities/",services:"/services/",apply:"/apply/",call:"/book-a-call/"};
+function go(target){
+  if (target === ROUTE) { window.scrollTo({top:0,behavior:'smooth'}); return; }
+  window.location.href = URL_MAP[target] || "/";
+}
+function Page(){
+  return (<div><SiteHeader route={ROUTE} go={go}/><HomeScreen go={go}/><SiteFooter go={go}/></div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Page/>);
+</script>
+</body>
+</html>
