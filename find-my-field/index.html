@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Universities — UniBridge NL</title>
-<meta name="description" content="Browse Dutch universities and programmes, filter by chance of admission, tuition and location, and get your personal shortlist.">
-<link rel="canonical" href="https://unibridgenl.com/universities/">
+<title>Find your field — UniBridge NL</title>
+<meta name="description" content="Answer a few questions about your interests, strongest subjects and what you value in work, and get a shortlist of the five study fields that fit you best.">
+<link rel="canonical" href="https://unibridgenl.com/find-my-field/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Universities — UniBridge NL">
-<meta property="og:description" content="Browse Dutch universities and programmes, filter by chance of admission, tuition and location, and get your personal shortlist.">
-<meta property="og:url" content="https://unibridgenl.com/universities/">
+<meta property="og:title" content="Find your field — UniBridge NL">
+<meta property="og:description" content="Answer a few questions about your interests, strongest subjects and what you value in work, and get a shortlist of the five study fields that fit you best.">
+<meta property="og:url" content="https://unibridgenl.com/find-my-field/">
 <meta property="og:image" content="https://unibridgenl.com/assets/logo-badge.jpg">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/jpeg" href="/assets/logo-badge.jpg">
@@ -23,16 +23,16 @@
 <body>
 <div id="root"></div>
 <script type="text/babel" src="/scripts/Chrome.jsx"></script>
-<script type="text/babel" src="/scripts/UniversitiesScreen.jsx"></script>
+<script type="text/babel" src="/scripts/QuizScreen.jsx"></script>
 <script type="text/babel">
-const ROUTE = "universities";
+const ROUTE = "quiz";
 const URL_MAP = {home:"/",universities:"/universities/",quiz:"/find-my-field/",services:"/services/",apply:"/apply/",call:"/book-a-call/"};
 function go(target){
   if (target === ROUTE) { window.scrollTo({top:0,behavior:'smooth'}); return; }
   window.location.href = URL_MAP[target] || "/";
 }
 function Page(){
-  return (<div><SiteHeader route={ROUTE} go={go}/><UniversitiesScreen go={go}/><SiteFooter go={go}/><CookieBanner/></div>);
+  return (<div><SiteHeader route={ROUTE} go={go}/><QuizScreen go={go}/><SiteFooter go={go}/><CookieBanner/></div>);
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<Page/>);
 </script>

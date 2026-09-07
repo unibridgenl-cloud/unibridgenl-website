@@ -1,7 +1,7 @@
 const { Button, Logo, Icon, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
 
 function SiteHeader({ route, go }) {
-  const nav = [["home","How it works"],["universities","Universities"],["services","Services"],["apply","Apply"]];
+  const nav = [["home","How it works"],["universities","Universities"],["quiz","Find my field"],["services","Services"],["apply","Apply"]];
   return (
     <header style={{position:'sticky',top:0,zIndex:20,background:'rgba(251,244,236,.88)',backdropFilter:'blur(10px)',borderBottom:'1px solid var(--border-hairline)'}}>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'14px var(--gutter-inline)',display:'flex',alignItems:'center',gap:'var(--space-8)'}}>
@@ -72,4 +72,27 @@ function Placeholder({ label = "Photo", ratio = "4 / 3", style }) {
   );
 }
 
-Object.assign(window, { SiteHeader, SiteFooter, Section, Placeholder });
+function CookieBanner() {
+  const [visible, setVisible] = React.useState(false);
+  React.useEffect(() => {
+    try { if (!localStorage.getItem('ub_cookie_choice')) setVisible(true); } catch(e) { setVisible(true); }
+  }, []);
+  const choose = (value) => {
+    try { localStorage.setItem('ub_cookie_choice', value); } catch(e) {}
+    setVisible(false);
+  };
+  if (!visible) return null;
+  return (
+    <div style={{position:'fixed',left:0,right:0,bottom:0,zIndex:60,background:'var(--surface-inverse)',color:'var(--text-on-inverse)',borderTop:'1px solid rgba(251,244,236,.14)'}}>
+      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',display:'flex',alignItems:'center',gap:'var(--space-6)',flexWrap:'wrap'}}>
+        <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--ink-100)',flex:'1 1 320px'}}>We use cookies for essential site functions and to understand how visitors use UniBridge NL. You can accept all cookies or continue with only the essential ones.</p>
+        <div style={{display:'flex',gap:'var(--space-3)',flex:'0 0 auto'}}>
+          <Button size="sm" variant="ghost" style={{color:'var(--cream-200)'}} onClick={()=>choose('essential')}>Essential only</Button>
+          <Button size="sm" onClick={()=>choose('all')}>Accept all</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { SiteHeader, SiteFooter, Section, Placeholder, CookieBanner });

@@ -26,13 +26,13 @@
 <script type="text/babel" src="/scripts/ServicesScreen.jsx"></script>
 <script type="text/babel">
 const ROUTE = "services";
-const URL_MAP = {home:"/",universities:"/universities/",services:"/services/",apply:"/apply/",call:"/book-a-call/"};
+const URL_MAP = {home:"/",universities:"/universities/",quiz:"/find-my-field/",services:"/services/",apply:"/apply/",call:"/book-a-call/"};
 function go(target){
   if (target === ROUTE) { window.scrollTo({top:0,behavior:'smooth'}); return; }
   window.location.href = URL_MAP[target] || "/";
 }
 function Page(){
-  return (<div><SiteHeader route={ROUTE} go={go}/><ServicesScreen go={go}/><SiteFooter go={go}/></div>);
+  return (<div><SiteHeader route={ROUTE} go={go}/><ServicesScreen go={go}/><SiteFooter go={go}/><CookieBanner/></div>);
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<Page/>);
 </script>
