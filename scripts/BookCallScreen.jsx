@@ -74,13 +74,13 @@ Requested slot: ${active.d} ${active.n}, ${slot} CET`;
       <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-2)'}}>Book a time on Google Meet</h1>
       <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Fifteen minutes, straight to the point. Pick a slot and we'll send you a Google Meet link by email — no software to install, no payment, no obligation.</p>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 340px',gap:'var(--space-5)',marginTop:'var(--space-10)',alignItems:'start'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:'var(--space-5)',marginTop:'var(--space-10)',alignItems:'start'}}>
         <Card padding="var(--space-6)">
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'var(--space-5)'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'var(--space-5)',flexWrap:'wrap',gap:'var(--space-2)'}}>
             <h3 style={{margin:0,fontSize:'var(--text-h4)'}}>October 2026 · week 41</h3>
             <span style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>Times shown in CET (Amsterdam)</span>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'var(--space-2)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(56px,1fr))',gap:'var(--space-2)'}}>
             {DAYS.map((x,i)=>{
               const on = i===day, none = x.slots.length===0;
               return (

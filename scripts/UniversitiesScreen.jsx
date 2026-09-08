@@ -42,7 +42,7 @@ function UniversitiesScreen({ go }) {
         </div>
       </div>
 
-      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-10) var(--gutter-inline) 0',display:'grid',gridTemplateColumns:'260px 1fr',gap:'var(--space-8)'}}>
+      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-10) var(--gutter-inline) 0',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-8)'}}>
         <aside style={{display:'flex',flexDirection:'column',gap:'var(--space-6)'}}>
           <Input placeholder="Search universities" iconLeft="search"/>
           <div>
@@ -70,21 +70,21 @@ function UniversitiesScreen({ go }) {
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)',marginTop:'var(--space-4)'}}>
             {rows.map(u=>(
-              <Card key={u.name} interactive style={{display:'grid',gridTemplateColumns:'96px 1fr auto',gap:'var(--space-5)',alignItems:'center'}}>
-                <CrestBadge initials={u.initials} color={u.color}/>
-                <div>
-                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <Card key={u.name} interactive style={{display:'flex',flexWrap:'wrap',gap:'var(--space-5)',alignItems:'center'}}>
+                <div style={{width:64,height:64,flex:'0 0 auto'}}><CrestBadge initials={u.initials} color={u.color}/></div>
+                <div style={{flex:'1 1 220px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
                     <h3 style={{fontSize:'var(--text-h4)',margin:0}}>{u.name}</h3>
                     <Badge tone={rateTone[u.rate]} dot>{u.rate} chance</Badge>
                   </div>
-                  <div style={{display:'flex',alignItems:'center',gap:14,marginTop:6,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:14,marginTop:6,fontSize:'var(--text-body-sm)',color:'var(--text-muted)',flexWrap:'wrap'}}>
                     <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="map-pin" size={15}/>{u.city}</span>
                     <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="graduation-cap" size={15}/>{u.level}</span>
                     <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="calendar-check" size={15}/>Deadline {u.deadline}</span>
                   </div>
-                  <div style={{display:'flex',gap:8,marginTop:'var(--space-3)'}}>{u.fields.map(t=><Tag key={t}>{t}</Tag>)}</div>
+                  <div style={{display:'flex',gap:8,marginTop:'var(--space-3)',flexWrap:'wrap'}}>{u.fields.map(t=><Tag key={t}>{t}</Tag>)}</div>
                 </div>
-                <div style={{textAlign:'right'}}>
+                <div style={{flex:'0 0 auto'}}>
                   <Tooltip label="EU / non-EU tuition per year" placement="left">
                     <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:'var(--text-h4)',color:'var(--text-heading)'}}>{u.tuition}</span>
                   </Tooltip>

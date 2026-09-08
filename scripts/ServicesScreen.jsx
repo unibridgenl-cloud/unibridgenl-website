@@ -66,7 +66,7 @@ function ServicesScreen({ go }) {
         <Tabs variant="pill" items={[{value:"plans",label:"Plans"},{value:"compare",label:"Compare"},{value:"addons",label:"Add-ons"},{value:"faq",label:"FAQ"}]} value={tab} onChange={setTab} style={{display:'inline-flex',marginBottom:'var(--space-8)'}}/>
 
         {tab === "plans" && (
-          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'var(--space-5)',alignItems:'stretch'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:'var(--space-5)',alignItems:'stretch'}}>
             {PLANS.map(p=>{
               const hero = p.cta === 'primary';
               return (
@@ -108,6 +108,8 @@ function ServicesScreen({ go }) {
 
         {tab === "compare" && (
           <Card padding="0">
+          <div style={{overflowX:'auto'}}>
+          <div style={{minWidth:640}}>
             <div style={{display:'grid',gridTemplateColumns:'1.6fr 1fr 1fr 1fr',padding:'var(--space-5) var(--space-6)',alignItems:'end'}}>
               <span className="ub-overline">What's included</span>
               {PLANS.map(p=>(
@@ -127,13 +129,15 @@ function ServicesScreen({ go }) {
               <span/>
               {PLANS.map(p=><div key={p.name} style={{display:'flex',justifyContent:'center'}}><Button size="sm" variant={p.cta} onClick={()=>go('call')}>Choose</Button></div>)}
             </div>
+          </div>
+          </div>
           </Card>
         )}
 
         {tab === "addons" && (
           <div>
             <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch',marginTop:0}}>Bolt these onto any plan, or take one on its own if you only need a single piece.</p>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'var(--space-4)',marginTop:'var(--space-6)'}}>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'var(--space-4)',marginTop:'var(--space-6)'}}>
               {ADDONS.map(([i,t,price,note])=>(
                 <Card key={t} interactive onClick={()=>go('call')}>
                   <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12}}>
@@ -163,7 +167,7 @@ function ServicesScreen({ go }) {
       </div>
 
       <div style={{maxWidth:'var(--content-max)',margin:'var(--section-y) auto 0',padding:'0 var(--gutter-inline)'}}>
-        <Card tone="ink" padding="var(--space-12)" style={{display:'grid',gridTemplateColumns:'1.4fr auto',gap:'var(--space-10)',alignItems:'center',borderRadius:'var(--radius-2xl)'}}>
+        <Card tone="ink" padding="var(--space-12)" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:'var(--space-10)',alignItems:'center',borderRadius:'var(--radius-2xl)'}}>
           <div>
             <h2 style={{color:'var(--cream-200)',fontSize:'var(--text-h2)',maxWidth:'26ch'}}>Not sure which plan fits?</h2>
             <p style={{color:'var(--ink-100)',fontSize:'var(--text-body-lg)',margin:0,maxWidth:'50ch'}}>Take the free 15-minute call. Harsh will tell you which plan you actually need — often the cheaper one.</p>

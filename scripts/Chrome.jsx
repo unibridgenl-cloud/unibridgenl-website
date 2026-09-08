@@ -1,22 +1,57 @@
 const { Button, Logo, Icon, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
 
+function useIsMobile(breakpoint) {
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    if (mq.addEventListener) mq.addEventListener('change', update); else mq.addListener(update);
+    return () => { if (mq.removeEventListener) mq.removeEventListener('change', update); else mq.removeListener(update); };
+  }, [breakpoint]);
+  return isMobile;
+}
+
 function SiteHeader({ route, go }) {
   const nav = [["home","How it works"],["universities","Universities"],["quiz","Find my field"],["services","Services"],["apply","Apply"]];
+  const isMobile = useIsMobile(860);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const navigate = (target) => { setMenuOpen(false); go(target); };
+
   return (
-    <header style={{position:'sticky',top:0,zIndex:20,background:'rgba(251,244,236,.88)',backdropFilter:'blur(10px)',borderBottom:'1px solid var(--border-hairline)'}}>
-      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'14px var(--gutter-inline)',display:'flex',alignItems:'center',gap:'var(--space-8)'}}>
-        <div onClick={()=>go('home')} style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
+    <header style={{position:'sticky',top:0,zIndex:20,background:'rgba(251,244,236,.92)',backdropFilter:'blur(10px)',borderBottom:'1px solid var(--border-hairline)'}}>
+      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'14px var(--gutter-inline)',display:'flex',alignItems:'center',gap:'var(--space-6)'}}>
+        <div onClick={()=>navigate('home')} style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer',flex:'0 0 auto'}}>
           <img src="/assets/logo-badge.jpg" alt="UniBridge NL" style={{width:40,height:40,borderRadius:999}}/>
           <Logo size={26}/>
         </div>
-        <nav style={{display:'flex',gap:'var(--space-6)',marginLeft:'auto'}}>
-          {nav.map(([k,l])=>(
-            <a key={k} onClick={()=>go(k)} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',fontWeight:route===k?700:500,color:route===k?'var(--text-heading)':'var(--text-muted)',textDecoration:'none',paddingBottom:2,borderBottom:'2px solid '+(route===k?'var(--gold-500)':'transparent')}}>{l}</a>
-          ))}
-        </nav>
-        <Button size="sm" variant="secondary" onClick={()=>go('call')}>Free 15-min call</Button>
-        <Button size="sm" onClick={()=>go('apply')}>Start free</Button>
+
+        {!isMobile && (
+          <nav style={{display:'flex',gap:'var(--space-6)',marginLeft:'auto'}}>
+            {nav.map(([k,l])=>(
+              <a key={k} onClick={()=>go(k)} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',fontWeight:route===k?700:500,color:route===k?'var(--text-heading)':'var(--text-muted)',textDecoration:'none',whiteSpace:'nowrap',paddingBottom:2,borderBottom:'2px solid '+(route===k?'var(--gold-500)':'transparent')}}>{l}</a>
+            ))}
+          </nav>
+        )}
+        {!isMobile && <Button size="sm" variant="secondary" onClick={()=>go('call')}>Free 15-min call</Button>}
+        {!isMobile && <Button size="sm" onClick={()=>go('apply')}>Start free</Button>}
+
+        {isMobile && (
+          <button onClick={()=>setMenuOpen(o=>!o)} aria-label="Menu" style={{marginLeft:'auto',background:'none',border:'none',cursor:'pointer',padding:8,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <Icon name={menuOpen ? 'x' : 'menu'} size={24} color="var(--text-heading)"/>
+          </button>
+        )}
       </div>
+
+      {isMobile && menuOpen && (
+        <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)',padding:'var(--space-2) var(--gutter-inline) var(--space-6)',borderTop:'1px solid var(--border-hairline)',background:'var(--surface-page)'}}>
+          {nav.map(([k,l])=>(
+            <a key={k} onClick={()=>navigate(k)} style={{cursor:'pointer',fontSize:'var(--text-body)',fontWeight:route===k?700:500,color:route===k?'var(--text-heading)':'var(--text-body)',textDecoration:'none',padding:'var(--space-2) 0'}}>{l}</a>
+          ))}
+          <Button variant="secondary" full onClick={()=>navigate('call')}>Free 15-min call</Button>
+          <Button full onClick={()=>navigate('apply')}>Start free</Button>
+        </div>
+      )}
     </header>
   );
 }
@@ -29,8 +64,8 @@ function SiteFooter({ go }) {
   ];
   return (
     <footer style={{background:'var(--surface-inverse)',color:'var(--text-on-inverse)',marginTop:'var(--section-y)'}}>
-      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-16) var(--gutter-inline) var(--space-10)',display:'grid',gridTemplateColumns:'1.4fr 1fr 1fr 1fr',gap:'var(--space-10)'}}>
-        <div>
+      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-16) var(--gutter-inline) var(--space-10)',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:'var(--space-10)'}}>
+        <div style={{gridColumn:'1 / -1',maxWidth:420}}>
           <Logo size={28} tone="cream"/>
           <p style={{marginTop:'var(--space-4)',fontSize:'var(--text-body-sm)',color:'var(--ink-100)',maxWidth:'32ch'}}>Your bridge to student life in the Netherlands — enrolment, housing and arrival, handled in one place.</p>
           <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:'var(--space-5)'}}>
@@ -47,7 +82,7 @@ function SiteFooter({ go }) {
           </div>
         ))}
       </div>
-      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',borderTop:'1px solid rgba(251,244,236,.14)',display:'flex',justifyContent:'space-between',fontSize:'var(--text-caption)',color:'var(--ink-200)'}}>
+      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',borderTop:'1px solid rgba(251,244,236,.14)',display:'flex',flexWrap:'wrap',gap:'var(--space-2) var(--space-6)',justifyContent:'space-between',fontSize:'var(--text-caption)',color:'var(--ink-200)'}}>
         <span>© 2026 UniBridge NL · Amsterdam, KvK 42087386</span><span>Made for students, not for paperwork.</span>
       </div>
     </footer>
@@ -89,7 +124,7 @@ function CookieBanner({ go }) {
   return (
     <div style={{position:'fixed',left:0,right:0,bottom:0,zIndex:60,background:'var(--surface-inverse)',color:'var(--text-on-inverse)',borderTop:'1px solid rgba(251,244,236,.14)'}}>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',display:'flex',alignItems:'center',gap:'var(--space-6)',flexWrap:'wrap'}}>
-        <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--ink-100)',flex:'1 1 320px'}}>We use cookies for essential site functions. See our <a onClick={()=>go && go('privacy')} style={{color:'var(--gold-300)',cursor:'pointer',textDecoration:'underline'}}>privacy statement</a> for details. You can accept all cookies or continue with only the essential ones.</p>
+        <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--ink-100)',flex:'1 1 260px'}}>We use cookies for essential site functions. See our <a onClick={()=>go && go('privacy')} style={{color:'var(--gold-300)',cursor:'pointer',textDecoration:'underline'}}>privacy statement</a> for details. You can accept all cookies or continue with only the essential ones.</p>
         <div style={{display:'flex',gap:'var(--space-3)',flex:'0 0 auto'}}>
           <Button size="sm" variant="ghost" style={{color:'var(--cream-200)'}} onClick={()=>choose('essential')}>Essential only</Button>
           <Button size="sm" onClick={()=>choose('all')}>Accept all</Button>

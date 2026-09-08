@@ -89,7 +89,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
 
       <Card padding="var(--space-8)">
         {step === 0 && (
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-5)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-5)'}}>
             <Field label="First name" required><Input placeholder="Jane" value={firstName} onChange={e=>setFirstName(e.target.value)}/></Field>
             <Field label="Last name" required><Input placeholder="Doe" value={lastName} onChange={e=>setLastName(e.target.value)}/></Field>
             <Field label="Email" required hint="We reply here — check your spam folder once."><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
@@ -99,7 +99,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
           </div>
         )}
         {step === 1 && (
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-5)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-5)'}}>
             <Field label="Study level" required><Radio name="lvl" value={studyLevel} onChange={e=>setStudyLevel(e.target.value)} options={["Bachelor","Master","Exchange"]}/></Field>
             <Field label="Intake" required><Radio name="intake" value={intake} onChange={e=>setIntake(e.target.value)} options={["September 2027","February 2028","Not sure yet"]}/></Field>
             <Field label="Study field" required><Select value={studyField} onChange={e=>setStudyField(e.target.value)} options={["Business & Economics","Computer Science","Data Science","Engineering","Architecture","Law","International Relations","Health & Medicine","Life Sciences","Psychology","Humanities","Communication","Media & Design","Environment & Food","Arts"]}/></Field>
@@ -118,7 +118,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
             <a onClick={()=>go('privacy')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'underline',marginLeft:32}}>Read our privacy statement</a>
           </div>
         )}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'var(--space-8)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'var(--space-8)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)',flexWrap:'wrap',gap:'var(--space-3)'}}>
           <Button variant="ghost" disabled={step===0} onClick={()=>setStep(s=>Math.max(0,s-1))} iconLeft={<Icon name="arrow-left" size={16}/>}>Back</Button>
           <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>Step {step+1} of 3 · nothing is charged today</span>
           {step < 2
@@ -128,7 +128,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
         {error && <Alert tone="warning" title="Something went wrong" style={{marginTop:'var(--space-5)'}}>Your application didn't send. Please try again, or WhatsApp us directly at 06 25 29 40 80.</Alert>}
       </Card>
 
-      <div style={{display:'flex',gap:'var(--space-6)',margin:'var(--space-6) 0 0',fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
+      <div style={{display:'flex',gap:'var(--space-6)',margin:'var(--space-6) 0 0',fontSize:'var(--text-body-sm)',color:'var(--text-muted)',flexWrap:'wrap'}}>
         <span style={{display:'inline-flex',gap:8,alignItems:'center'}}><Icon name="shield-check" size={16} color="var(--moss-500)"/>Documents encrypted, deleted on request</span>
         <span style={{display:'inline-flex',gap:8,alignItems:'center'}}><Icon name="clock" size={16} color="var(--moss-500)"/>Answer within 1 working day</span>
         <span style={{display:'inline-flex',gap:8,alignItems:'center'}}><Icon name="message-circle" size={16} color="var(--moss-500)"/>Or WhatsApp 06 25 29 40 80</span>
