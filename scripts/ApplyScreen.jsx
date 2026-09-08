@@ -1,11 +1,13 @@
 const { Card, Button, Field, Input, Select, Radio, Checkbox, Textarea, Stepper, Alert, Toast, Icon, Badge } = window.UnibridgeNLDesignSystem_3cb2d1;
 
+const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
+
 const COUNTRIES = ["Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Congo-Brazzaville)","Costa Rica","Croatia","Cuba","Cyprus","Czechia","Democratic Republic of the Congo","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe","Other"];
 
 function ApplyScreen({ go }) {
   const [step, setStep] = React.useState(0);
   const [sent, setSent] = React.useState(false);
-  const [sending, setSending] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState(false);
 
   const [firstName, setFirstName] = React.useState("");
@@ -15,61 +17,65 @@ function ApplyScreen({ go }) {
   const [country, setCountry] = React.useState("Ghana");
   const [diploma, setDiploma] = React.useState("Secondary school");
 
-  const [level, setLevel] = React.useState("Master");
+  const [studyLevel, setStudyLevel] = React.useState("Master");
   const [intake, setIntake] = React.useState("September 2027");
-  const [field, setField] = React.useState("Data Science");
+  const [studyField, setStudyField] = React.useState("Data Science");
   const [budget, setBudget] = React.useState("€600 – €800");
   const [notes, setNotes] = React.useState("");
 
-  const [wantEnrolment, setWantEnrolment] = React.useState(true);
-  const [wantHousing, setWantHousing] = React.useState(true);
-  const [wantVisa, setWantVisa] = React.useState(false);
-  const [wantArrival, setWantArrival] = React.useState(false);
-  const [agreePrivacy, setAgreePrivacy] = React.useState(false);
+  const [svcEnrolment, setSvcEnrolment] = React.useState(true);
+  const [svcHousing, setSvcHousing] = React.useState(true);
+  const [svcVisa, setSvcVisa] = React.useState(false);
+  const [svcArrival, setSvcArrival] = React.useState(false);
+  const [agreed, setAgreed] = React.useState(false);
 
   const steps = [{label:"About you",meta:"2 min"},{label:"Study plan",meta:"1 min"},{label:"Services",meta:"30 sec"}];
 
-  const canSend = firstName && lastName && email.includes('@') && agreePrivacy;
-
-  const submitApplication = async () => {
-    if (!canSend) return;
-    setSending(true);
+  const submit = async () => {
+    setSubmitting(true);
     setError(false);
+    const services = [
+      svcEnrolment && "University enrolment",
+      svcHousing && "Housing via partner agency",
+      svcVisa && "Visa & BSN",
+      svcArrival && "Arrival week"
+    ].filter(Boolean).join(", ") || "None selected";
+    const message = `New application via unibridgenl.com
+
+Name: ${firstName} ${lastName}
+Email: ${email}
+WhatsApp: ${whatsapp || "—"}
+Country of citizenship: ${country}
+Highest diploma: ${diploma}
+
+Study level: ${studyLevel}
+Intake: ${intake}
+Study field: ${studyField}
+Monthly rent budget: ${budget}
+Notes: ${notes || "—"}
+
+Requested services: ${services}
+Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
+
     try {
-      const services = [
-        wantEnrolment && "University enrolment",
-        wantHousing && "Housing via partner agency",
-        wantVisa && "Visa & BSN",
-        wantArrival && "Arrival week"
-      ].filter(Boolean).join(", ");
       const res = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
-          access_key: "a828545d-4f6f-4f85-8ddf-888a55281203",
-          subject: "New application — UniBridge NL",
-          from_name: "UniBridge NL website",
+          access_key: WEB3FORMS_KEY,
+          subject: `New application: ${firstName} ${lastName}`,
+          from_name: `${firstName} ${lastName}`.trim() || "UniBridge NL website",
           email: email,
-          "First name": firstName,
-          "Last name": lastName,
-          "Applicant email": email,
-          "WhatsApp": whatsapp,
-          "Country of citizenship": country,
-          "Highest diploma": diploma,
-          "Study level": level,
-          "Intake": intake,
-          "Study field": field,
-          "Monthly rent budget": budget,
-          "Notes": notes,
-          "Services requested": services
+          message: message
         })
       });
       const data = await res.json();
-      if (data.success) { setSent(true); } else { setError(true); }
+      if (data.success) { setSent(true); }
+      else { setError(true); }
     } catch (e) {
       setError(true);
     } finally {
-      setSending(false);
+      setSubmitting(false);
     }
   };
 
@@ -94,9 +100,9 @@ function ApplyScreen({ go }) {
         )}
         {step === 1 && (
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-5)'}}>
-            <Field label="Study level" required><Radio name="lvl" value={level} onChange={setLevel} options={["Bachelor","Master","Exchange"]}/></Field>
-            <Field label="Intake" required><Radio name="intake" value={intake} onChange={setIntake} options={["September 2027","February 2028","Not sure yet"]}/></Field>
-            <Field label="Study field" required><Select value={field} onChange={e=>setField(e.target.value)} options={["Business & Economics","Computer Science","Data Science","Engineering","Architecture","Law","International Relations","Health & Medicine","Life Sciences","Psychology","Humanities","Communication","Media & Design","Environment & Food","Arts"]}/></Field>
+            <Field label="Study level" required><Radio name="lvl" value={studyLevel} onChange={e=>setStudyLevel(e.target.value)} options={["Bachelor","Master","Exchange"]}/></Field>
+            <Field label="Intake" required><Radio name="intake" value={intake} onChange={e=>setIntake(e.target.value)} options={["September 2027","February 2028","Not sure yet"]}/></Field>
+            <Field label="Study field" required><Select value={studyField} onChange={e=>setStudyField(e.target.value)} options={["Business & Economics","Computer Science","Data Science","Engineering","Architecture","Law","International Relations","Health & Medicine","Life Sciences","Psychology","Humanities","Communication","Media & Design","Environment & Food","Arts"]}/></Field>
             <Field label="Monthly budget for rent" hint="Amsterdam averages €950 for a studio; nearby cities are cheaper."><Select value={budget} onChange={e=>setBudget(e.target.value)} options={["Under €600","€600 – €800","€800 – €1,000","Over €1,000"]}/></Field>
             <Field label="Anything we should know?" style={{gridColumn:'1 / -1'}}><Textarea rows={3} placeholder="Scholarships you're applying for, family in NL, health needs…" value={notes} onChange={e=>setNotes(e.target.value)}/></Field>
           </div>
@@ -104,22 +110,22 @@ function ApplyScreen({ go }) {
         {step === 2 && (
           <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)'}}>
             <Alert tone="warning" title="September deadlines close 1 May">Nine weeks left. Applications filed after 15 April get a rush fee from the university, not from us.</Alert>
-            <Checkbox checked={wantEnrolment} onChange={setWantEnrolment} label="University enrolment" description="Up to five applications, documents certified and filed."/>
-            <Checkbox checked={wantHousing} onChange={setWantHousing} label="Housing via our partner agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
-            <Checkbox checked={wantVisa} onChange={setWantVisa} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
-            <Checkbox checked={wantArrival} onChange={setWantArrival} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
-            <Checkbox checked={agreePrivacy} onChange={setAgreePrivacy} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
+            <Checkbox checked={svcEnrolment} onChange={e=>setSvcEnrolment(e.target.checked)} label="University enrolment" description="Up to five applications, documents certified and filed."/>
+            <Checkbox checked={svcHousing} onChange={e=>setSvcHousing(e.target.checked)} label="Housing via our partner agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
+            <Checkbox checked={svcVisa} onChange={e=>setSvcVisa(e.target.checked)} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
+            <Checkbox checked={svcArrival} onChange={e=>setSvcArrival(e.target.checked)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
+            <Checkbox checked={agreed} onChange={e=>setAgreed(e.target.checked)} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
+            <a onClick={()=>go('privacy')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'underline',marginLeft:32}}>Read our privacy statement</a>
           </div>
         )}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'var(--space-8)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)'}}>
           <Button variant="ghost" disabled={step===0} onClick={()=>setStep(s=>Math.max(0,s-1))} iconLeft={<Icon name="arrow-left" size={16}/>}>Back</Button>
           <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>Step {step+1} of 3 · nothing is charged today</span>
           {step < 2
-            ? <Button onClick={()=>setStep(s=>s+1)} iconRight={<Icon name="arrow-right" size={16}/>}>Continue</Button>
-            : <Button onClick={submitApplication} disabled={sending || !canSend}>{sending ? "Sending…" : "Send my application"}</Button>}
+            ? <Button disabled={step===0 && (!firstName || !lastName || !email.includes('@'))} onClick={()=>setStep(s=>s+1)} iconRight={<Icon name="arrow-right" size={16}/>}>Continue</Button>
+            : <Button disabled={!agreed || submitting} onClick={submit}>{submitting ? "Sending…" : "Send my application"}</Button>}
         </div>
-        {step === 2 && !agreePrivacy && <p style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)',textAlign:'right',marginTop:'var(--space-3)'}}>Agree to the privacy statement to send.</p>}
-        {error && <Alert tone="warning" title="Something went wrong sending your application" style={{marginTop:'var(--space-5)'}}>Please try again, or reach us directly on WhatsApp 06 25 29 40 80.</Alert>}
+        {error && <Alert tone="warning" title="Something went wrong" style={{marginTop:'var(--space-5)'}}>Your application didn't send. Please try again, or WhatsApp us directly at 06 25 29 40 80.</Alert>}
       </Card>
 
       <div style={{display:'flex',gap:'var(--space-6)',margin:'var(--space-6) 0 0',fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>

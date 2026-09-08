@@ -22,7 +22,11 @@ function SiteHeader({ route, go }) {
 }
 
 function SiteFooter({ go }) {
-  const cols = [["Programmes",["Bachelor","Master","Exchange","Foundation year"]],["Services",["Enrolment","Housing","Visa & BSN","Bank & insurance"]],["Company",["About","Partner universities","Contact","Privacy"]]];
+  const cols = [
+    ["Programmes", [["Bachelor","universities"],["Master","universities"],["Exchange","universities"],["Foundation year","universities"]]],
+    ["Services", [["Enrolment","services"],["Housing","services"],["Visa & BSN","services"],["Bank & insurance","services"]]],
+    ["Company", [["About","home"],["Partner universities","universities"],["Contact","call"],["Privacy","privacy"]]]
+  ];
   return (
     <footer style={{background:'var(--surface-inverse)',color:'var(--text-on-inverse)',marginTop:'var(--section-y)'}}>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-16) var(--gutter-inline) var(--space-10)',display:'grid',gridTemplateColumns:'1.4fr 1fr 1fr 1fr',gap:'var(--space-10)'}}>
@@ -38,13 +42,13 @@ function SiteFooter({ go }) {
           <div key={t}>
             <div style={{font:'700 12px/1 var(--font-sans)',letterSpacing:'.14em',textTransform:'uppercase',color:'var(--gold-300)',marginBottom:'var(--space-4)'}}>{t}</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {items.map(i=><a key={i} onClick={()=>go('services')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--cream-200)',textDecoration:'none'}}>{i}</a>)}
+              {items.map(([label,target])=><a key={label} onClick={()=>go(target)} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--cream-200)',textDecoration:'none'}}>{label}</a>)}
             </div>
           </div>
         ))}
       </div>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',borderTop:'1px solid rgba(251,244,236,.14)',display:'flex',justifyContent:'space-between',fontSize:'var(--text-caption)',color:'var(--ink-200)'}}>
-        <span>© 2026 UniBridge NL · Amsterdam, KvK 90210345</span><span>Made for students, not for paperwork.</span>
+        <span>© 2026 UniBridge NL · Amstelveen, KvK 42087386</span><span>Made for students, not for paperwork.</span>
       </div>
     </footer>
   );
@@ -72,7 +76,7 @@ function Placeholder({ label = "Photo", ratio = "4 / 3", style }) {
   );
 }
 
-function CookieBanner() {
+function CookieBanner({ go }) {
   const [visible, setVisible] = React.useState(false);
   React.useEffect(() => {
     try { if (!localStorage.getItem('ub_cookie_choice')) setVisible(true); } catch(e) { setVisible(true); }
@@ -85,7 +89,7 @@ function CookieBanner() {
   return (
     <div style={{position:'fixed',left:0,right:0,bottom:0,zIndex:60,background:'var(--surface-inverse)',color:'var(--text-on-inverse)',borderTop:'1px solid rgba(251,244,236,.14)'}}>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',display:'flex',alignItems:'center',gap:'var(--space-6)',flexWrap:'wrap'}}>
-        <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--ink-100)',flex:'1 1 320px'}}>We use cookies for essential site functions and to understand how visitors use UniBridge NL. You can accept all cookies or continue with only the essential ones.</p>
+        <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--ink-100)',flex:'1 1 320px'}}>We use cookies for essential site functions. See our <a onClick={()=>go && go('privacy')} style={{color:'var(--gold-300)',cursor:'pointer',textDecoration:'underline'}}>privacy statement</a> for details. You can accept all cookies or continue with only the essential ones.</p>
         <div style={{display:'flex',gap:'var(--space-3)',flex:'0 0 auto'}}>
           <Button size="sm" variant="ghost" style={{color:'var(--cream-200)'}} onClick={()=>choose('essential')}>Essential only</Button>
           <Button size="sm" onClick={()=>choose('all')}>Accept all</Button>
