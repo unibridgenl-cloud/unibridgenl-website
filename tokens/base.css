@@ -9,3 +9,20 @@ a:hover{color:var(--text-link-hover)}
 ::selection{background:var(--gold-100);color:var(--ink-900)}
 .ub-overline{font-family:var(--font-sans);font-size:var(--text-overline);font-weight:var(--weight-bold);letter-spacing:var(--tracking-overline);text-transform:uppercase;color:var(--text-muted)}
 .ub-rule{height:1px;background:var(--divider-rule);border:0;opacity:.9}
+.ub-hover-lift{transition:transform var(--duration-base) var(--ease-standard),box-shadow var(--duration-base) var(--ease-standard)}
+.ub-hover-lift:hover{transform:translateY(-3px)}
+.ub-anim-grow{animation:ub-grow-v 6s ease-in-out infinite}
+.ub-anim-draw{animation:ub-draw-path 6s ease-in-out infinite}
+.ub-anim-pop{animation:ub-pop-light 6s ease-in-out infinite}
+.ub-anim-pulse{animation:ub-pulse-soft 3s ease-in-out infinite}
+.ub-anim-drift{animation:ub-drift 4s ease-in-out infinite}
+.ub-anim-shimmer{animation:ub-shimmer 5s ease-in-out infinite}
+@keyframes ub-grow-v{0%{transform:scaleY(0)}10%{transform:scaleY(1)}82%{transform:scaleY(1)}92%{transform:scaleY(0)}100%{transform:scaleY(0)}}
+@keyframes ub-draw-path{0%{stroke-dashoffset:1}15%{stroke-dashoffset:0}78%{stroke-dashoffset:0}90%{stroke-dashoffset:1}100%{stroke-dashoffset:1}}
+@keyframes ub-pop-light{0%{transform:scale(0);opacity:0}8%{transform:scale(1.35);opacity:1}14%{transform:scale(1);opacity:1}75%{transform:scale(1);opacity:1}85%{transform:scale(0);opacity:0}100%{transform:scale(0);opacity:0}}
+@keyframes ub-pulse-soft{0%,100%{opacity:.65}50%{opacity:1}}
+@keyframes ub-drift{0%,100%{transform:translateX(0)}50%{transform:translateX(10px)}}
+@keyframes ub-shimmer{0%,100%{opacity:.5}50%{opacity:.85}}
+@media (prefers-reduced-motion:reduce){
+  .ub-anim-grow,.ub-anim-draw,.ub-anim-pop,.ub-anim-pulse,.ub-anim-drift,.ub-anim-shimmer{animation:none!important}
+}

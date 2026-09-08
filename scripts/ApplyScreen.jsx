@@ -44,7 +44,7 @@ function ApplyScreen({ go }) {
 
 Name: ${firstName} ${lastName}
 Email: ${email}
-WhatsApp: ${whatsapp || "—"}
+WhatsApp: ${whatsapp || "Not provided"}
 Country of citizenship: ${country}
 Highest diploma: ${diploma}
 
@@ -52,7 +52,7 @@ Study level: ${studyLevel}
 Intake: ${intake}
 Study field: ${studyField}
 Monthly rent budget: ${budget}
-Notes: ${notes || "—"}
+Notes: ${notes || "Not provided"}
 
 Requested services: ${services}
 Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
