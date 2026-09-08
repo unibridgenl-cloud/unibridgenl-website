@@ -48,7 +48,7 @@ function SiteFooter({ go }) {
         ))}
       </div>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',borderTop:'1px solid rgba(251,244,236,.14)',display:'flex',justifyContent:'space-between',fontSize:'var(--text-caption)',color:'var(--ink-200)'}}>
-        <span>© 2026 UniBridge NL · Amstelveen, KvK 42087386</span><span>Made for students, not for paperwork.</span>
+        <span>© 2026 UniBridge NL · Amsterdam, KvK 42087386</span><span>Made for students, not for paperwork.</span>
       </div>
     </footer>
   );

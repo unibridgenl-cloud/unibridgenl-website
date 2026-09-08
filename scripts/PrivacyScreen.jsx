@@ -9,7 +9,7 @@ function PrivacyScreen({ go }) {
       <Card padding="var(--space-8)" style={{display:'flex',flexDirection:'column',gap:'var(--space-6)'}}>
         <section>
           <h3 style={{fontSize:'var(--text-h4)',margin:'0 0 var(--space-2)'}}>Who we are</h3>
-          <p style={{fontSize:'var(--text-body)',color:'var(--text-body)',margin:0}}>UniBridge NL (KvK 42087386), based in Amstelveen, the Netherlands. Contact: <a href="mailto:unibridgenl@gmail.com" style={{color:'var(--text-link)'}}>unibridgenl@gmail.com</a>.</p>
+          <p style={{fontSize:'var(--text-body)',color:'var(--text-body)',margin:0}}>UniBridge NL (KvK 42087386), based in Amsterdam, the Netherlands. Contact: <a href="mailto:unibridgenl@gmail.com" style={{color:'var(--text-link)'}}>unibridgenl@gmail.com</a>.</p>
         </section>
 
         <section>
