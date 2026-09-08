@@ -28,7 +28,37 @@ function HomeScreen({ go }) {
             </div>
           </div>
           <div>
-            <Placeholder label="Hero photo · students on a canal bridge" ratio="4 / 5"/>
+            <div style={{aspectRatio:'4 / 5',borderRadius:'var(--radius-media)',overflow:'hidden',border:'1px solid var(--border-hairline)',background:'var(--cream-300)'}}>
+              <svg viewBox="0 0 400 500" width="100%" height="100%" style={{display:'block'}}>
+                <rect width="400" height="500" fill="var(--cream-300)"/>
+                <rect x="0" y="400" width="400" height="100" fill="var(--gold-100)"/>
+                <line x1="0" y1="400" x2="400" y2="400" stroke="var(--gold-300)" strokeWidth="2"/>
+                <path d="M60,110 Q70,100 80,110 Q90,100 100,110" stroke="var(--ink-300)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                <path d="M140,90 Q150,80 160,90 Q170,80 180,90" stroke="var(--ink-300)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                <circle cx="330" cy="55" r="22" fill="var(--gold-500)"/>
+                <line x1="356" y1="55" x2="368" y2="55" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="348.4" y1="73.4" x2="356.9" y2="81.9" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="330" y1="81" x2="330" y2="93" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="311.6" y1="73.4" x2="303.1" y2="81.9" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="304" y1="55" x2="292" y2="55" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="311.6" y1="36.6" x2="303.1" y2="28.1" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="330" y1="29" x2="330" y2="17" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="348.4" y1="36.6" x2="356.9" y2="28.1" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="50" y1="380" x2="350" y2="380" stroke="var(--ink-700)" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="90" y1="320" x2="90" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+                <line x1="140" y1="270" x2="140" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+                <line x1="190" y1="235" x2="190" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+                <line x1="240" y1="245" x2="240" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+                <line x1="290" y1="290" x2="290" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+                <line x1="330" y1="350" x2="330" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+                <path d="M50,400 Q200,60 350,400" stroke="var(--ink-900)" strokeWidth="8" fill="none" strokeLinecap="round"/>
+                <circle cx="90" cy="320" r="9" fill="var(--gold-500)"/>
+                <circle cx="140" cy="270" r="9" fill="var(--clay-500)"/>
+                <circle cx="190" cy="235" r="9" fill="var(--moss-500)"/>
+                <circle cx="240" cy="245" r="9" fill="var(--gold-700)"/>
+                <circle cx="290" cy="290" r="9" fill="var(--moss-700)"/>
+              </svg>
+            </div>
             <Card elevation="lg" style={{marginTop:'var(--space-6)',maxWidth:290}}>
               <div className="ub-overline">Your checklist</div>
               <Stepper orientation="vertical" current={2} style={{marginTop:12}} steps={[{label:"Profile",meta:"Complete"},{label:"University choice",meta:"Erasmus, Utrecht"},{label:"Documents",meta:"2 of 5 uploaded"},{label:"Housing partner"}]}/>
