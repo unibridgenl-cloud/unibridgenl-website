@@ -1,10 +1,15 @@
-const { Card } = window.UnibridgeNLDesignSystem_3cb2d1;
+const { Card, Icon } = window.UnibridgeNLDesignSystem_3cb2d1;
 
 function PrivacyScreen({ go }) {
   return (
-    <main style={{maxWidth:820,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) var(--space-20)'}}>
-      <div className="ub-overline">Legal</div>
-      <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-6)'}}>Privacy statement</h1>
+    <main style={{maxWidth:1100,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) var(--space-20)'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:'var(--space-12)',alignItems:'start'}}>
+      <div style={{maxWidth:760}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:'var(--space-4)'}}>
+        <span style={{width:44,height:44,borderRadius:'var(--radius-md)',background:'var(--surface-accent-soft)',color:'var(--gold-700)',display:'flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto'}}><Icon name="shield-check" size={22}/></span>
+        <div className="ub-overline">Legal</div>
+      </div>
+      <h1 style={{fontSize:'var(--text-h1)',margin:'0 0 var(--space-6)'}}>Privacy statement</h1>
 
       <Card padding="var(--space-8)" style={{display:'flex',flexDirection:'column',gap:'var(--space-6)'}}>
         <section>
@@ -39,6 +44,26 @@ function PrivacyScreen({ go }) {
 
         <p style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)',margin:0}}>Last updated: September 2026.</p>
       </Card>
+      </div>
+
+      <div style={{display:'flex',flexDirection:'column',gap:'var(--space-5)'}}>
+        <Card tone="sunken" elevation="none">
+          <div className="ub-overline" style={{marginBottom:'var(--space-3)'}}>Quick links</div>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <a onClick={()=>go('apply')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',display:'flex',alignItems:'center',gap:8}}><Icon name="arrow-right" size={14}/>Start an application</a>
+            <a onClick={()=>go('call')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',display:'flex',alignItems:'center',gap:8}}><Icon name="arrow-right" size={14}/>Book a free call</a>
+            <a onClick={()=>go('services')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',display:'flex',alignItems:'center',gap:8}}><Icon name="arrow-right" size={14}/>See services & pricing</a>
+          </div>
+        </Card>
+        <Card>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:'var(--space-2)'}}>
+            <Icon name="mail" size={16} color="var(--moss-500)"/>
+            <span style={{fontSize:'var(--text-body-sm)',fontWeight:700,color:'var(--text-heading)'}}>Questions about your data?</span>
+          </div>
+          <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:0}}>Email us anytime at <a href="mailto:unibridgenl@gmail.com" style={{color:'var(--text-link)'}}>unibridgenl@gmail.com</a> and we'll respond personally, not with a bot.</p>
+        </Card>
+      </div>
+      </div>
     </main>
   );
 }

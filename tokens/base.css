@@ -1,5 +1,5 @@
 *,*::before,*::after{box-sizing:border-box}
-body{margin:0;background:var(--surface-page);color:var(--text-body);font-family:var(--font-sans);font-size:var(--text-body);line-height:var(--leading-normal);-webkit-font-smoothing:antialiased;text-wrap:pretty}
+body{margin:0;background:radial-gradient(circle at 8% 10%,rgba(184,124,70,.08),transparent 40%),radial-gradient(circle at 94% 16%,rgba(193,97,63,.07),transparent 38%),radial-gradient(circle at 14% 92%,rgba(110,115,80,.07),transparent 42%),radial-gradient(circle at 88% 88%,rgba(184,124,70,.06),transparent 40%),var(--surface-page);background-attachment:fixed;color:var(--text-body);font-family:var(--font-sans);font-size:var(--text-body);line-height:var(--leading-normal);-webkit-font-smoothing:antialiased;text-wrap:pretty}
 h1,h2,h3,h4{font-family:var(--font-display);color:var(--text-heading);font-variation-settings:var(--display-variation);font-weight:var(--weight-semibold);line-height:var(--leading-snug);letter-spacing:var(--tracking-tight);margin:0 0 var(--space-3)}
 h1{font-size:var(--text-h1)}h2{font-size:var(--text-h2)}h3{font-size:var(--text-h3)}h4{font-size:var(--text-h4)}
 p{margin:0 0 var(--space-4)}

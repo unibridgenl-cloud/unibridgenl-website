@@ -1,4 +1,4 @@
-const { Button, Logo, Icon, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
+const { Button, Card, Logo, Icon, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
 
 function useIsMobile(breakpoint) {
   const [isMobile, setIsMobile] = React.useState(false);
@@ -111,6 +111,35 @@ function Placeholder({ label = "Photo", ratio = "4 / 3", style }) {
   );
 }
 
+function TrustPanel() {
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:'var(--space-5)'}}>
+      <Card rule>
+        <p style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontSize:'var(--text-h4)',lineHeight:1.45,color:'var(--text-heading)'}}>They talked me out of two universities I would have wasted money applying to. That advice paid for the whole service.</p>
+        <div style={{display:'flex',alignItems:'center',gap:12,marginTop:'var(--space-5)'}}>
+          <div style={{width:38,height:38,borderRadius:999,background:'var(--surface-tertiary-soft)',color:'var(--moss-700)',display:'flex',alignItems:'center',justifyContent:'center',font:'700 14px var(--font-sans)'}}>D</div>
+          <div><div style={{fontSize:'var(--text-body-sm)',fontWeight:700,color:'var(--text-heading)'}}>Diego F.</div><div style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>Utrecht University, MSc Data Science</div></div>
+        </div>
+      </Card>
+      <Card tone="sunken" elevation="none">
+        <div className="ub-overline" style={{marginBottom:'var(--space-3)'}}>Why students choose us</div>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {[["shield-check","No commission from universities or landlords"],["message-circle","One advisor, start to finish"],["house","Licensed housing partner, not random listings"]].map(([icon,text])=>(
+            <div key={text} style={{display:'flex',gap:10,fontSize:'var(--text-body-sm)',color:'var(--text-body)'}}>
+              <Icon name={icon} size={16} color="var(--moss-500)" style={{marginTop:2,flex:'0 0 auto'}}/>{text}
+            </div>
+          ))}
+        </div>
+      </Card>
+      <div style={{display:'flex',gap:'var(--space-6)',padding:'0 var(--space-2)'}}>
+        {[["16","partner universities"],["13","cities"]].map(([n,l])=>(
+          <div key={l}><div style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:26,color:'var(--text-heading)'}}>{n}</div><div style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>{l}</div></div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CookieBanner({ go }) {
   const [visible, setVisible] = React.useState(false);
   React.useEffect(() => {
@@ -134,4 +163,4 @@ function CookieBanner({ go }) {
   );
 }
 
-Object.assign(window, { SiteHeader, SiteFooter, Section, Placeholder, CookieBanner });
+Object.assign(window, { SiteHeader, SiteFooter, Section, Placeholder, CookieBanner, TrustPanel });

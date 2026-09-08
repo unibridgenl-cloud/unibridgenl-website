@@ -104,7 +104,9 @@ ${top5.map((f,i)=>`${i+1}. ${f}`).join("\n")}`;
   );
 
   return (
-    <main style={{maxWidth:760,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) var(--space-20)'}}>
+    <main style={{maxWidth:1180,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) var(--space-20)'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(340px,1fr))',gap:'var(--space-12)',alignItems:'start'}}>
+      <div style={{maxWidth:760}}>
       <div className="ub-overline">Free · 2 minutes</div>
       <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-2)'}}>Find your field</h1>
       <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Answer a few questions about your interests, strongest subjects and what you value in future work, and we'll shortlist the five study fields that fit you best.</p>
@@ -195,6 +197,9 @@ ${top5.map((f,i)=>`${i+1}. ${f}`).join("\n")}`;
           </div>
         )}
       </Card>
+      </div>
+      <TrustPanel/>
+      </div>
     </main>
   );
 }

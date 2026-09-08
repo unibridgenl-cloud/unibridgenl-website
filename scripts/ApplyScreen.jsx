@@ -80,7 +80,9 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
   };
 
   return (
-    <main style={{maxWidth:960,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) 0'}}>
+    <main style={{maxWidth:1180,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) 0'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(420px,1fr))',gap:'var(--space-12)',alignItems:'start'}}>
+      <div style={{maxWidth:960}}>
       <div className="ub-overline">Free application</div>
       <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-2)'}}>Let's map your route</h1>
       <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'54ch'}}>Three short steps. An advisor replies within one working day with a shortlist and the real costs.</p>
@@ -135,6 +137,9 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
       </div>
 
       {sent && <div style={{position:'fixed',right:24,bottom:24,zIndex:50}}><Toast tone="success" title="Application sent" message="Harsh Raj, your advisor in Amsterdam, will reply by tomorrow afternoon." onClose={()=>setSent(false)}/></div>}
+      </div>
+      <TrustPanel/>
+      </div>
     </main>
   );
 }
