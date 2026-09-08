@@ -58,7 +58,7 @@ Requested slot: ${active.d} ${active.n}, ${slot} CET`;
         <Card rule padding="var(--space-8)">
           <div className="ub-overline">Booked</div>
           <h1 style={{fontSize:'var(--text-h2)',margin:'var(--space-3) 0 var(--space-2)'}}>You're in for {active.d} {active.n}, {slot} CET</h1>
-          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)'}}>Harsh Raj has been notified and will send you a Google Meet invite by email shortly — add it to your calendar so the reminder reaches you.</p>
+          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)'}}>Harsh Raj has been notified and will send you a Google Meet invite by email shortly. Add it to your calendar so the reminder reaches you.</p>
           <div style={{display:'flex',gap:'var(--space-3)'}}>
             <Button variant="secondary" onClick={()=>{setBooked(false);setSlot(null);}}>Pick another time</Button>
             <Button variant="ghost" onClick={()=>go('apply')}>Start my application instead</Button>
@@ -72,7 +72,7 @@ Requested slot: ${active.d} ${active.n}, ${slot} CET`;
     <main style={{maxWidth:960,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) 0'}}>
       <div className="ub-overline">Free 15-minute call</div>
       <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-2)'}}>Book a time on Google Meet</h1>
-      <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Fifteen minutes, straight to the point. Pick a slot and we'll send you a Google Meet link by email — no software to install, no payment, no obligation.</p>
+      <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Fifteen minutes, straight to the point. Pick a slot and we'll send you a Google Meet link by email, with no software to install, no payment, and no obligation.</p>
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:'var(--space-5)',marginTop:'var(--space-10)',alignItems:'start'}}>
         <Card padding="var(--space-6)">

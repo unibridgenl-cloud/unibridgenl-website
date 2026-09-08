@@ -6,7 +6,7 @@ const PLANS = [
     items:[["check","Two university applications"],["check","Document check & certified copies"],["check","Credential evaluation guidance"],["check","Deadline tracking in your dashboard"],["check","Email support, answered in 1 working day"]],
     excl:["Housing search","Visa & BSN support","Arrival week"], cta:"secondary" },
   { name:"Bridge Full", tier:"Full", price:"€1,200", note:"one-off",
-    who:"The whole move handled — from shortlist to the keys in your hand.",
+    who:"The whole move handled, from shortlist to the keys in your hand.",
     items:[["check","Up to five university applications"],["check","Everything in Bridge Basic"],["check","Housing search with our partner agency"],["check","Contract review before you sign"],["check","Visa & BSN appointment booking"],["check","Bank, insurance and OV chip card"],["check","Arrival week support"],["check","WhatsApp line to your advisor"]],
     excl:[], cta:"primary" },
   { name:"Bridge Together", tier:"Together", price:"€1,750", note:"one-off",
@@ -99,7 +99,7 @@ function ServicesScreen({ go }) {
                   <div style={{marginTop:'auto',paddingTop:'var(--space-6)'}}>
                     <Button full variant={p.cta} onClick={()=>go('call')}>{`Choose ${p.tier}`}</Button>
                   </div>
-                  <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>Free call first — no payment today</div>
+                  <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>Free call first, no payment today</div>
                 </Card>
               );
             })}
@@ -170,7 +170,7 @@ function ServicesScreen({ go }) {
         <Card tone="ink" padding="var(--space-12)" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:'var(--space-10)',alignItems:'center',borderRadius:'var(--radius-2xl)'}}>
           <div>
             <h2 style={{color:'var(--cream-200)',fontSize:'var(--text-h2)',maxWidth:'26ch'}}>Not sure which plan fits?</h2>
-            <p style={{color:'var(--ink-100)',fontSize:'var(--text-body-lg)',margin:0,maxWidth:'50ch'}}>Take the free 15-minute call. Harsh will tell you which plan you actually need — often the cheaper one.</p>
+            <p style={{color:'var(--ink-100)',fontSize:'var(--text-body-lg)',margin:0,maxWidth:'50ch'}}>Take the free 15-minute call. Harsh will tell you which plan you actually need, often the cheaper one.</p>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'var(--space-3)'}}>
             <Button size="lg" onClick={()=>go('call')} iconLeft={<Icon name="video" size={17}/>}>Book a free 15-min call</Button>

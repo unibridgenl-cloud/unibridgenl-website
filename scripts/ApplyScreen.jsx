@@ -92,7 +92,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-5)'}}>
             <Field label="First name" required><Input placeholder="Jane" value={firstName} onChange={e=>setFirstName(e.target.value)}/></Field>
             <Field label="Last name" required><Input placeholder="Doe" value={lastName} onChange={e=>setLastName(e.target.value)}/></Field>
-            <Field label="Email" required hint="We reply here — check your spam folder once."><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
+            <Field label="Email" required hint="We reply here, so check your spam folder once."><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
             <Field label="WhatsApp number"><Input type="tel" placeholder="+233 …" value={whatsapp} onChange={e=>setWhatsapp(e.target.value)}/></Field>
             <Field label="Country of citizenship" required><Select value={country} onChange={e=>setCountry(e.target.value)} options={COUNTRIES}/></Field>
             <Field label="Highest diploma" required><Select value={diploma} onChange={e=>setDiploma(e.target.value)} options={["Secondary school","Bachelor","Master"]}/></Field>

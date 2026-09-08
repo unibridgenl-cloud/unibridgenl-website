@@ -38,7 +38,7 @@ function UniversitiesScreen({ go }) {
         <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'0 var(--gutter-inline)'}}>
           <div className="ub-overline">{UNIS.length} partner universities · research universities and universities of applied sciences</div>
           <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-2)'}}>Where you could study</h1>
-          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Tuition shown as EU / non-EU per year. Deadlines are the university's own — we file two weeks ahead of them.</p>
+          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Tuition shown as EU / non-EU per year. Deadlines are the university's own; we file two weeks ahead of them.</p>
         </div>
       </div>
 

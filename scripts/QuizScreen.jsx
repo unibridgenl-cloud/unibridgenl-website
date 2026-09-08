@@ -1,5 +1,7 @@
 const { Card, Button, Field, Input, Icon, Badge, Alert, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
 
+const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
+
 const Q1 = [
   ["Solving technical or engineering problems", ["Engineering","Computer Science"]],
   ["Working with numbers, markets and money", ["Business","Economics"]],
@@ -59,20 +61,24 @@ function QuizScreen({ go }) {
   const sendResults = async () => {
     setSending(true);
     setError(false);
+    const message = `Find my field quiz result
+
+Interest: ${interest}
+Best subjects: ${subjects.join(", ")}
+What they value: ${value}
+
+Top 5 shortlisted fields:
+${top5.map((f,i)=>`${i+1}. ${f}`).join("\n")}`;
     try {
       const res = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
-          access_key: "a828545d-4f6f-4f85-8ddf-888a55281203",
-          subject: "New Find My Field shortlist — UniBridge NL",
+          access_key: WEB3FORMS_KEY,
+          subject: "New Find my field quiz result",
           from_name: "UniBridge NL website",
           email: email,
-          "Visitor email": email,
-          "Interest": interest,
-          "Best subjects": subjects.join(", "),
-          "What they value": value,
-          "Top 5 shortlisted fields": top5.map((f,i)=>`${i+1}. ${f}`).join(" | ")
+          message: message
         })
       });
       const data = await res.json();
@@ -101,14 +107,14 @@ function QuizScreen({ go }) {
     <main style={{maxWidth:760,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) var(--space-20)'}}>
       <div className="ub-overline">Free · 2 minutes</div>
       <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-2)'}}>Find your field</h1>
-      <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Answer a few questions about your interests, strongest subjects and what you value in future work — we'll shortlist the five study fields that fit you best.</p>
+      <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Answer a few questions about your interests, strongest subjects and what you value in future work, and we'll shortlist the five study fields that fit you best.</p>
 
       <Card padding="var(--space-8)" style={{marginTop:'var(--space-8)'}}>
         {step === 0 && (
           <div>
             <div className="ub-overline" style={{marginBottom:'var(--space-3)'}}>Step 1 of 4</div>
             <h3 style={{fontSize:'var(--text-h4)',margin:'0 0 var(--space-2)'}}>Where should we send your shortlist?</h3>
-            <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:'0 0 var(--space-5)'}}>We'll only use this to send your results — no spam, ever.</p>
+            <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:'0 0 var(--space-5)'}}>We'll only use this to send your results, no spam, ever.</p>
             <Field label="Your email" required><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
             <div style={{display:'flex',justifyContent:'flex-end',marginTop:'var(--space-6)'}}>
               <Button disabled={!email.includes('@')} onClick={()=>setStep(1)} iconRight={<Icon name="arrow-right" size={16}/>}>Continue</Button>
@@ -137,7 +143,7 @@ function QuizScreen({ go }) {
             <div className="ub-overline" style={{marginBottom:'var(--space-3)'}}>Step 3 of 4</div>
             <h3 style={{fontSize:'var(--text-h4)',margin:'0 0 var(--space-2)'}}>Which subjects were your highest grades in?</h3>
             <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:'0 0 var(--space-5)'}}>Pick up to 4.</p>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-3)'}}>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'var(--space-3)'}}>
               {Q2.map(([label])=>(
                 <OptionButton key={label} active={subjects.includes(label)} onClick={()=>toggleSubject(label)}>{label}</OptionButton>
               ))}

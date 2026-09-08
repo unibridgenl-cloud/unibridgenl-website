@@ -14,7 +14,7 @@ function PrivacyScreen({ go }) {
 
         <section>
           <h3 style={{fontSize:'var(--text-h4)',margin:'0 0 var(--space-2)'}}>What we collect</h3>
-          <p style={{fontSize:'var(--text-body)',color:'var(--text-body)',margin:0}}>When you fill in the Apply form, book a call, or take the Find my field quiz, we collect the information you type in — for example your name, email address, WhatsApp number, country, study preferences, and any notes you add. We only collect what's needed to respond to your request.</p>
+          <p style={{fontSize:'var(--text-body)',color:'var(--text-body)',margin:0}}>When you fill in the Apply form, book a call, or take the Find my field quiz, we collect the information you type in, for example your name, email address, WhatsApp number, country, study preferences, and any notes you add. We only collect what's needed to respond to your request.</p>
         </section>
 
         <section>

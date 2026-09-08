@@ -1,5 +1,64 @@
 const { Button, Card, Icon, Badge, Tag, Stepper } = window.UnibridgeNLDesignSystem_3cb2d1;
 
+function BridgeHero() {
+  const [buildKey, setBuildKey] = React.useState(0);
+  return (
+    <div>
+      <div onClick={()=>setBuildKey(k=>k+1)} style={{position:'relative',aspectRatio:'4 / 5',borderRadius:'var(--radius-media)',overflow:'hidden',border:'1px solid var(--border-hairline)',background:'var(--cream-300)',cursor:'pointer'}}>
+        <style>{`
+          @keyframes ubDraw { to { stroke-dashoffset: 0; } }
+          @keyframes ubGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+          @keyframes ubPop { 0% { opacity:0; transform: scale(0); } 70% { opacity:1; transform: scale(1.2); } 100% { opacity:1; transform: scale(1); } }
+          @keyframes ubPopLogo { 0% { opacity:0; transform: translateX(-50%) scale(0); } 70% { opacity:1; transform: translateX(-50%) scale(1.2); } 100% { opacity:1; transform: translateX(-50%) scale(1); } }
+          @keyframes ubFade { from { opacity:0; } to { opacity:1; } }
+          .ub-water { animation: ubFade .5s ease both; }
+          .ub-deck { stroke-dasharray:1; stroke-dashoffset:1; animation: ubDraw .7s ease .2s both; }
+          .ub-arch { stroke-dasharray:1; stroke-dashoffset:1; animation: ubDraw 1.1s ease .5s both; }
+          .ub-hanger { transform-origin: top; animation: ubGrow .3s ease both; }
+          .ub-bead { animation: ubPop .4s ease both; }
+          .ub-badge { animation: ubFade .5s ease 1.9s both; }
+          .ub-birds { animation: ubFade .6s ease 2.1s both; }
+        `}</style>
+        <svg key={buildKey} viewBox="0 0 400 500" width="100%" height="100%" style={{display:'block'}} pathLength="1">
+          <rect width="400" height="500" fill="var(--cream-300)"/>
+          <rect className="ub-water" x="0" y="400" width="400" height="100" fill="var(--gold-100)"/>
+          <line className="ub-water" x1="0" y1="400" x2="400" y2="400" stroke="var(--gold-300)" strokeWidth="2"/>
+          <g className="ub-birds">
+            <path d="M60,110 Q70,100 80,110 Q90,100 100,110" stroke="var(--ink-300)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+            <path d="M140,90 Q150,80 160,90 Q170,80 180,90" stroke="var(--ink-300)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+          </g>
+          <g className="ub-badge">
+            <circle cx="330" cy="55" r="22" fill="var(--gold-500)"/>
+            <line x1="356" y1="55" x2="368" y2="55" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="348.4" y1="73.4" x2="356.9" y2="81.9" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="330" y1="81" x2="330" y2="93" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="311.6" y1="73.4" x2="303.1" y2="81.9" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="304" y1="55" x2="292" y2="55" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="311.6" y1="36.6" x2="303.1" y2="28.1" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="330" y1="29" x2="330" y2="17" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="348.4" y1="36.6" x2="356.9" y2="28.1" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
+          </g>
+          <line className="ub-deck" x1="50" y1="380" x2="350" y2="380" pathLength="1" stroke="var(--ink-700)" strokeWidth="4" strokeLinecap="round"/>
+          <line className="ub-hanger" style={{animationDelay:'.9s'}} x1="90" y1="320" x2="90" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+          <line className="ub-hanger" style={{animationDelay:'1.0s'}} x1="140" y1="270" x2="140" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+          <line className="ub-hanger" style={{animationDelay:'1.1s'}} x1="190" y1="235" x2="190" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+          <line className="ub-hanger" style={{animationDelay:'1.2s'}} x1="240" y1="245" x2="240" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+          <line className="ub-hanger" style={{animationDelay:'1.3s'}} x1="290" y1="290" x2="290" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+          <line className="ub-hanger" style={{animationDelay:'1.4s'}} x1="330" y1="350" x2="330" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
+          <path className="ub-arch" d="M50,400 Q200,60 350,400" pathLength="1" stroke="var(--ink-900)" strokeWidth="8" fill="none" strokeLinecap="round"/>
+          <circle className="ub-bead" style={{animationDelay:'1.5s'}} cx="90" cy="320" r="9" fill="var(--gold-500)"/>
+          <circle className="ub-bead" style={{animationDelay:'1.6s'}} cx="140" cy="270" r="9" fill="var(--clay-500)"/>
+          <circle className="ub-bead" style={{animationDelay:'1.7s'}} cx="190" cy="235" r="9" fill="var(--moss-500)"/>
+          <circle className="ub-bead" style={{animationDelay:'1.8s'}} cx="240" cy="245" r="9" fill="var(--gold-700)"/>
+          <circle className="ub-bead" style={{animationDelay:'1.9s'}} cx="290" cy="290" r="9" fill="var(--moss-700)"/>
+        </svg>
+        <img key={'logo'+buildKey} src="/assets/logo-badge.jpg" alt="UniBridge NL" style={{position:'absolute',top:'8%',left:'50%',width:56,height:56,borderRadius:999,border:'3px solid var(--cream-100)',boxShadow:'var(--shadow-md)',opacity:0,animation:'ubPopLogo .5s ease 2.1s both'}}/>
+      </div>
+      <p style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',margin:'var(--space-2) 0 0'}}>Tap the bridge to watch it build again</p>
+    </div>
+  );
+}
+
 function HomeScreen({ go }) {
   const services = [
     ["graduation-cap","University enrolment","We file your application at up to five Dutch universities and chase every decision."],
@@ -16,7 +75,7 @@ function HomeScreen({ go }) {
           <div>
             <Badge tone="accent">September 2027 intake open</Badge>
             <h1 style={{fontSize:'var(--text-display-2)',lineHeight:'var(--leading-tight)',margin:'var(--space-5) 0 var(--space-4)'}}>Your bridge to student life in the Netherlands</h1>
-            <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'46ch'}}>You handle the studying. We handle enrolment, your residence permit and the first week — and put you in front of a licensed housing partner instead of a scam listing.</p>
+            <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'46ch'}}>You handle the studying. We handle enrolment, your residence permit and the first week, and put you in front of a licensed housing partner instead of a scam listing.</p>
             <div style={{display:'flex',gap:'var(--space-3)',marginTop:'var(--space-8)',flexWrap:'wrap'}}>
               <Button size="lg" onClick={()=>go('apply')} iconRight={<Icon name="arrow-right" size={18}/>}>Start my application</Button>
               <Button size="lg" variant="secondary" onClick={()=>go('call')}>Book a free 15-min call</Button>
@@ -28,37 +87,7 @@ function HomeScreen({ go }) {
             </div>
           </div>
           <div>
-            <div style={{aspectRatio:'4 / 5',borderRadius:'var(--radius-media)',overflow:'hidden',border:'1px solid var(--border-hairline)',background:'var(--cream-300)'}}>
-              <svg viewBox="0 0 400 500" width="100%" height="100%" style={{display:'block'}}>
-                <rect width="400" height="500" fill="var(--cream-300)"/>
-                <rect x="0" y="400" width="400" height="100" fill="var(--gold-100)"/>
-                <line x1="0" y1="400" x2="400" y2="400" stroke="var(--gold-300)" strokeWidth="2"/>
-                <path d="M60,110 Q70,100 80,110 Q90,100 100,110" stroke="var(--ink-300)" strokeWidth="2" fill="none" strokeLinecap="round"/>
-                <path d="M140,90 Q150,80 160,90 Q170,80 180,90" stroke="var(--ink-300)" strokeWidth="2" fill="none" strokeLinecap="round"/>
-                <circle cx="330" cy="55" r="22" fill="var(--gold-500)"/>
-                <line x1="356" y1="55" x2="368" y2="55" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="348.4" y1="73.4" x2="356.9" y2="81.9" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="330" y1="81" x2="330" y2="93" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="311.6" y1="73.4" x2="303.1" y2="81.9" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="304" y1="55" x2="292" y2="55" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="311.6" y1="36.6" x2="303.1" y2="28.1" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="330" y1="29" x2="330" y2="17" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="348.4" y1="36.6" x2="356.9" y2="28.1" stroke="var(--gold-500)" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="50" y1="380" x2="350" y2="380" stroke="var(--ink-700)" strokeWidth="4" strokeLinecap="round"/>
-                <line x1="90" y1="320" x2="90" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
-                <line x1="140" y1="270" x2="140" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
-                <line x1="190" y1="235" x2="190" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
-                <line x1="240" y1="245" x2="240" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
-                <line x1="290" y1="290" x2="290" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
-                <line x1="330" y1="350" x2="330" y2="380" stroke="var(--ink-500)" strokeWidth="2"/>
-                <path d="M50,400 Q200,60 350,400" stroke="var(--ink-900)" strokeWidth="8" fill="none" strokeLinecap="round"/>
-                <circle cx="90" cy="320" r="9" fill="var(--gold-500)"/>
-                <circle cx="140" cy="270" r="9" fill="var(--clay-500)"/>
-                <circle cx="190" cy="235" r="9" fill="var(--moss-500)"/>
-                <circle cx="240" cy="245" r="9" fill="var(--gold-700)"/>
-                <circle cx="290" cy="290" r="9" fill="var(--moss-700)"/>
-              </svg>
-            </div>
+            <BridgeHero/>
             <Card elevation="lg" style={{marginTop:'var(--space-6)',maxWidth:290}}>
               <div className="ub-overline">Your checklist</div>
               <Stepper orientation="vertical" current={2} style={{marginTop:12}} steps={[{label:"Profile",meta:"Complete"},{label:"University choice",meta:"Erasmus, Utrecht"},{label:"Documents",meta:"2 of 5 uploaded"},{label:"Housing partner"}]}/>
