@@ -69,8 +69,9 @@ function UniversitiesScreen({ go }) {
             <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>Sorted by chance of admission</span>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)',marginTop:'var(--space-4)'}}>
-            {rows.map(u=>(
-              <Card key={u.name} interactive style={{display:'flex',flexWrap:'wrap',gap:'var(--space-5)',alignItems:'center'}}>
+            {rows.map((u,i)=>(
+              <Reveal key={u.name} delay={Math.min(i*0.05,0.4)}>
+              <Card interactive style={{display:'flex',flexWrap:'wrap',gap:'var(--space-5)',alignItems:'center'}}>
                 <div style={{width:64,height:64,flex:'0 0 auto'}}><CrestBadge initials={u.initials} color={u.color}/></div>
                 <div style={{flex:'1 1 220px'}}>
                   <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
@@ -91,6 +92,7 @@ function UniversitiesScreen({ go }) {
                   <div style={{marginTop:'var(--space-4)'}}><Button size="sm" variant="secondary">Add to list</Button></div>
                 </div>
               </Card>
+              </Reveal>
             ))}
           </div>
         </div>

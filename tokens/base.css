@@ -26,3 +26,6 @@ a:hover{color:var(--text-link-hover)}
 @media (prefers-reduced-motion:reduce){
   .ub-anim-grow,.ub-anim-draw,.ub-anim-pop,.ub-anim-pulse,.ub-anim-drift,.ub-anim-shimmer{animation:none!important}
 }
+@keyframes ub-page-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.ub-page-fade-in{animation:ub-page-in .55s cubic-bezier(.22,1,.36,1) both}
+@media (prefers-reduced-motion:reduce){.ub-page-fade-in{animation:none!important}}

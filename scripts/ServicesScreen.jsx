@@ -67,10 +67,11 @@ function ServicesScreen({ go }) {
 
         {tab === "plans" && (
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:'var(--space-5)',alignItems:'stretch'}}>
-            {PLANS.map(p=>{
+            {PLANS.map((p,i)=>{
               const hero = p.cta === 'primary';
               return (
-                <Card key={p.name} elevation={hero?'lg':'sm'} padding="var(--space-6)"
+                <Reveal key={p.name} delay={i*0.1}>
+                <Card elevation={hero?'lg':'sm'} padding="var(--space-6)"
                   style={{display:'flex',flexDirection:'column',...(hero?{border:'1px solid var(--gold-500)'}:{})}}>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',minHeight:24}}>
                     <span className="ub-overline">{p.tier}</span>
@@ -101,6 +102,7 @@ function ServicesScreen({ go }) {
                   </div>
                   <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>Free call first, no payment today</div>
                 </Card>
+                </Reveal>
               );
             })}
           </div>
@@ -138,8 +140,9 @@ function ServicesScreen({ go }) {
           <div>
             <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch',marginTop:0}}>Bolt these onto any plan, or take one on its own if you only need a single piece.</p>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'var(--space-4)',marginTop:'var(--space-6)'}}>
-              {ADDONS.map(([i,t,price,note])=>(
-                <Card key={t} interactive onClick={()=>go('call')}>
+              {ADDONS.map(([i,t,price,note],idx)=>(
+                <Reveal key={t} delay={idx*0.06}>
+                <Card interactive onClick={()=>go('call')}>
                   <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12}}>
                     <span style={{width:40,height:40,flex:'0 0 auto',borderRadius:'var(--radius-md)',background:'var(--surface-accent-soft)',color:'var(--gold-700)',display:'flex',alignItems:'center',justifyContent:'center'}}><Icon name={i} size={20}/></span>
                     <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:23,color:'var(--text-heading)'}}>{price}</span>
@@ -147,6 +150,7 @@ function ServicesScreen({ go }) {
                   <h4 style={{margin:'var(--space-4) 0 4px'}}>{t}</h4>
                   <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>{note}</p>
                 </Card>
+                </Reveal>
               ))}
             </div>
             <Alert tone="info" title="What you pay elsewhere" style={{marginTop:'var(--space-6)'}}>
@@ -167,6 +171,7 @@ function ServicesScreen({ go }) {
       </div>
 
       <div style={{maxWidth:'var(--content-max)',margin:'var(--section-y) auto 0',padding:'0 var(--gutter-inline)'}}>
+        <Reveal>
         <Card tone="ink" padding="var(--space-12)" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:'var(--space-10)',alignItems:'center',borderRadius:'var(--radius-2xl)'}}>
           <div>
             <h2 style={{color:'var(--cream-200)',fontSize:'var(--text-h2)',maxWidth:'26ch'}}>Not sure which plan fits?</h2>
@@ -177,6 +182,7 @@ function ServicesScreen({ go }) {
             <Button size="lg" variant="ghost" style={{color:'var(--cream-200)'}} onClick={()=>go('apply')}>Start my application</Button>
           </div>
         </Card>
+        </Reveal>
       </div>
     </main>
   );

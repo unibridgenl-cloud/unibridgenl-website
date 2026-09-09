@@ -99,7 +99,7 @@ function HomeScreen({ go }) {
         <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'0 var(--gutter-inline)',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:'var(--space-16)',alignItems:'center'}}>
           <div>
             <Badge tone="accent">September 2027 intake open</Badge>
-            <h1 style={{fontSize:'var(--text-display-2)',lineHeight:'var(--leading-tight)',margin:'var(--space-5) 0 var(--space-4)'}}>Your bridge to student life in the Netherlands</h1>
+            <h1 style={{fontSize:'var(--text-display-1)',lineHeight:'var(--leading-tight)',margin:'var(--space-5) 0 var(--space-4)',letterSpacing:'-0.02em'}}>Your bridge to student life in the Netherlands</h1>
             <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'46ch'}}>You handle the studying. We handle enrolment, your residence permit and the first week, and put you in front of a licensed housing partner instead of a scam listing.</p>
             <div style={{display:'flex',gap:'var(--space-3)',marginTop:'var(--space-8)',flexWrap:'wrap'}}>
               <Button size="lg" onClick={()=>go('apply')} iconRight={<Icon name="arrow-right" size={18}/>}>Start my application</Button>
@@ -123,44 +123,51 @@ function HomeScreen({ go }) {
 
       <Section tone="cream" overline="What we do" title="Everything between an offer letter and your first lecture" lead="Six services, one fee, no forwarding you to a call centre.">
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-5)'}}>
-          {services.map(([icon,t,d])=>(
-            <Card key={t} interactive onClick={()=>go('services')}>
+          {services.map(([icon,t,d],i)=>(
+            <Reveal key={t} delay={i*0.08}>
+            <Card interactive onClick={()=>go('services')}>
               <span style={{display:'inline-flex',width:44,height:44,borderRadius:'var(--radius-md)',background:'var(--surface-accent-soft)',color:'var(--gold-700)',alignItems:'center',justifyContent:'center'}}><Icon name={icon} size={22}/></span>
               <h3 style={{fontSize:'var(--text-h4)',margin:'var(--space-4) 0 var(--space-2)'}}>{t}</h3>
               <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:0}}>{d}</p>
             </Card>
+            </Reveal>
           ))}
         </div>
       </Section>
 
       <Section overline="How it works" title="Three steps, twelve weeks">
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'var(--space-8)'}}>
-          {[["01","Tell us your plan","Fifteen minutes. Study level, field, budget, cities you'd live in."],["02","We build your route","A shortlist of universities you'll actually get into, with dates and costs written out."],["03","You arrive settled","A room found through our housing partner, bank card, BSN appointment and a bike in your arrival week."]].map(([n,t,d])=>(
-            <div key={n}>
+          {[["01","Tell us your plan","Fifteen minutes. Study level, field, budget, cities you'd live in."],["02","We build your route","A shortlist of universities you'll actually get into, with dates and costs written out."],["03","You arrive settled","A room found through our housing partner, bank card, BSN appointment and a bike in your arrival week."]].map(([n,t,d],i)=>(
+            <Reveal key={n} delay={i*0.1}>
+            <div>
               <div style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:48,color:'var(--gold-300)',lineHeight:1}}>{n}</div>
               <hr className="ub-rule" style={{width:40,margin:'var(--space-4) 0'}}/>
               <h3 style={{fontSize:'var(--text-h4)'}}>{t}</h3>
               <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>{d}</p>
             </div>
+            </Reveal>
           ))}
         </div>
       </Section>
 
       <Section tone="cream" overline="Students" title="What it felt like on the other side">
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:'var(--space-5)'}}>
-          {[["Amara O.","University of Amsterdam","I landed on a Tuesday and had my BSN appointment on the Thursday. Nothing was left to figure out at the airport."],["Diego F.","Utrecht University, MSc Data Science","They talked me out of two universities I would have wasted money applying to. That advice paid for the whole service."],["Nour H.","VU Amsterdam, BSc Architecture","Housing was the part I was scared of. Their partner agency found the room and UniBridge read the contract before I signed."]].map(([n,s,q])=>(
-            <Card key={n} rule>
+          {[["Amara O.","University of Amsterdam","I landed on a Tuesday and had my BSN appointment on the Thursday. Nothing was left to figure out at the airport."],["Diego F.","Utrecht University, MSc Data Science","They talked me out of two universities I would have wasted money applying to. That advice paid for the whole service."],["Nour H.","VU Amsterdam, BSc Architecture","Housing was the part I was scared of. Their partner agency found the room and UniBridge read the contract before I signed."]].map(([n,s,q],i)=>(
+            <Reveal key={n} delay={i*0.1}>
+            <Card rule>
               <p style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontSize:'var(--text-h4)',lineHeight:1.45,color:'var(--text-heading)'}}>{q}</p>
               <div style={{display:'flex',alignItems:'center',gap:12,marginTop:'var(--space-5)'}}>
                 <div style={{width:38,height:38,borderRadius:999,background:'var(--surface-tertiary-soft)',color:'var(--moss-700)',display:'flex',alignItems:'center',justifyContent:'center',font:'700 14px var(--font-sans)'}}>{n[0]}</div>
                 <div><div style={{fontSize:'var(--text-body-sm)',fontWeight:700,color:'var(--text-heading)'}}>{n}</div><div style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>{s}</div></div>
               </div>
             </Card>
+            </Reveal>
           ))}
         </div>
       </Section>
 
       <section style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'0 var(--gutter-inline)'}}>
+        <Reveal>
         <Card tone="ink" padding="var(--space-16)" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:'var(--space-10)',alignItems:'center',borderRadius:'var(--radius-2xl)'}}>
           <div>
             <h2 style={{color:'var(--cream-200)',fontSize:'var(--text-h2)',maxWidth:'26ch'}}>Applications for September close on 1 May.</h2>
@@ -171,6 +178,7 @@ function HomeScreen({ go }) {
             <Button size="lg" variant="ghost" style={{color:'var(--cream-200)'}}>See partner universities</Button>
           </div>
         </Card>
+        </Reveal>
       </section>
     </main>
   );

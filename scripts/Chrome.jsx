@@ -89,14 +89,40 @@ function SiteFooter({ go }) {
   );
 }
 
+function Reveal({ children, delay = 0 }) {
+  const ref = React.useRef(null);
+  const [visible, setVisible] = React.useState(false);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { setVisible(true); return; }
+    if (!('IntersectionObserver' in window)) { setVisible(true); return; }
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => { if (entry.isIntersecting) { setVisible(true); obs.unobserve(el); } });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{opacity:visible?1:0,transform:visible?'translateY(0)':'translateY(28px)',transition:`opacity .75s cubic-bezier(.22,1,.36,1) ${delay}s, transform .75s cubic-bezier(.22,1,.36,1) ${delay}s`,willChange:'opacity, transform'}}>
+      {children}
+    </div>
+  );
+}
+
 function Section({ overline, title, lead, children, tone }) {
   return (
     <section style={{background:tone==='cream'?'var(--surface-page)':'transparent',padding:'var(--section-y) 0'}}>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'0 var(--gutter-inline)'}}>
-        {overline && <div className="ub-overline">{overline}</div>}
-        {overline && <hr className="ub-rule" style={{width:56,margin:'12px 0 16px'}}/>}
-        {title && <h2 style={{fontSize:'var(--text-h2)',maxWidth:'24ch'}}>{title}</h2>}
-        {lead && <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'62ch'}}>{lead}</p>}
+        <Reveal>
+          <div>
+            {overline && <div className="ub-overline">{overline}</div>}
+            {overline && <hr className="ub-rule" style={{width:56,margin:'12px 0 16px'}}/>}
+            {title && <h2 style={{fontSize:'var(--text-h2)',maxWidth:'24ch'}}>{title}</h2>}
+            {lead && <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'62ch'}}>{lead}</p>}
+          </div>
+        </Reveal>
         <div style={{marginTop:'var(--space-10)'}}>{children}</div>
       </div>
     </section>
@@ -163,4 +189,4 @@ function CookieBanner({ go }) {
   );
 }
 
-Object.assign(window, { SiteHeader, SiteFooter, Section, Placeholder, CookieBanner, TrustPanel });
+Object.assign(window, { SiteHeader, SiteFooter, Section, Placeholder, CookieBanner, TrustPanel, Reveal });
