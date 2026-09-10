@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy statement — UniBridge NL</title>
-<meta name="description" content="How UniBridge NL collects, uses, and protects your personal information, and your rights under GDPR.">
-<link rel="canonical" href="https://unibridgenl.com/privacy/">
+<title>Contact — UniBridge NL</title>
+<meta name="description" content="Reach UniBridge NL by WhatsApp, email, or book a free 15-minute call. One advisor handles your case start to finish.">
+<link rel="canonical" href="https://unibridgenl.com/contact/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Privacy statement — UniBridge NL">
-<meta property="og:description" content="How UniBridge NL collects, uses, and protects your personal information, and your rights under GDPR.">
-<meta property="og:url" content="https://unibridgenl.com/privacy/">
+<meta property="og:title" content="Contact — UniBridge NL">
+<meta property="og:description" content="Reach UniBridge NL by WhatsApp, email, or book a free 15-minute call. One advisor handles your case start to finish.">
+<meta property="og:url" content="https://unibridgenl.com/contact/">
 <meta property="og:image" content="https://unibridgenl.com/assets/logo-badge.jpg">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/jpeg" href="/assets/logo-badge.jpg">
@@ -23,16 +23,16 @@
 <body>
 <div id="root"></div>
 <script type="text/babel" src="/scripts/Chrome.jsx"></script>
-<script type="text/babel" src="/scripts/PrivacyScreen.jsx"></script>
+<script type="text/babel" src="/scripts/ContactScreen.jsx"></script>
 <script type="text/babel">
-const ROUTE = "privacy";
+const ROUTE = "contact";
 const URL_MAP = {home:"/",universities:"/universities/",quiz:"/find-my-field/",services:"/services/",apply:"/apply/",call:"/book-a-call/",privacy:"/privacy/",about:"/about/",contact:"/contact/"};
 function go(target){
   if (target === ROUTE) { window.scrollTo({top:0,behavior:'smooth'}); return; }
   window.location.href = URL_MAP[target] || "/";
 }
 function Page(){
-  return (<div className="ub-page-fade-in"><SiteHeader route={ROUTE} go={go}/><PrivacyScreen go={go}/><SiteFooter go={go}/><CookieBanner go={go}/></div>);
+  return (<div className="ub-page-fade-in"><SiteHeader route={ROUTE} go={go}/><ContactScreen go={go}/><SiteFooter go={go}/><CookieBanner go={go}/></div>);
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<Page/>);
 </script>

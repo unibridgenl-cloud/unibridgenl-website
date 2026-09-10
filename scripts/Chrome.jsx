@@ -60,7 +60,7 @@ function SiteFooter({ go }) {
   const cols = [
     ["Programmes", [["Bachelor","universities"],["Master","universities"],["Exchange","universities"],["Foundation year","universities"]]],
     ["Services", [["Enrolment","services"],["Housing","services"],["Visa & BSN","services"],["Bank & insurance","services"]]],
-    ["Company", [["About","home"],["Partner universities","universities"],["Contact","call"],["Privacy","privacy"]]]
+    ["Company", [["About","about"],["Partner universities","universities"],["Contact","contact"],["Privacy","privacy"]]]
   ];
   return (
     <footer style={{background:'var(--surface-inverse)',color:'var(--text-on-inverse)',marginTop:'var(--section-y)'}}>
