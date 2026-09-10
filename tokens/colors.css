@@ -1,26 +1,33 @@
 :root{
---ink-900:#2E1504;
+/* --- Base ramps (warm, earthy; derived from the logo) --- */
+--ink-900:#2E1504; /* espresso brown, logo linework */
 --ink-700:#4A2A12;
 --ink-500:#6B4526;
 --ink-300:#9A7B5E;
 --ink-200:#C0A992;
 --ink-100:#D8C7B6;
---cream-100:#FFFDFB;
---cream-200:#FBF4EC;
+
+--cream-100:#FFFDFB; /* Paper — card surface */
+--cream-200:#FBF4EC; /* Cream — page ground, logo badge fill */
 --cream-300:#F2E7DA;
 --cream-400:#E7D8C6;
+
 --gold-700:#8F5C2E;
---gold-500:#B87C46;
+--gold-500:#B87C46; /* Gold — logo divider, primary accent */
 --gold-300:#D6A877;
 --gold-100:#F1DCC3;
+
 --clay-700:#96442A;
---clay-500:#C1613F;
+--clay-500:#C1613F; /* Clay — rust secondary accent */
 --clay-300:#DA9377;
 --clay-100:#F4D9CD;
+
 --moss-700:#545839;
---moss-500:#6E7350;
+--moss-500:#6E7350; /* Moss — muted olive tertiary */
 --moss-300:#9AA07E;
 --moss-100:#E0E3D3;
+
+/* --- Semantic: surfaces --- */
 --surface-page:var(--cream-200);
 --surface-card:var(--cream-100);
 --surface-sunken:var(--cream-300);
@@ -29,6 +36,8 @@
 --surface-accent-soft:var(--gold-100);
 --surface-secondary-soft:var(--clay-100);
 --surface-tertiary-soft:var(--moss-100);
+
+/* --- Semantic: text --- */
 --text-heading:var(--ink-900);
 --text-body:var(--ink-700);
 --text-muted:var(--ink-500);
@@ -37,11 +46,15 @@
 --text-on-inverse:var(--cream-200);
 --text-link:var(--gold-700);
 --text-link-hover:var(--clay-700);
+
+/* --- Semantic: lines --- */
 --border-hairline:var(--cream-400);
 --border-default:var(--ink-200);
 --border-strong:var(--ink-900);
 --border-accent:var(--gold-500);
---divider-rule:var(--gold-500);
+--divider-rule:var(--gold-500); /* the logo's divider line */
+
+/* --- Semantic: status --- */
 --status-success-fg:var(--moss-700);
 --status-success-bg:var(--moss-100);
 --status-warning-fg:var(--gold-700);
@@ -50,5 +63,7 @@
 --status-danger-bg:var(--clay-100);
 --status-info-fg:var(--ink-700);
 --status-info-bg:var(--cream-300);
+
+/* --- Focus --- */
 --focus-ring:var(--gold-500);
 }

@@ -1,4 +1,5 @@
 const { Card, Button, Field, Input, Select, Radio, Checkbox, Textarea, Stepper, Alert, Toast, Icon, Badge } = window.UnibridgeNLDesignSystem_3cb2d1;
+const { PageHero, Reveal, Rise, Stagger, Magnetic } = window;
 
 const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 
@@ -14,7 +15,7 @@ function ApplyScreen({ go }) {
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [whatsapp, setWhatsapp] = React.useState("");
-  const [country, setCountry] = React.useState("Ghana");
+  const [country, setCountry] = React.useState("India");
   const [diploma, setDiploma] = React.useState("Secondary school");
 
   const [studyLevel, setStudyLevel] = React.useState("Master");
@@ -70,8 +71,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
         })
       });
       const data = await res.json();
-      if (data.success) { setSent(true); }
-      else { setError(true); }
+      if (data.success) { setSent(true); } else { setError(true); }
     } catch (e) {
       setError(true);
     } finally {
@@ -80,28 +80,28 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
   };
 
   return (
-    <main style={{maxWidth:1180,margin:'0 auto',padding:'var(--space-12) var(--gutter-inline) 0'}}>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(420px,1fr))',gap:'var(--space-12)',alignItems:'start'}}>
-      <div style={{maxWidth:960}}>
-      <div className="ub-overline">Free application</div>
-      <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-2)'}}>Let's map your route</h1>
-      <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'54ch'}}>Three short steps. An advisor replies within one working day with a shortlist and the real costs.</p>
+    <main>
+      <PageHero overline="Free application" tone="moss" title="Let's map your route"
+        lead="Three short steps. An advisor replies within one working day with a shortlist and the real costs."/>
 
-      <Stepper current={step} steps={steps} style={{margin:'var(--space-10) 0 var(--space-8)'}}/>
+      <div style={{maxWidth:960,margin:'0 auto',padding:'var(--space-10) var(--gutter-inline) 0'}}>
+      <Rise delay={80}><Stepper current={step} steps={steps} style={{margin:'0 0 var(--space-8)'}}/></Rise>
 
+      <Reveal y={18}>
       <Card padding="var(--space-8)">
+        <div key={step} className="ub-page">
         {step === 0 && (
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-5)'}}>
-            <Field label="First name" required><Input placeholder="Jane" value={firstName} onChange={e=>setFirstName(e.target.value)}/></Field>
-            <Field label="Last name" required><Input placeholder="Doe" value={lastName} onChange={e=>setLastName(e.target.value)}/></Field>
+          <div className="ub-stagger" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-5)'}}>
+            <Field label="First name" required><Input placeholder="Your first name" value={firstName} onChange={e=>setFirstName(e.target.value)}/></Field>
+            <Field label="Last name" required><Input placeholder="Your last name" value={lastName} onChange={e=>setLastName(e.target.value)}/></Field>
             <Field label="Email" required hint="We reply here, so check your spam folder once."><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
-            <Field label="WhatsApp number"><Input type="tel" placeholder="+233 …" value={whatsapp} onChange={e=>setWhatsapp(e.target.value)}/></Field>
+            <Field label="WhatsApp number"><Input type="tel" placeholder="+31 6 …" value={whatsapp} onChange={e=>setWhatsapp(e.target.value)}/></Field>
             <Field label="Country of citizenship" required><Select value={country} onChange={e=>setCountry(e.target.value)} options={COUNTRIES}/></Field>
             <Field label="Highest diploma" required><Select value={diploma} onChange={e=>setDiploma(e.target.value)} options={["Secondary school","Bachelor","Master"]}/></Field>
           </div>
         )}
         {step === 1 && (
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-5)'}}>
+          <div className="ub-stagger" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-5)'}}>
             <Field label="Study level" required><Radio name="lvl" value={studyLevel} onChange={e=>setStudyLevel(e.target.value)} options={["Bachelor","Master","Exchange"]}/></Field>
             <Field label="Intake" required><Radio name="intake" value={intake} onChange={e=>setIntake(e.target.value)} options={["September 2027","February 2028","Not sure yet"]}/></Field>
             <Field label="Study field" required><Select value={studyField} onChange={e=>setStudyField(e.target.value)} options={["Business & Economics","Computer Science","Data Science","Engineering","Architecture","Law","International Relations","Health & Medicine","Life Sciences","Psychology","Humanities","Communication","Media & Design","Environment & Food","Arts"]}/></Field>
@@ -111,6 +111,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
         )}
         {step === 2 && (
           <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)'}}>
+            <Stagger step={80} y={14}>
             <Alert tone="warning" title="September deadlines close 1 May">Nine weeks left. Applications filed after 15 April get a rush fee from the university, not from us.</Alert>
             <Checkbox checked={svcEnrolment} onChange={e=>setSvcEnrolment(e.target.checked)} label="University enrolment" description="Up to five applications, documents certified and filed."/>
             <Checkbox checked={svcHousing} onChange={e=>setSvcHousing(e.target.checked)} label="Housing via our partner agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
@@ -118,28 +119,31 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
             <Checkbox checked={svcArrival} onChange={e=>setSvcArrival(e.target.checked)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
             <Checkbox checked={agreed} onChange={e=>setAgreed(e.target.checked)} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
             <a onClick={()=>go('privacy')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'underline',marginLeft:32}}>Read our privacy statement</a>
+            </Stagger>
           </div>
         )}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'var(--space-8)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)',flexWrap:'wrap',gap:'var(--space-3)'}}>
+        </div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-3)',justifyContent:'space-between',alignItems:'center',marginTop:'var(--space-8)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)'}}>
           <Button variant="ghost" disabled={step===0} onClick={()=>setStep(s=>Math.max(0,s-1))} iconLeft={<Icon name="arrow-left" size={16}/>}>Back</Button>
           <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>Step {step+1} of 3 · nothing is charged today</span>
           {step < 2
-            ? <Button disabled={step===0 && (!firstName || !lastName || !email.includes('@'))} onClick={()=>setStep(s=>s+1)} iconRight={<Icon name="arrow-right" size={16}/>}>Continue</Button>
-            : <Button disabled={!agreed || submitting} onClick={submit}>{submitting ? "Sending…" : "Send my application"}</Button>}
+            ? <Magnetic strength={0.18}><Button disabled={step===0 && (!firstName || !lastName || !email.includes('@'))} onClick={()=>setStep(s=>s+1)} iconRight={<Icon name="arrow-right" size={16}/>}>Continue</Button></Magnetic>
+            : <Magnetic strength={0.18}><Button disabled={!agreed || submitting} onClick={submit}>{submitting ? "Sending…" : "Send my application"}</Button></Magnetic>}
         </div>
         {error && <Alert tone="warning" title="Something went wrong" style={{marginTop:'var(--space-5)'}}>Your application didn't send. Please try again, or WhatsApp us directly at 06 25 29 40 80.</Alert>}
       </Card>
+      </Reveal>
 
-      <div style={{display:'flex',gap:'var(--space-6)',margin:'var(--space-6) 0 0',fontSize:'var(--text-body-sm)',color:'var(--text-muted)',flexWrap:'wrap'}}>
+      <Reveal delay={120} y={14}>
+      <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-4) var(--space-6)',margin:'var(--space-6) 0 0',fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
         <span style={{display:'inline-flex',gap:8,alignItems:'center'}}><Icon name="shield-check" size={16} color="var(--moss-500)"/>Documents encrypted, deleted on request</span>
         <span style={{display:'inline-flex',gap:8,alignItems:'center'}}><Icon name="clock" size={16} color="var(--moss-500)"/>Answer within 1 working day</span>
         <span style={{display:'inline-flex',gap:8,alignItems:'center'}}><Icon name="message-circle" size={16} color="var(--moss-500)"/>Or WhatsApp 06 25 29 40 80</span>
       </div>
+      </Reveal>
+      </div>
 
       {sent && <div style={{position:'fixed',right:24,bottom:24,zIndex:50}}><Toast tone="success" title="Application sent" message="Harsh Raj, your advisor in Amsterdam, will reply by tomorrow afternoon." onClose={()=>setSent(false)}/></div>}
-      </div>
-      <TrustPanel/>
-      </div>
     </main>
   );
 }

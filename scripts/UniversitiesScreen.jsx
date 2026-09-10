@@ -1,58 +1,98 @@
 const { Card, Tag, Badge, Button, Input, Select, Tabs, Icon, Tooltip } = window.UnibridgeNLDesignSystem_3cb2d1;
+const { PageHero, Reveal, Rise, Tilt, Counter, Stagger, Magnetic } = window;
 
-const UNIS = [
-  { name:"University of Amsterdam", initials:"UvA", color:"var(--gold-500)", city:"Amsterdam", level:"Bachelor · Master", fields:["Business","Economics","Health","Communication"], tuition:"€2,530 / €16,900", deadline:"1 May", rate:"High" },
-  { name:"VU Amsterdam", initials:"VU", color:"var(--clay-500)", city:"Amsterdam", level:"Bachelor · Master", fields:["Health","Law","Life Sciences"], tuition:"€2,530 / €15,800", deadline:"1 May", rate:"High" },
-  { name:"Amsterdam UAS (HvA)", initials:"HvA", color:"var(--moss-500)", city:"Amsterdam", level:"Bachelor", fields:["Business","Media & Design","Engineering"], tuition:"€2,530 / €9,600", deadline:"1 May", rate:"High" },
-  { name:"Erasmus University Rotterdam", initials:"EUR", color:"var(--gold-700)", city:"Rotterdam", level:"Bachelor · Master", fields:["Business","Economics","Health"], tuition:"€2,530 / €16,400", deadline:"1 May", rate:"High" },
-  { name:"Utrecht University", initials:"UU", color:"var(--clay-700)", city:"Utrecht", level:"Master", fields:["Data Science","Law","Humanities"], tuition:"€2,530 / €19,400", deadline:"1 April", rate:"Medium" },
-  { name:"TU Delft", initials:"TUD", color:"var(--moss-700)", city:"Delft", level:"Bachelor · Master", fields:["Engineering","Architecture","Computer Science"], tuition:"€2,530 / €18,750", deadline:"15 January", rate:"Selective" },
-  { name:"Leiden University", initials:"LU", color:"var(--gold-500)", city:"Leiden", level:"Bachelor · Master", fields:["Law","Humanities","Life Sciences","Psychology"], tuition:"€2,530 / €17,300", deadline:"1 April", rate:"Medium" },
-  { name:"University of Groningen", initials:"RUG", color:"var(--clay-500)", city:"Groningen", level:"Bachelor", fields:["Life Sciences","Business","Arts"], tuition:"€2,530 / €15,200", deadline:"1 May", rate:"High" },
-  { name:"Eindhoven University of Technology", initials:"TU/e", color:"var(--moss-500)", city:"Eindhoven", level:"Bachelor · Master", fields:["Engineering","Computer Science","Data Science"], tuition:"€2,530 / €18,100", deadline:"1 April", rate:"Selective" },
-  { name:"Tilburg University", initials:"TiU", color:"var(--gold-700)", city:"Tilburg", level:"Master", fields:["Economics","Psychology","Data Science"], tuition:"€2,530 / €14,700", deadline:"1 June", rate:"High" },
-  { name:"Maastricht University", initials:"UM", color:"var(--clay-700)", city:"Maastricht", level:"Bachelor · Master", fields:["Business","Health","International Relations"], tuition:"€2,530 / €16,000", deadline:"1 May", rate:"High" },
-  { name:"Radboud University", initials:"RU", color:"var(--moss-700)", city:"Nijmegen", level:"Bachelor · Master", fields:["Life Sciences","Psychology","Humanities"], tuition:"€2,530 / €14,300", deadline:"1 May", rate:"High" },
-  { name:"Wageningen University", initials:"WUR", color:"var(--gold-500)", city:"Wageningen", level:"Master", fields:["Life Sciences","Environment & Food"], tuition:"€2,530 / €19,200", deadline:"1 April", rate:"Medium" },
-  { name:"University of Twente", initials:"UT", color:"var(--clay-500)", city:"Enschede", level:"Bachelor · Master", fields:["Engineering","Computer Science","Business"], tuition:"€2,530 / €16,750", deadline:"1 May", rate:"High" },
-  { name:"The Hague UAS", initials:"THUAS", color:"var(--moss-500)", city:"The Hague", level:"Bachelor", fields:["International Relations","Business","Media & Design"], tuition:"€2,530 / €8,900", deadline:"1 May", rate:"High" },
-  { name:"Rotterdam UAS", initials:"RUAS", color:"var(--gold-700)", city:"Rotterdam", level:"Bachelor", fields:["Engineering","Business","Health"], tuition:"€2,530 / €9,200", deadline:"1 May", rate:"High" }
-];
-
-function CrestBadge({ initials, color }) {
+/** Monogram crest: the university's favicon when it resolves, initials otherwise. */
+function UniLogo({ name, domain, size = 96 }) {
+  const [failed, setFailed] = React.useState(false);
+  const initials = name.replace(/[^A-Z]/g, "").slice(0, 3) || name.slice(0, 2).toUpperCase();
   return (
-    <div style={{aspectRatio:'1 / 1',borderRadius:'var(--radius-md)',background:color,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:15,color:'var(--cream-100)',letterSpacing:'-0.01em'}}>{initials}</span>
+    <div style={{width:size,height:size,flex:'0 0 auto',background:'var(--surface-page)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:6,padding:10,overflow:'hidden'}}>
+      {!failed
+        ? <img src={"https://www.google.com/s2/favicons?domain=" + domain + "&sz=128"} alt={name + " logo"} loading="lazy" decoding="async" onError={()=>setFailed(true)}
+            style={{width:32,height:32,objectFit:'contain'}}/>
+        : <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:size*0.26,lineHeight:1,color:'var(--gold-700)'}}>{initials}</span>}
+      <span style={{fontSize:10,fontWeight:600,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--text-subtle)',whiteSpace:'nowrap'}}>{domain}</span>
     </div>
   );
 }
 
+const UNIS = [
+  { name:"University of Amsterdam", domain:"uva.nl", city:"Amsterdam", level:"Bachelor · Master", fields:["Business","Economics","Health","Communication"], tuition:"€2,530 / €16,900", deadline:"1 May", rate:"High" },
+  { name:"VU Amsterdam", domain:"vu.nl", city:"Amsterdam", level:"Bachelor · Master", fields:["Health","Law","Life Sciences"], tuition:"€2,530 / €15,800", deadline:"1 May", rate:"High" },
+  { name:"Amsterdam UAS (HvA)", domain:"hva.nl", city:"Amsterdam", level:"Bachelor", fields:["Business","Media & Design","Engineering"], tuition:"€2,530 / €9,600", deadline:"1 May", rate:"High" },
+  { name:"Erasmus University Rotterdam", domain:"eur.nl", city:"Rotterdam", level:"Bachelor · Master", fields:["Business","Economics","Health"], tuition:"€2,530 / €16,400", deadline:"1 May", rate:"High" },
+  { name:"Utrecht University", domain:"uu.nl", city:"Utrecht", level:"Master", fields:["Data Science","Law","Humanities"], tuition:"€2,530 / €19,400", deadline:"1 April", rate:"Medium" },
+  { name:"TU Delft", domain:"tudelft.nl", city:"Delft", level:"Bachelor · Master", fields:["Engineering","Architecture","Computer Science"], tuition:"€2,530 / €18,750", deadline:"15 January", rate:"Selective" },
+  { name:"Leiden University", domain:"universiteitleiden.nl", city:"Leiden", level:"Bachelor · Master", fields:["Law","Humanities","Life Sciences","Psychology"], tuition:"€2,530 / €17,300", deadline:"1 April", rate:"Medium" },
+  { name:"University of Groningen", domain:"rug.nl", city:"Groningen", level:"Bachelor", fields:["Life Sciences","Business","Arts"], tuition:"€2,530 / €15,200", deadline:"1 May", rate:"High" },
+  { name:"Eindhoven University of Technology", domain:"tue.nl", city:"Eindhoven", level:"Bachelor · Master", fields:["Engineering","Computer Science","Data Science"], tuition:"€2,530 / €18,100", deadline:"1 April", rate:"Selective" },
+  { name:"Tilburg University", domain:"tilburguniversity.edu", city:"Tilburg", level:"Master", fields:["Economics","Psychology","Data Science"], tuition:"€2,530 / €14,700", deadline:"1 June", rate:"High" },
+  { name:"Maastricht University", domain:"maastrichtuniversity.nl", city:"Maastricht", level:"Bachelor · Master", fields:["Business","Health","International Relations"], tuition:"€2,530 / €16,000", deadline:"1 May", rate:"High" },
+  { name:"Radboud University", domain:"ru.nl", city:"Nijmegen", level:"Bachelor · Master", fields:["Life Sciences","Psychology","Humanities"], tuition:"€2,530 / €14,300", deadline:"1 May", rate:"High" },
+  { name:"Wageningen University", domain:"wur.nl", city:"Wageningen", level:"Master", fields:["Life Sciences","Environment & Food"], tuition:"€2,530 / €19,200", deadline:"1 April", rate:"Medium" },
+  { name:"University of Twente", domain:"utwente.nl", city:"Enschede", level:"Bachelor · Master", fields:["Engineering","Computer Science","Business"], tuition:"€2,530 / €16,750", deadline:"1 May", rate:"High" },
+  { name:"The Hague UAS", domain:"dehaagsehogeschool.nl", city:"The Hague", level:"Bachelor", fields:["International Relations","Business","Media & Design"], tuition:"€2,530 / €8,900", deadline:"1 May", rate:"High" },
+  { name:"Rotterdam UAS", domain:"hogeschoolrotterdam.nl", city:"Rotterdam", level:"Bachelor", fields:["Engineering","Business","Health"], tuition:"€2,530 / €9,200", deadline:"1 May", rate:"High" }
+];
+
+const CITIES = ["All cities","Amsterdam","Rotterdam","Utrecht","Delft","Leiden","Groningen","Eindhoven","Tilburg","Maastricht","Nijmegen","Wageningen","Enschede","The Hague"];
+const FIELD_TAGS = ["Business","Economics","Engineering","Computer Science","Data Science","Law","Health","Life Sciences","Psychology","Humanities","Architecture","Media & Design","International Relations","Communication","Environment & Food","Arts"];
+const RATE_ORDER = { High:0, Medium:1, Selective:2 };
+
 function UniversitiesScreen({ go }) {
   const [city, setCity] = React.useState("All cities");
   const [level, setLevel] = React.useState("All");
-  const rows = UNIS.filter(u => (city === "All cities" || u.city === city) && (level === "All" || u.level.includes(level)));
+  const [query, setQuery] = React.useState("");
+  const [fields, setFields] = React.useState([]);
+
+  const toggleField = (t) => setFields(f => f.includes(t) ? f.filter(x=>x!==t) : [...f, t]);
+  const clear = () => { setCity("All cities"); setLevel("All"); setQuery(""); setFields([]); };
+  const filtered = fields.length || query.trim() || city !== "All cities" || level !== "All";
+
+  const rows = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return UNIS
+      .filter(u =>
+        (city === "All cities" || u.city === city) &&
+        (level === "All" || u.level.includes(level)) &&
+        (!fields.length || fields.some(f => u.fields.includes(f))) &&
+        (!q || u.name.toLowerCase().includes(q) || u.city.toLowerCase().includes(q) || u.fields.join(" ").toLowerCase().includes(q)))
+      .sort((a,b) => RATE_ORDER[a.rate] - RATE_ORDER[b.rate]);
+  }, [city, level, query, fields]);
+
+  /* One key for the whole result list: the CSS stagger replays on every filter change,
+     which is far cheaper than an IntersectionObserver per row and never leaves a row
+     stranded at opacity 0 mid-scroll. */
+  const listKey = city + "|" + level + "|" + query.trim().toLowerCase() + "|" + fields.join(",");
   const rateTone = { High:"success", Medium:"warning", Selective:"danger" };
+
   return (
     <main>
-      <div style={{background:'var(--surface-page)',borderBottom:'1px solid var(--border-hairline)',padding:'var(--space-12) 0'}}>
-        <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'0 var(--gutter-inline)'}}>
-          <div className="ub-overline">{UNIS.length} partner universities · research universities and universities of applied sciences</div>
-          <h1 style={{fontSize:'var(--text-h1)',margin:'var(--space-3) 0 var(--space-2)'}}>Where you could study</h1>
-          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch'}}>Tuition shown as EU / non-EU per year. Deadlines are the university's own; we file two weeks ahead of them.</p>
-        </div>
-      </div>
+      <PageHero overline={UNIS.length + " partner universities · research and applied sciences"}
+        title="Where you could study"
+        lead="Tuition shown as EU / non-EU per year. Deadlines are the university's own, and we file two weeks ahead of them."
+        meta={[["map-pin","13 cities"],["graduation-cap","Bachelor, Master & exchange"],["calendar-check","Filed two weeks early"]].map(([i,t])=>(
+          <span key={t} style={{display:'inline-flex',alignItems:'center',gap:8,fontSize:'var(--text-body-sm)',color:'var(--text-body)'}}><Icon name={i} size={16} color="var(--moss-500)"/>{t}</span>
+        ))}/>
 
-      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-10) var(--gutter-inline) 0',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'var(--space-8)'}}>
-        <aside style={{display:'flex',flexDirection:'column',gap:'var(--space-6)'}}>
-          <Input placeholder="Search universities" iconLeft="search"/>
+      <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-10) var(--gutter-inline) 0',display:'flex',flexWrap:'wrap',alignItems:'flex-start',gap:'clamp(24px,3vw,32px)'}}>
+        <aside style={{flex:'1 1 240px',minWidth:0,display:'flex',flexDirection:'column',gap:'var(--space-6)',position:'sticky',top:92,alignSelf:'start'}}>
+          <Input placeholder="Search universities" iconLeft="search" value={query} onChange={e=>setQuery(e.target.value)}/>
           <div>
             <div className="ub-overline" style={{marginBottom:'var(--space-3)'}}>City</div>
-            <Select value={city} onChange={e=>setCity(e.target.value)} options={["All cities","Amsterdam","Rotterdam","Utrecht","Delft","Leiden","Groningen","Eindhoven","Tilburg","Maastricht","Nijmegen","Wageningen","Enschede","The Hague"]}/>
+            <Select value={city} onChange={e=>setCity(e.target.value)} options={CITIES}/>
           </div>
           <div>
-            <div className="ub-overline" style={{marginBottom:'var(--space-3)'}}>Study field</div>
+            <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:10,marginBottom:'var(--space-3)'}}>
+              <span className="ub-overline">Study field</span>
+              {fields.length > 0 && (
+                <button onClick={()=>setFields([])} style={{border:'none',background:'none',padding:0,cursor:'pointer',font:'600 12px var(--font-sans)',color:'var(--text-link)'}}>Reset</button>
+              )}
+            </div>
             <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-              {["Business","Economics","Engineering","Computer Science","Data Science","Law","Health","Life Sciences","Psychology","Humanities","Architecture","Media & Design","International Relations","Communication","Environment & Food","Arts"].map(t=><Tag key={t}>{t}</Tag>)}
+              {FIELD_TAGS.map(t=>(
+                <Tag key={t} selected={fields.includes(t)} onSelect={()=>toggleField(t)}>{t}</Tag>
+              ))}
             </div>
           </div>
           <Card tone="sunken" elevation="none">
@@ -62,39 +102,51 @@ function UniversitiesScreen({ go }) {
           </Card>
         </aside>
 
-        <div>
+        <div style={{flex:'3 1 min(100%,520px)',minWidth:0}}>
           <Tabs items={[{value:"All",label:"All levels"},{value:"Bachelor",label:"Bachelor"},{value:"Master",label:"Master"}]} value={level} onChange={setLevel}/>
-          <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginTop:'var(--space-5)'}}>
-            <span style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>{rows.length} of {UNIS.length} shown</span>
+          <div style={{display:'flex',flexWrap:'wrap',alignItems:'baseline',justifyContent:'space-between',gap:10,marginTop:'var(--space-5)'}}>
+            <span style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
+              <Counter to={rows.length} key={rows.length} duration={520}/> of {UNIS.length} shown
+              {filtered && <button onClick={clear} style={{marginLeft:12,border:'none',background:'none',padding:0,cursor:'pointer',font:'600 13px var(--font-sans)',color:'var(--text-link)'}}>Clear filters</button>}
+            </span>
             <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>Sorted by chance of admission</span>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)',marginTop:'var(--space-4)'}}>
-            {rows.map((u,i)=>(
-              <Reveal key={u.name} delay={Math.min(i*0.05,0.4)}>
-              <Card interactive style={{display:'flex',flexWrap:'wrap',gap:'var(--space-5)',alignItems:'center'}}>
-                <div style={{width:64,height:64,flex:'0 0 auto'}}><CrestBadge initials={u.initials} color={u.color}/></div>
-                <div style={{flex:'1 1 220px'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                    <h3 style={{fontSize:'var(--text-h4)',margin:0}}>{u.name}</h3>
-                    <Badge tone={rateTone[u.rate]} dot>{u.rate} chance</Badge>
+
+          {rows.length === 0 ? (
+            <Card tone="sunken" elevation="none" padding="var(--space-8)" style={{marginTop:'var(--space-4)',textAlign:'center'}}>
+              <div style={{fontSize:'var(--text-h4)',color:'var(--text-heading)',marginBottom:'var(--space-2)'}}>Nothing matches that combination</div>
+              <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:'0 0 var(--space-5)'}}>Try one filter at a time, or let us build the shortlist for you.</p>
+              <Button size="sm" variant="secondary" onClick={clear}>Clear filters</Button>
+            </Card>
+          ) : (
+            <div key={listKey} className="ub-unilist" style={{display:'flex',flexDirection:'column',gap:'var(--space-4)',marginTop:'var(--space-4)'}}>
+              {rows.map((u)=>(
+                <Card key={u.name} interactive style={{display:'flex',flexWrap:'wrap',gap:'var(--space-5)',alignItems:'center'}}>
+                  <UniLogo name={u.name} domain={u.domain}/>
+                  <div style={{flex:'1 1 260px',minWidth:0}}>
+                    <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:10}}>
+                      <h3 style={{fontSize:'var(--text-h4)',margin:0}}>{u.name}</h3>
+                      <Badge tone={rateTone[u.rate]} dot>{u.rate} chance</Badge>
+                    </div>
+                    <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'6px 14px',marginTop:6,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="map-pin" size={15}/>{u.city}</span>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="graduation-cap" size={15}/>{u.level}</span>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="calendar-check" size={15}/>Deadline {u.deadline}</span>
+                    </div>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:'var(--space-3)'}}>
+                      {u.fields.map(t=><Tag key={t} tone={fields.includes(t)?'gold':'moss'}>{t}</Tag>)}
+                    </div>
                   </div>
-                  <div style={{display:'flex',alignItems:'center',gap:14,marginTop:6,fontSize:'var(--text-body-sm)',color:'var(--text-muted)',flexWrap:'wrap'}}>
-                    <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="map-pin" size={15}/>{u.city}</span>
-                    <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="graduation-cap" size={15}/>{u.level}</span>
-                    <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="calendar-check" size={15}/>Deadline {u.deadline}</span>
+                  <div style={{flex:'0 0 auto',marginLeft:'auto',textAlign:'right'}}>
+                    <Tooltip label="EU / non-EU tuition per year" placement="left">
+                      <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:'var(--text-h4)',color:'var(--text-heading)',whiteSpace:'nowrap'}}>{u.tuition}</span>
+                    </Tooltip>
+                    <div style={{marginTop:'var(--space-4)'}}><Button size="sm" variant="secondary">Add to list</Button></div>
                   </div>
-                  <div style={{display:'flex',gap:8,marginTop:'var(--space-3)',flexWrap:'wrap'}}>{u.fields.map(t=><Tag key={t}>{t}</Tag>)}</div>
-                </div>
-                <div style={{flex:'0 0 auto'}}>
-                  <Tooltip label="EU / non-EU tuition per year" placement="left">
-                    <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:'var(--text-h4)',color:'var(--text-heading)'}}>{u.tuition}</span>
-                  </Tooltip>
-                  <div style={{marginTop:'var(--space-4)'}}><Button size="sm" variant="secondary">Add to list</Button></div>
-                </div>
-              </Card>
-              </Reveal>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </main>

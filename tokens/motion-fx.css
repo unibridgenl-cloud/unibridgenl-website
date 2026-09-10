@@ -1,0 +1,35 @@
+@keyframes ub-hint{0%,100%{opacity:.5;transform:translateY(0)}50%{opacity:1;transform:translateY(5px)}}
+.ub-scrollhint{position:relative;animation:ub-hint 2.2s var(--ease-in-out) infinite}
+.ub-scrollhint::after{content:"";position:absolute;top:8px;left:50%;width:2px;height:7px;margin-left:-1px;border-radius:2px;background:var(--gold-300)}
+@keyframes ub-page{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:none}}
+.ub-page{animation:ub-page 520ms var(--ease-out) both}
+@keyframes ub-aurora{0%{transform:translate3d(-4%,-2%,0) scale(1)}50%{transform:translate3d(4%,3%,0) scale(1.12)}100%{transform:translate3d(-4%,-2%,0) scale(1)}}
+.ub-aurora{background:radial-gradient(38% 44% at 22% 34%,rgba(184,124,70,.20),transparent 62%),radial-gradient(34% 40% at 76% 62%,rgba(193,97,63,.16),transparent 64%);animation:ub-aurora 24s var(--ease-in-out) infinite;will-change:transform}
+@keyframes ub-sheen{0%{background-position:-140% 0}55%,100%{background-position:240% 0}}
+.ub-sheen{background-image:linear-gradient(100deg,transparent 38%,rgba(214,168,119,.55) 50%,transparent 62%);background-size:220% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;animation:ub-sheen 7s var(--ease-in-out) 1.6s infinite}
+@keyframes ub-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(214,168,119,.5)}70%{opacity:.7;box-shadow:0 0 0 7px rgba(214,168,119,0)}}
+.ub-pulse{animation:ub-pulse 2.6s var(--ease-in-out) infinite}
+@keyframes ub-marquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+.ub-marquee{animation-name:ub-marquee;animation-timing-function:linear;animation-iteration-count:infinite}
+.ub-marquee:hover{animation-play-state:paused}
+@keyframes ub-slot{from{opacity:0;transform:translate3d(0,8px,0) scale(.96)}to{opacity:1;transform:none}}
+@keyframes ub-orbit{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes ub-float{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-9px,0)}}
+@keyframes ub-row{from{opacity:0;transform:translate3d(14px,0,0)}to{opacity:1;transform:none}}
+@keyframes ub-bar{from{transform:scaleX(0);transform-origin:left center}to{transform:scaleX(1);transform-origin:left center}}
+@keyframes ub-lift{from{opacity:0;transform:translate3d(0,16px,0) scale(.98)}to{opacity:1;transform:none}}
+.ub-liftrow{transition:background-color 320ms var(--ease-standard),transform 320ms var(--ease-out)}
+.ub-liftrow:hover{background:var(--surface-accent-soft)!important;transform:translateX(4px)}
+.ub-stagger>*{animation:ub-lift 560ms var(--ease-out) both}
+.ub-nav a{white-space:nowrap}
+@media(max-width:1120px){.ub-navcall{display:none}}
+@media(max-width:860px){.ub-wordmark{display:none}}
+@media(max-width:720px){.ub-nav{overflow-x:auto;scrollbar-width:none}.ub-nav::-webkit-scrollbar{display:none}}
+.ub-stagger>*:nth-child(1){animation-delay:40ms}.ub-stagger>*:nth-child(2){animation-delay:110ms}.ub-stagger>*:nth-child(3){animation-delay:180ms}.ub-stagger>*:nth-child(4){animation-delay:250ms}.ub-stagger>*:nth-child(5){animation-delay:320ms}.ub-stagger>*:nth-child(6){animation-delay:390ms}
+.ub-unilist>*{animation:ub-lift 460ms var(--ease-out) both}
+.ub-unilist>*:nth-child(1){animation-delay:0ms}.ub-unilist>*:nth-child(2){animation-delay:55ms}.ub-unilist>*:nth-child(3){animation-delay:110ms}.ub-unilist>*:nth-child(4){animation-delay:165ms}.ub-unilist>*:nth-child(5){animation-delay:220ms}.ub-unilist>*:nth-child(n+6){animation-delay:265ms}
+@media (prefers-reduced-motion:reduce){.ub-unilist>*{animation:none}}
+.ub-navlink:hover>span{transform:scaleX(1)!important}
+.ub-footlink:hover{color:var(--gold-300)!important;transform:translateX(3px)}
+@media (prefers-reduced-motion:reduce){.ub-scrollhint,.ub-page,.ub-aurora,.ub-sheen,.ub-pulse,.ub-marquee{animation:none}}
+@media print{*{transition:none!important;animation:none!important}[style*="opacity: 0"]{opacity:1!important;transform:none!important;filter:none!important}}
