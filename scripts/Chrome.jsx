@@ -1,7 +1,7 @@
 const { Button, Logo, Icon, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
 
 function SiteHeader({ route, go }) {
-  const nav = [["home","How it works"],["universities","Universities"],["services","Services"],["quiz","Find my field"],["about","About us"]];
+  const nav = [["home","How it works"],["universities","Universities"],["services","Services"],["quiz","Find my field"],["mylist","My list"],["about","About us"]];
   const y = useScrollY();
   const overHero = route === 'home' && y < 70;
   const fg = overHero ? 'var(--cream-200)' : 'var(--text-muted)';
@@ -39,7 +39,7 @@ function HeaderSpacer() { return <div style={{height:69}}/>; }
 
 function SiteFooter({ go }) {
   const cols = [
-    ["Programmes",[["Bachelor","universities"],["Master","universities"],["Exchange","universities"],["Find my field","quiz"]]],
+    ["Programmes",[["Bachelor","universities"],["Master","universities"],["Find my field","quiz"],["My study list","mylist"]]],
     ["Services",[["Enrolment","services"],["Housing","services"],["Visa & BSN","services"],["Plans & pricing","services"]]],
     ["Company",[["About us","about"],["Partner universities","universities"],["Contact","contact"],["Privacy statement","privacy"]]]
   ];
