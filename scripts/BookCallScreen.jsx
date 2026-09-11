@@ -9,13 +9,48 @@ const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 const UB_ENDPOINT = "https://script.google.com/macros/s/AKfycbxXrbOgXwzirT8fnW_dlVDAXTd0jhAEzIVQAMjiYgNiD_Qp6B_AiIMTMiG-64AaRSjd/exec";
 const UB_TOKEN = "ub-2026-9f3a71";
 
-const DAYS = [
-  { d:"Mon", n:"6 Oct", iso:"2026-10-06", slots:["09:30","11:00","14:00"] },
-  { d:"Tue", n:"7 Oct", iso:"2026-10-07", slots:["10:00","13:30"] },
-  { d:"Wed", n:"8 Oct", iso:"2026-10-08", slots:["09:00","11:30","15:00","16:30"] },
-  { d:"Thu", n:"9 Oct", iso:"2026-10-09", slots:[] },
-  { d:"Fri", n:"10 Oct", iso:"2026-10-10", slots:["09:30","12:00","14:30"] }
-];
+/* Availability rolls forward automatically. Previously these were five hardcoded
+   dates, which meant the form silently kept offering slots after they had passed.
+   Edit SLOTS_BY_WEEKDAY to change your standard hours. */
+const SLOTS_BY_WEEKDAY = {
+  1: ["09:30","11:00","14:00"],          // Monday
+  2: ["10:00","13:30"],                  // Tuesday
+  3: ["09:00","11:30","15:00","16:30"],  // Wednesday
+  4: [],                                 // Thursday, kept clear
+  5: ["09:30","12:00","14:30"]           // Friday
+};
+const LEAD_DAYS = 2;      // earliest bookable day, counted from today
+const DAYS_SHOWN = 5;     // working days offered
+
+const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function buildDays() {
+  const out = [];
+  const cursor = new Date();
+  cursor.setHours(0,0,0,0);
+  cursor.setDate(cursor.getDate() + LEAD_DAYS);
+  let guard = 0;
+  while (out.length < DAYS_SHOWN && guard < 40) {
+    guard++;
+    const wd = cursor.getDay();
+    if (wd >= 1 && wd <= 5) {
+      const y = cursor.getFullYear();
+      const m = String(cursor.getMonth() + 1).padStart(2, "0");
+      const dd = String(cursor.getDate()).padStart(2, "0");
+      out.push({
+        d: DAY_NAMES[wd],
+        n: cursor.getDate() + " " + MONTH_NAMES[cursor.getMonth()],
+        iso: y + "-" + m + "-" + dd,
+        slots: SLOTS_BY_WEEKDAY[wd] || []
+      });
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return out;
+}
+
+const DAYS = buildDays();
 
 function BookCallScreen({ go }) {
   const [day, setDay] = React.useState(0);
@@ -31,15 +66,13 @@ function BookCallScreen({ go }) {
   const submitBooking = async () => {
     setSubmitting(true);
     setError(false);
-    const startIso = `${active.iso}T${slot}:00+02:00`;
     const message = `New call booking via unibridgenl.com
 
 Name: ${name}
 Email: ${email}
 Language: ${language}
-Date: ${active.d} ${active.n}
-Time: ${slot} CET
-Start (ISO): ${startIso}`;
+Date: ${active.d} ${active.n} (${active.iso})
+Time: ${slot} Amsterdam time`;
     try {
       const res = await fetch(UB_ENDPOINT, {
         method: "POST",
@@ -51,8 +84,8 @@ Start (ISO): ${startIso}`;
           email: email,
           language: language,
           date: `${active.d} ${active.n}`,
-          time: slot,
-          startIso: startIso
+          dateIso: active.iso,
+          time: slot
         })
       });
       const data = await res.json();
@@ -92,7 +125,7 @@ Start (ISO): ${startIso}`;
         <Rise>
         <Card rule padding="var(--space-8)">
           <div className="ub-overline">Booked</div>
-          <h1 style={{fontSize:'var(--text-h2)',margin:'var(--space-3) 0 var(--space-2)'}}>You're in for {active.d} {active.n}, {slot} CET</h1>
+          <h1 style={{fontSize:'var(--text-h2)',margin:'var(--space-3) 0 var(--space-2)'}}>You're in for {active.d} {active.n}, {slot} Amsterdam time</h1>
           <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)'}}>Harsh Raj has been notified and will send you a Google Meet invite by email shortly. Add it to your calendar so the reminder reaches you.</p>
           <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-3)'}}>
             <Button variant="secondary" onClick={()=>{setBooked(false);setSlot(null);}}>Pick another time</Button>
@@ -115,7 +148,7 @@ Start (ISO): ${startIso}`;
         <Card padding="var(--space-6)">
           <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-2)',alignItems:'center',justifyContent:'space-between',marginBottom:'var(--space-5)'}}>
             <h3 style={{margin:0,fontSize:'var(--text-h4)'}}>October 2026 · week 41</h3>
-            <span style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>Times shown in CET (Amsterdam)</span>
+            <span style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>Times shown in Amsterdam time</span>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(56px,1fr))',gap:'var(--space-2)'}}>
             {DAYS.map((x,i)=>{
@@ -179,7 +212,7 @@ Start (ISO): ${startIso}`;
           <Card tone="sunken" elevation="none">
             <h4 style={{margin:'0 0 var(--space-3)'}}>What we'll cover</h4>
             <div style={{display:'flex',flexDirection:'column',gap:10,fontSize:'var(--text-body-sm)',color:'var(--text-body)'}}>
-              {["Which universities your grades actually clear","Real costs: tuition, rent, proof of funds","How housing works through our partner agency","Dates you cannot miss for your intake"].map(x=>(
+              {["Which universities your grades actually clear","Real costs: tuition, rent, proof of funds","How housing works through a licensed letting agency","Dates you cannot miss for your intake"].map(x=>(
                 <div key={x} style={{display:'flex',gap:10}}><Icon name="check" size={16} color="var(--moss-500)"/>{x}</div>
               ))}
             </div>

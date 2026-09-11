@@ -8,7 +8,7 @@ const PLANS = [
     excl:["Housing search","Visa & BSN support","Arrival week"], cta:"secondary" },
   { name:"Bridge Full", tier:"Full", price:"€1,200", amount:1200, note:"one-off",
     who:"The whole move handled, from shortlist to the keys in your hand.",
-    items:[["check","Up to five university applications"],["check","Everything in Bridge Basic"],["check","Housing search with our partner agency"],["check","Contract review before you sign"],["check","Visa & BSN appointment booking"],["check","Bank, insurance and OV chip card"],["check","Arrival week support"],["check","WhatsApp line to your advisor"]],
+    items:[["check","Up to five university applications"],["check","Everything in Bridge Basic"],["check","Housing search with a licensed letting agency"],["check","Contract review before you sign"],["check","Visa & BSN appointment booking"],["check","Bank, insurance and OV chip card"],["check","Arrival week support"],["check","WhatsApp line to your advisor"]],
     excl:[], cta:"primary" },
   { name:"Bridge Together", tier:"Together", price:"€1,750", amount:1750, note:"one-off",
     who:"Under 18, or parents who want to be walked through every step.",
@@ -18,7 +18,7 @@ const PLANS = [
 
 const ADDONS = [
   ["file-check","Extra university application","€150","per application beyond your plan"],
-  ["house","Housing search only","€450","partner agency referral + contract review"],
+  ["house","Housing search only","€450","licensed agency referral + contract review"],
   ["id-card","Visa & BSN only","€400","residence permit file and municipality booking"],
   ["plane-takeoff","Arrival week only","€350","keys, bank, insurance, bike"],
   ["languages","Document translation","€60","per certified page, sworn translator"],
@@ -29,7 +29,7 @@ const COMPARE = [
   ["University applications","2","Up to 5","Up to 5"],
   ["Documents certified & filed","yes","yes","yes"],
   ["Deadline dashboard","yes","yes","yes"],
-  ["Housing search via partner","no","yes","yes"],
+  ["Housing search via agency","no","yes","yes"],
   ["Contract review","no","yes","yes"],
   ["Visa & BSN booking","no","yes","yes"],
   ["Bank, insurance, OV card","no","yes","yes"],

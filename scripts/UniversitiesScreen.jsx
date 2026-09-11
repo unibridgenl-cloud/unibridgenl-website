@@ -126,7 +126,7 @@ function UniversitiesScreen({ go }) {
 
   return (
     <main>
-      <PageHero overline={UNIS.length + " partner universities · research and applied sciences"}
+      <PageHero overline={UNIS.length + " universities we cover · research and applied sciences"}
         title="Where you could study"
         lead="Pick a university to see real English-taught programmes, then add the ones you like to your study list. Tuition shown as EU / non-EU per year."
         meta={[["map-pin","13 cities"],["graduation-cap","Bachelor, Master & exchange"],["calendar-check","Filed two weeks early"]].map(([i,t])=>(

@@ -521,7 +521,7 @@ ${progs}`;
           : stage === "analysing"
             ? "We're scoring eight subject areas, then checking your profile against real entry requirements."
             : "Tell us where to send the result, then answer twelve questions about how you actually work. You'll get a niche, not a vague category."}
-        meta={[["clock","About 4 minutes"],["file-check","Emailed to you and your advisor"],["graduation-cap","16 partner universities"]].map(([ic,t])=>(
+        meta={[["clock","About 4 minutes"],["file-check","Emailed to you and your advisor"],["graduation-cap","16 universities we cover"]].map(([ic,t])=>(
           <span key={t} style={{display:'inline-flex',alignItems:'center',gap:8,fontSize:'var(--text-body-sm)'}}><Icon name={ic} size={16} color="var(--gold-300)"/>{t}</span>
         ))}/>
 

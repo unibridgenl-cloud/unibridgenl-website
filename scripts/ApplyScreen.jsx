@@ -37,7 +37,7 @@ function ApplyScreen({ go }) {
     setError(false);
     const services = [
       svcEnrolment && "University enrolment",
-      svcHousing && "Housing via partner agency",
+      svcHousing && "Housing via a licensed letting agency",
       svcVisa && "Visa & BSN",
       svcArrival && "Arrival week"
     ].filter(Boolean).join(", ") || "None selected";
@@ -114,7 +114,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
             <Stagger step={80} y={14}>
             <Alert tone="warning" title="September deadlines close 1 May">Nine weeks left. Applications filed after 15 April get a rush fee from the university, not from us.</Alert>
             <Checkbox checked={svcEnrolment} onChange={e=>setSvcEnrolment(e.target.checked)} label="University enrolment" description="Up to five applications, documents certified and filed."/>
-            <Checkbox checked={svcHousing} onChange={e=>setSvcHousing(e.target.checked)} label="Housing via our partner agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
+            <Checkbox checked={svcHousing} onChange={e=>setSvcHousing(e.target.checked)} label="Housing via a licensed letting agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
             <Checkbox checked={svcVisa} onChange={e=>setSvcVisa(e.target.checked)} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
             <Checkbox checked={svcArrival} onChange={e=>setSvcArrival(e.target.checked)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
             <Checkbox checked={agreed} onChange={e=>setAgreed(e.target.checked)} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>

@@ -2,7 +2,7 @@ const { Button, Card, Icon, Badge, Tag, Stepper } = window.UnibridgeNLDesignSyst
 
 const SERVICES = [
   ["graduation-cap","University enrolment","We file your application at up to five Dutch universities and chase every decision."],
-  ["house","Housing support","A licensed partner agency sources verified rooms. We read the contract before you sign."],
+  ["house","Housing support","A licensed letting agency we work with sources verified rooms. We read the contract before you sign."],
   ["id-card","Visa & BSN","Residence permit paperwork and a booked BSN appointment in your arrival week."],
   ["wallet","Bank & insurance","A Dutch IBAN, student health insurance and your OV chip card, sorted."],
   ["plane-takeoff","Arrival week","A bike, a SIM card, your first shop and a walk through your new neighbourhood."],
@@ -21,7 +21,7 @@ const CHAPTERS = [
   { k:"Apply", t:"We file, you study", d:"Up to five applications, documents certified, every deadline two weeks ahead of the university's own.", icon:"graduation-cap",
     label:"Application file", stat:"5", statLabel:"universities filed",
     rows:[["check","Diploma certified & translated"],["check","Motivation letter reviewed"],["check","IELTS 6.5 verified"],["clock","UvA decision expected 12 Apr"]] },
-  { k:"Live", t:"A room, checked before you sign", d:"Our licensed partner agency sources verified listings. We read the contract line by line.", icon:"house",
+  { k:"Live", t:"A room, checked before you sign", d:"A licensed letting agency we work with sources verified listings. We read the contract line by line.", icon:"house",
     label:"Housing shortlist", stat:"3", statLabel:"verified rooms shortlisted",
     rows:[["check","Registration allowed at address"],["check","Deposit capped at two months"],["check","Contract read by your advisor"],["clock","Viewing booked 18 Apr, 14:00"]] },
   { k:"Stay", t:"Permit, BSN, and the paperwork nobody explains", d:"Residence permit filed, municipality appointment booked inside your arrival week.", icon:"id-card",
@@ -320,7 +320,7 @@ function HomeScreen({ go }) {
       {/* ── Logo marquee ── */}
       <section style={{background:'var(--ink-900)',padding:'clamp(28px,4vw,44px) 0',borderTop:'1px solid rgba(251,244,236,.09)'}}>
         <div style={{textAlign:'center',marginBottom:'var(--space-6)'}}>
-          <span className="ub-overline" style={{color:'rgba(251,244,236,.42)'}}>16 partner universities</span>
+          <span className="ub-overline" style={{color:'rgba(251,244,236,.42)'}}>16 universities we cover</span>
         </div>
         <Marquee items={UNI_LOGOS} speed={54} height={58} render={([name,domain])=>(
           <span title={domain} style={{display:'flex',alignItems:'center',gap:12,padding:'0 6px',opacity:.6,transition:'opacity 400ms var(--ease-standard)'}}
@@ -376,7 +376,7 @@ function HomeScreen({ go }) {
             <Reveal delay={180}><p style={{color:'var(--ink-100)',fontSize:'var(--text-body-lg)',maxWidth:'44ch'}}>No inbox archaeology. You always know what is done, what is with us, and what needs you today.</p></Reveal>
             <Reveal delay={260}>
               <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-8)',marginTop:'var(--space-10)'}}>
-                {[[16,"partner universities"],[13,"cities in the Netherlands"],[1,"advisor, start to arrival"]].map(([n,l])=>(
+                {[[16,"universities we cover"],[13,"cities in the Netherlands"],[1,"advisor, start to arrival"]].map(([n,l])=>(
                   <div key={l}>
                     <div style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:42,lineHeight:1,color:'var(--gold-300)'}}><Counter to={n}/></div>
                     <div style={{fontSize:'var(--text-caption)',color:'var(--ink-100)',marginTop:6}}>{l}</div>
