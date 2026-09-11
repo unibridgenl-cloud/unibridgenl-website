@@ -323,18 +323,25 @@ function finderFor(uni) {
   return (COURSE_DB[uni] && COURSE_DB[uni].finder) || "#";
 }
 
-// ---- My Study List: browser-only persistence (localStorage) ----
+// ---- My Study List: browser-only, per-visit persistence (sessionStorage) ----
+// sessionStorage survives page navigation within the visit, and is cleared by the
+// browser when the tab or site is closed, so every return visit starts on an empty
+// list. Swap the two UB_STORE lines back to localStorage to make the list persist.
 const UB_LIST_KEY = "ub_study_list_v1";
 const UB_LIST_EVENT = "ub-study-list-change";
+function ubStore() { return window.sessionStorage; }
 
 function readStudyList() {
-  try { return JSON.parse(localStorage.getItem(UB_LIST_KEY) || "[]"); }
+  try { return JSON.parse(ubStore().getItem(UB_LIST_KEY) || "[]"); }
   catch (e) { return []; }
 }
 function writeStudyList(items) {
-  try { localStorage.setItem(UB_LIST_KEY, JSON.stringify(items)); } catch (e) {}
+  try { ubStore().setItem(UB_LIST_KEY, JSON.stringify(items)); } catch (e) {}
   try { window.dispatchEvent(new CustomEvent(UB_LIST_EVENT)); } catch (e) {}
 }
+// One-time cleanup: clear any list left in localStorage by the previous build,
+// otherwise old saved courses would linger on returning visitors' devices.
+try { window.localStorage.removeItem(UB_LIST_KEY); } catch (e) {}
 function studyListId(uni, courseName) { return uni + "::" + courseName; }
 function inStudyList(uni, courseName) {
   return readStudyList().some(it => it.id === studyListId(uni, courseName));
@@ -354,8 +361,8 @@ function removeFromStudyList(id) {
 function clearStudyList() { writeStudyList([]); }
 
 // React hook so any component re-renders when the list changes (even across tabs),
-// and re-reads from localStorage whenever the page is revisited after being closed
-// or backgrounded (mobile browsers restore a frozen page instead of re-running JS,
+// and re-reads from sessionStorage whenever the page is revisited after being backgrounded
+// (mobile browsers restore a frozen page instead of re-running JS,
 // so without this the list can show stale data until the visitor manually reloads).
 function useStudyList() {
   const [items, setItems] = React.useState(readStudyList());

@@ -13,7 +13,7 @@ const SECTIONS = [
      "When you book a call, we create a calendar event and add you as a guest, which means Google sends you an invite containing a Google Meet link. Your name and email address appear on that event so we know who we are meeting. You can decline or remove the invite from your own calendar at any time, and you can ask us to delete the event entirely.",
      "When you complete the quiz, we email the result to the address you gave us and keep a copy in our inbox so an advisor can follow up. If you would rather we didn't, say so and we'll delete it."]],
   ["your-study-list","graduation-cap","Your study list",
-    ["The courses you save to My study list are stored in your own browser and never sent to us. Nobody at UniBridge NL can see them unless you choose to email the list or bring it to a call. Clearing your browser data will clear the list, and we have no copy to restore."]],
+    ["The courses you save to My study list are stored in your own browser and never sent to us. Nobody at UniBridge NL can see them unless you choose to email the list or bring it to a call. The list is cleared automatically when you close the site, so if you want to keep your choices, email the list to yourself before you go."]],
   ["cookies","cookie","Cookies",
     ["This site uses essential cookies needed for basic site functions (like remembering your cookie preference). You can choose \u201cEssential only\u201d or \u201cAccept all\u201d in the cookie banner shown on your first visit."]],
   ["your-rights","shield-check","Your rights",
