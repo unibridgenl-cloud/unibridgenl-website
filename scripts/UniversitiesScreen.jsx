@@ -39,11 +39,71 @@ const CITIES = ["All cities","Amsterdam","Rotterdam","Utrecht","Delft","Leiden",
 const FIELD_TAGS = ["Business","Economics","Engineering","Computer Science","Data Science","Law","Health","Life Sciences","Psychology","Humanities","Architecture","Media & Design","International Relations","Communication","Environment & Food","Arts"];
 const RATE_ORDER = { High:0, Medium:1, Selective:2 };
 
+/** One course row inside an expanded university: info + working Add-to-list. */
+function CourseRow({ uni, c }) {
+  const list = useStudyList();
+  const saved = list.some(it => it.id === studyListId(uni, c.name));
+  const [justAdded, setJustAdded] = React.useState(false);
+  const add = () => {
+    const ok = addToStudyList({ uni, name:c.name, level:c.level, field:c.field, duration:c.duration, language:c.language, url:c.url });
+    if (ok) { setJustAdded(true); setTimeout(()=>setJustAdded(false), 1600); }
+  };
+  return (
+    <div style={{padding:'var(--space-4) 0',borderTop:'1px solid var(--border-hairline)'}}>
+      <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-3)',alignItems:'flex-start',justifyContent:'space-between'}}>
+        <div style={{flex:'1 1 260px',minWidth:0}}>
+          <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:8}}>
+            <span style={{fontSize:'var(--text-body)',fontWeight:700,color:'var(--text-heading)'}}>{c.name}</span>
+            <Badge tone={c.level==='Bachelor'?'moss':'accent'}>{c.level}</Badge>
+          </div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:'6px 14px',marginTop:6,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
+            <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="graduation-cap" size={14}/>{c.field}</span>
+            {c.duration && <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="clock" size={14}/>{c.duration}</span>}
+            {c.language && <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="languages" size={14}/>{c.language}</span>}
+            {c.format && <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="calendar-check" size={14}/>{c.format}</span>}
+          </div>
+          {c.desc && <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-body)',margin:'var(--space-3) 0 0',maxWidth:'60ch',lineHeight:1.55}}>{c.desc}</p>}
+          {c.url && <a href={c.url} target="_blank" rel="noopener noreferrer" style={{display:'inline-flex',alignItems:'center',gap:6,marginTop:'var(--space-3)',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'none',fontWeight:600}}>View official course page<Icon name="arrow-right" size={14}/></a>}
+        </div>
+        <div style={{flex:'0 0 auto'}}>
+          {saved
+            ? <Button size="sm" variant="ghost" disabled iconLeft={<Icon name="check" size={15}/>} style={{color:'var(--moss-700)'}}>In your list</Button>
+            : <Button size="sm" variant={justAdded?'primary':'secondary'} onClick={add} iconLeft={<Icon name={justAdded?'check':'graduation-cap'} size={15}/>}>{justAdded?'Added':'Add to list'}</Button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The expandable courses panel for a university card. */
+function UniCourses({ uni, go }) {
+  const courses = coursesFor(uni);
+  if (!courses.length) {
+    return (
+      <div style={{marginTop:'var(--space-4)',paddingTop:'var(--space-4)',borderTop:'1px solid var(--border-hairline)'}}>
+        <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:0}}>We're still adding programmes for this university. Meanwhile, browse them on the official site.</p>
+        <a href={finderFor(uni)} target="_blank" rel="noopener noreferrer" style={{display:'inline-flex',alignItems:'center',gap:6,marginTop:'var(--space-3)',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'none',fontWeight:600}}>Official programme finder<Icon name="arrow-right" size={14}/></a>
+      </div>
+    );
+  }
+  return (
+    <div style={{marginTop:'var(--space-4)'}}>
+      {courses.map(c => <CourseRow key={c.name} uni={uni} c={c}/>)}
+      <div style={{display:'flex',flexWrap:'wrap',gap:10,alignItems:'center',justifyContent:'space-between',marginTop:'var(--space-4)',paddingTop:'var(--space-4)',borderTop:'1px solid var(--border-hairline)'}}>
+        <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)',maxWidth:'52ch'}}>Tuition, deadlines and admission requirements change each intake. Verify current details on the official course page.</span>
+        <a href={finderFor(uni)} target="_blank" rel="noopener noreferrer" style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'none',fontWeight:600,whiteSpace:'nowrap'}}>All programmes<Icon name="arrow-right" size={14}/></a>
+      </div>
+    </div>
+  );
+}
+
 function UniversitiesScreen({ go }) {
   const [city, setCity] = React.useState("All cities");
   const [level, setLevel] = React.useState("All");
   const [query, setQuery] = React.useState("");
   const [fields, setFields] = React.useState([]);
+  const [openUni, setOpenUni] = React.useState(null);
+  const list = useStudyList();
 
   const toggleField = (t) => setFields(f => f.includes(t) ? f.filter(x=>x!==t) : [...f, t]);
   const clear = () => { setCity("All cities"); setLevel("All"); setQuery(""); setFields([]); };
@@ -60,17 +120,15 @@ function UniversitiesScreen({ go }) {
       .sort((a,b) => RATE_ORDER[a.rate] - RATE_ORDER[b.rate]);
   }, [city, level, query, fields]);
 
-  /* One key for the whole result list: the CSS stagger replays on every filter change,
-     which is far cheaper than an IntersectionObserver per row and never leaves a row
-     stranded at opacity 0 mid-scroll. */
   const listKey = city + "|" + level + "|" + query.trim().toLowerCase() + "|" + fields.join(",");
   const rateTone = { High:"success", Medium:"warning", Selective:"danger" };
+  const savedCount = list.length;
 
   return (
     <main>
       <PageHero overline={UNIS.length + " partner universities · research and applied sciences"}
         title="Where you could study"
-        lead="Tuition shown as EU / non-EU per year. Deadlines are the university's own, and we file two weeks ahead of them."
+        lead="Pick a university to see real English-taught programmes, then add the ones you like to your study list. Tuition shown as EU / non-EU per year."
         meta={[["map-pin","13 cities"],["graduation-cap","Bachelor, Master & exchange"],["calendar-check","Filed two weeks early"]].map(([i,t])=>(
           <span key={t} style={{display:'inline-flex',alignItems:'center',gap:8,fontSize:'var(--text-body-sm)',color:'var(--text-body)'}}><Icon name={i} size={16} color="var(--moss-500)"/>{t}</span>
         ))}/>
@@ -97,9 +155,18 @@ function UniversitiesScreen({ go }) {
           </div>
           <Card tone="sunken" elevation="none">
             <div style={{fontSize:'var(--text-body-sm)',fontWeight:700,color:'var(--text-heading)'}}>Not sure yet?</div>
-            <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:'6px 0 var(--space-4)'}}>We'll shortlist five you can realistically get into.</p>
-            <Button size="sm" full onClick={()=>go('quiz')}>Get my shortlist</Button>
+            <p style={{fontSize:'var(--text-body-sm)',color:'var(--text-muted)',margin:'6px 0 var(--space-4)'}}>Answer a few questions and we'll recommend real programmes that fit you.</p>
+            <Button size="sm" full onClick={()=>go('quiz')}>Find my field</Button>
           </Card>
+          {savedCount > 0 && (
+            <Card>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:'var(--space-2)'}}>
+                <Icon name="check" size={16} color="var(--gold-700)"/>
+                <span style={{fontSize:'var(--text-body-sm)',fontWeight:700,color:'var(--text-heading)'}}>{savedCount} in your study list</span>
+              </div>
+              <Button size="sm" variant="secondary" full onClick={()=>go('mylist')}>Review my list</Button>
+            </Card>
+          )}
         </aside>
 
         <div style={{flex:'3 1 min(100%,520px)',minWidth:0}}>
@@ -120,31 +187,42 @@ function UniversitiesScreen({ go }) {
             </Card>
           ) : (
             <div key={listKey} className="ub-unilist" style={{display:'flex',flexDirection:'column',gap:'var(--space-4)',marginTop:'var(--space-4)'}}>
-              {rows.map((u)=>(
-                <Card key={u.name} interactive style={{display:'flex',flexWrap:'wrap',gap:'var(--space-5)',alignItems:'center'}}>
-                  <UniLogo name={u.name} domain={u.domain}/>
-                  <div style={{flex:'1 1 260px',minWidth:0}}>
-                    <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:10}}>
-                      <h3 style={{fontSize:'var(--text-h4)',margin:0}}>{u.name}</h3>
-                      <Badge tone={rateTone[u.rate]} dot>{u.rate} chance</Badge>
+              {rows.map((u)=>{
+                const open = openUni === u.name;
+                const nCourses = coursesFor(u.name).length;
+                return (
+                <Card key={u.name} style={{display:'flex',flexDirection:'column'}}>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-5)',alignItems:'center'}}>
+                    <UniLogo name={u.name} domain={u.domain}/>
+                    <div style={{flex:'1 1 260px',minWidth:0}}>
+                      <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:10}}>
+                        <h3 style={{fontSize:'var(--text-h4)',margin:0}}>{u.name}</h3>
+                        <Badge tone={rateTone[u.rate]} dot>{u.rate} chance</Badge>
+                      </div>
+                      <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'6px 14px',marginTop:6,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
+                        <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="map-pin" size={15}/>{u.city}</span>
+                        <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="graduation-cap" size={15}/>{u.level}</span>
+                        <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="calendar-check" size={15}/>Deadline {u.deadline}</span>
+                      </div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:'var(--space-3)'}}>
+                        {u.fields.map(t=><Tag key={t} tone={fields.includes(t)?'gold':'moss'}>{t}</Tag>)}
+                      </div>
                     </div>
-                    <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'6px 14px',marginTop:6,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="map-pin" size={15}/>{u.city}</span>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="graduation-cap" size={15}/>{u.level}</span>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Icon name="calendar-check" size={15}/>Deadline {u.deadline}</span>
-                    </div>
-                    <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:'var(--space-3)'}}>
-                      {u.fields.map(t=><Tag key={t} tone={fields.includes(t)?'gold':'moss'}>{t}</Tag>)}
+                    <div style={{flex:'0 0 auto',marginLeft:'auto',textAlign:'right'}}>
+                      <Tooltip label="EU / non-EU tuition per year" placement="left">
+                        <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:'var(--text-h4)',color:'var(--text-heading)',whiteSpace:'nowrap'}}>{u.tuition}</span>
+                      </Tooltip>
+                      <div style={{marginTop:'var(--space-4)'}}>
+                        <Button size="sm" variant={open?'primary':'secondary'} onClick={()=>setOpenUni(open?null:u.name)} iconRight={<Icon name={open?'minus':'chevron-down'} size={15}/>}>
+                          {open ? 'Hide courses' : (nCourses ? nCourses + ' courses' : 'View courses')}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <div style={{flex:'0 0 auto',marginLeft:'auto',textAlign:'right'}}>
-                    <Tooltip label="EU / non-EU tuition per year" placement="left">
-                      <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:'var(--text-h4)',color:'var(--text-heading)',whiteSpace:'nowrap'}}>{u.tuition}</span>
-                    </Tooltip>
-                    <div style={{marginTop:'var(--space-4)'}}><Button size="sm" variant="secondary">Add to list</Button></div>
-                  </div>
+                  {open && <UniCourses uni={u.name} go={go}/>}
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
