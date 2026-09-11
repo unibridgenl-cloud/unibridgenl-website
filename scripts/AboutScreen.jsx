@@ -14,7 +14,7 @@ function AboutScreen({ go }) {
       <PageHero overline="About us" tone="ink"
         title="We built the service we needed as students"
         lead="UniBridge NL is a small Amsterdam team that walks international students from a first question to a room, a student number and a residence permit, without the guesswork."
-        meta={[["map-pin","Amsterdam, the Netherlands"],["file-text","KvK 42087386"],["graduation-cap","16 universities we cover"]].map(([i,t])=>(
+        meta={[["map-pin","Amsterdam, the Netherlands"],["file-text","KvK 42087386"],["graduation-cap","16 universities we apply to"]].map(([i,t])=>(
           <span key={t} style={{display:'inline-flex',alignItems:'center',gap:8,fontSize:'var(--text-body-sm)'}}><Icon name={i} size={16} color="var(--gold-300)"/>{t}</span>
         ))}/>
 
@@ -28,7 +28,7 @@ function AboutScreen({ go }) {
         </Reveal>
         <Reveal delay={140}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-4)'}}>
-            {[[16,"universities we cover"],[13,"cities in the Netherlands"],[3,"years working in this field"],[5,"applications per student"]].map(([n,l])=>(
+            {[[16,"universities we help you apply to"],[13,"cities in the Netherlands"],[3,"years working in this field"],[5,"applications per student"]].map(([n,l])=>(
               <Tilt key={l} max={3}>
                 <Card padding="var(--space-5)" style={{height:'100%'}}>
                   <div style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:'clamp(30px,3.4vw,44px)',lineHeight:1,color:'var(--gold-700)',letterSpacing:'-.02em'}}>

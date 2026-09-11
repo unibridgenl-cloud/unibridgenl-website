@@ -320,7 +320,7 @@ function HomeScreen({ go }) {
       {/* ── Logo marquee ── */}
       <section style={{background:'var(--ink-900)',padding:'clamp(28px,4vw,44px) 0',borderTop:'1px solid rgba(251,244,236,.09)'}}>
         <div style={{textAlign:'center',marginBottom:'var(--space-6)'}}>
-          <span className="ub-overline" style={{color:'rgba(251,244,236,.42)'}}>16 universities we cover</span>
+          <span className="ub-overline" style={{color:'rgba(251,244,236,.42)'}}>Universities we help students apply to</span>
         </div>
         <Marquee items={UNI_LOGOS} speed={54} height={58} render={([name,domain])=>(
           <span title={domain} style={{display:'flex',alignItems:'center',gap:12,padding:'0 6px',opacity:.6,transition:'opacity 400ms var(--ease-standard)'}}
@@ -376,7 +376,7 @@ function HomeScreen({ go }) {
             <Reveal delay={180}><p style={{color:'var(--ink-100)',fontSize:'var(--text-body-lg)',maxWidth:'44ch'}}>No inbox archaeology. You always know what is done, what is with us, and what needs you today.</p></Reveal>
             <Reveal delay={260}>
               <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-8)',marginTop:'var(--space-10)'}}>
-                {[[16,"universities we cover"],[13,"cities in the Netherlands"],[1,"advisor, start to arrival"]].map(([n,l])=>(
+                {[[16,"universities we help you apply to"],[13,"cities in the Netherlands"],[1,"advisor, start to arrival"]].map(([n,l])=>(
                   <div key={l}>
                     <div style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:42,lineHeight:1,color:'var(--gold-300)'}}><Counter to={n}/></div>
                     <div style={{fontSize:'var(--text-caption)',color:'var(--ink-100)',marginTop:6}}>{l}</div>
