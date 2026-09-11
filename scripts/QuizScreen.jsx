@@ -387,6 +387,11 @@ function Analysing({ name, onDone }) {
 
 const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 
+/* Apps Script web app on unibridgenl@gmail.com. Emails the result to the student
+   and copies the advisor. text/plain avoids a CORS preflight Apps Script cannot answer. */
+const UB_ENDPOINT = "https://script.google.com/macros/s/AKfycbxXrbOgXwzirT8fnW_dlVDAXTd0jhAEzIVQAMjiYgNiD_Qp6B_AiIMTMiG-64AaRSjd/exec";
+const UB_TOKEN = "ub-2026-9f3a71";
+
 function QuizScreen({ go }) {
   const [stage, setStage] = React.useState("gate"); // gate → quiz → analysing → result
   const [lead, setLead] = React.useState({ name:"", email:"", country:"", intake:"September 2027", consent:true });
@@ -475,17 +480,36 @@ Suggested level: ${level}
 
 Matching programmes:
 ${progs}`;
-    fetch("https://api.web3forms.com/submit", {
+    fetch(UB_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
-        access_key: WEB3FORMS_KEY,
-        subject: `New Find my field result: ${lead.name || "Website visitor"}`,
-        from_name: lead.name || "UniBridge NL website",
+        token: UB_TOKEN,
+        type: "quiz",
+        name: lead.name,
         email: lead.email,
-        message: body
+        country: lead.country,
+        intake: lead.intake,
+        field: field.name,
+        niche: bestNiche.name,
+        level: level,
+        why: bestNiche.why,
+        programmes: (bestNiche.progs || []).map(([p,u]) => ({ name: p, university: u }))
       })
-    }).then(r => r.json()).then(d => { if (d.success) setSent(true); }).catch(() => {});
+    }).then(r => r.json()).then(d => { if (d && d.ok) setSent(true); }).catch(() => {
+      /* Endpoint down: fall back to the old advisor-only notification so the lead is never lost. */
+      fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          subject: `New Find my field result: ${lead.name || "Website visitor"}`,
+          from_name: lead.name || "UniBridge NL website",
+          email: lead.email,
+          message: body
+        })
+      }).catch(() => {});
+    });
   }, [stage, bestNiche, lead, field, level]);
 
   return (

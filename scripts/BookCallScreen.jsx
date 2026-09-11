@@ -3,6 +3,12 @@ const { PageHero, Reveal, Rise, Stagger, Magnetic, Tilt } = window;
 
 const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 
+/* Apps Script web app on unibridgenl@gmail.com. Creates the Calendar event with a
+   Google Meet link, invites the student, and emails a confirmation.
+   text/plain avoids a CORS preflight Apps Script cannot answer. */
+const UB_ENDPOINT = "https://script.google.com/macros/s/AKfycbxXrbOgXwzirT8fnW_dlVDAXTd0jhAEzIVQAMjiYgNiD_Qp6B_AiIMTMiG-64AaRSjd/exec";
+const UB_TOKEN = "ub-2026-9f3a71";
+
 const DAYS = [
   { d:"Mon", n:"6 Oct", iso:"2026-10-06", slots:["09:30","11:00","14:00"] },
   { d:"Tue", n:"7 Oct", iso:"2026-10-07", slots:["10:00","13:30"] },
@@ -35,21 +41,46 @@ Date: ${active.d} ${active.n}
 Time: ${slot} CET
 Start (ISO): ${startIso}`;
     try {
-      const res = await fetch("https://api.web3forms.com/submit", {
+      const res = await fetch(UB_ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          subject: `New call booking: ${name || "Website visitor"}`,
-          from_name: name || "UniBridge NL website",
+          token: UB_TOKEN,
+          type: "booking",
+          name: name,
           email: email,
-          message: message
+          language: language,
+          date: `${active.d} ${active.n}`,
+          time: slot,
+          startIso: startIso
         })
       });
       const data = await res.json();
-      if (data.success) { setBooked(true); } else { setError(true); }
+      if (data && data.ok) {
+        setBooked(true);
+      } else {
+        throw new Error("endpoint declined");
+      }
     } catch (e) {
-      setError(true);
+      /* Endpoint down: fall back to the advisor notification so no booking is lost.
+         The call still gets made, it is just scheduled by hand. */
+      try {
+        const res2 = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            access_key: WEB3FORMS_KEY,
+            subject: `New call booking: ${name || "Website visitor"}`,
+            from_name: name || "UniBridge NL website",
+            email: email,
+            message: message
+          })
+        });
+        const data2 = await res2.json();
+        if (data2.success) { setBooked(true); } else { setError(true); }
+      } catch (e2) {
+        setError(true);
+      }
     } finally {
       setSubmitting(false);
     }
