@@ -10,9 +10,9 @@ const PLANS = [
     who:"The whole move handled, from shortlist to the keys in your hand.",
     items:[["check","Up to five university applications"],["check","Everything in Bridge Basic"],["check","Housing search with a licensed letting agency"],["check","Contract review before you sign"],["check","Visa & BSN appointment booking"],["check","Bank, insurance and OV chip card"],["check","Arrival week support"],["check","WhatsApp line to your advisor"]],
     excl:[], cta:"primary" },
-  { name:"Bridge Together", tier:"Together", price:"€1,750", amount:1750, note:"one-off",
-    who:"Under 18, or parents who want to be walked through every step. A parent or legal guardian signs for students under 18.",
-    items:[["check","Everything in Bridge Full"],["check","Parent briefing call in your language"],["check","Guardianship documents prepared and checked"],["check","Monthly progress call for the family"],["check","Priority WhatsApp, answered same day"]],
+  { name:"Bridge Settled", tier:"Settled", price:"€1,750", amount:1750, note:"one-off",
+    who:"You want somebody in your corner past arrival week, through the whole first year.",
+    items:[["check","Everything in Bridge Full"],["check","Allowance check: whether you qualify for healthcare and rent allowance, walked through on a call"],["check","Huisarts and dentist registration, before you need one"],["check","Second-year housing search, started in January"],["check","Monthly check-in through your first two semesters"],["check","Parent briefing call in your language"],["check","Priority WhatsApp, answered same day"]],
     excl:[], cta:"secondary" }
 ];
 
@@ -35,7 +35,10 @@ const COMPARE = [
   ["Bank, insurance, OV card","no","yes","yes"],
   ["Arrival week support","no","yes","yes"],
   ["Parent briefing call","no","no","yes"],
-  ["Guardianship documents prepared","no","no","yes"],
+  ["Allowance check","no","no","yes"],
+  ["Huisarts registration","no","no","yes"],
+  ["Second-year housing search","no","no","yes"],
+  ["Check-ins through first year","no","no","yes"],
   ["Support channel","Email","WhatsApp","Priority WhatsApp"]
 ];
 
@@ -45,9 +48,9 @@ const FAQ = [
   ["When do I pay?","After the free 15-minute call, once you accept the route in writing. You can split any plan into three interest-free instalments."],
   ["What if my visa is refused?","We refile once at no cost and, if it fails again, refund the visa portion of your fee."],
   ["What if I'm rejected by every university?","If none of your applications lead to an offer for the intake you paid for, we carry your plan to the next intake at no extra cost."],
-  ["Can my parents join the calls?","Yes, and on Bridge Together we schedule a briefing call for them in Hindi, Dutch or English."],
-  ["My child is under 18. What exactly do you do about guardianship?","Dutch universities require a guardianship arrangement for students under 18, and that arrangement is made through a licensed guardianship provider, not through us. What we do is tell you precisely what your university asks for, prepare and check the documents, and keep the deadlines moving. We do not act as guardian and we cannot approve the arrangement ourselves. If your university has no provider it works with, say so on the free call and we will point you to one before you pay for anything."],
-  ["Who signs the contract for a student under 18?","A parent or legal guardian. Someone under 18 cannot enter this agreement on their own, so the adult signs and we copy them on everything."]
+  ["Can my parents join the calls?","Yes, and on Bridge Settled we schedule a briefing call for them in Hindi, Dutch or English."],
+  ["What does Bridge Settled actually add?","Bridge Full stops once you have your keys. Bridge Settled keeps going for a year. The two things students most often miss are allowances, healthcare and rent support you may be entitled to every month, and a huisarts, because practices near student housing fill up and you do not want to be finding one while ill. We also start your second-year housing hunt in January rather than June, which is the difference between choosing a room and taking whatever is left."],
+  ["Will you be under 18 when your course starts?","We only work with students who are 18 or over by their first day. Universities require a formal guardianship arrangement for minors, made through a licensed provider, and that is not something we are set up to arrange. Get in touch anyway. We will tell you what your university needs and point you somewhere that can help, at no cost."]
 ];
 
 /** Accordion row: height-animated answer, rotating chevron. */
