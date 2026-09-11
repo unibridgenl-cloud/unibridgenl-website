@@ -353,16 +353,26 @@ function removeFromStudyList(id) {
 }
 function clearStudyList() { writeStudyList([]); }
 
-// React hook so any component re-renders when the list changes (even across tabs)
+// React hook so any component re-renders when the list changes (even across tabs),
+// and re-reads from localStorage whenever the page is revisited after being closed
+// or backgrounded (mobile browsers restore a frozen page instead of re-running JS,
+// so without this the list can show stale data until the visitor manually reloads).
 function useStudyList() {
   const [items, setItems] = React.useState(readStudyList());
   React.useEffect(() => {
     const refresh = () => setItems(readStudyList());
+    const onVisibility = () => { if (document.visibilityState === "visible") refresh(); };
     window.addEventListener(UB_LIST_EVENT, refresh);
     window.addEventListener("storage", refresh);
+    window.addEventListener("pageshow", refresh); // fires on bfcache restore (closed tab / app switch)
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener(UB_LIST_EVENT, refresh);
       window.removeEventListener("storage", refresh);
+      window.removeEventListener("pageshow", refresh);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
   return items;

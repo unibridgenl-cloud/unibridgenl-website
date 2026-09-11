@@ -4,11 +4,11 @@ const { PageHero, Reveal, Rise, Stagger, Magnetic, Tilt } = window;
 const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 
 const DAYS = [
-  { d:"Mon", n:"6 Oct", slots:["09:30","11:00","14:00"] },
-  { d:"Tue", n:"7 Oct", slots:["10:00","13:30"] },
-  { d:"Wed", n:"8 Oct", slots:["09:00","11:30","15:00","16:30"] },
-  { d:"Thu", n:"9 Oct", slots:[] },
-  { d:"Fri", n:"10 Oct", slots:["09:30","12:00","14:30"] }
+  { d:"Mon", n:"6 Oct", iso:"2026-10-06", slots:["09:30","11:00","14:00"] },
+  { d:"Tue", n:"7 Oct", iso:"2026-10-07", slots:["10:00","13:30"] },
+  { d:"Wed", n:"8 Oct", iso:"2026-10-08", slots:["09:00","11:30","15:00","16:30"] },
+  { d:"Thu", n:"9 Oct", iso:"2026-10-09", slots:[] },
+  { d:"Fri", n:"10 Oct", iso:"2026-10-10", slots:["09:30","12:00","14:30"] }
 ];
 
 function BookCallScreen({ go }) {
@@ -25,12 +25,15 @@ function BookCallScreen({ go }) {
   const submitBooking = async () => {
     setSubmitting(true);
     setError(false);
+    const startIso = `${active.iso}T${slot}:00+02:00`;
     const message = `New call booking via unibridgenl.com
 
 Name: ${name}
 Email: ${email}
 Language: ${language}
-Requested slot: ${active.d} ${active.n}, ${slot} CET`;
+Date: ${active.d} ${active.n}
+Time: ${slot} CET
+Start (ISO): ${startIso}`;
     try {
       const res = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
