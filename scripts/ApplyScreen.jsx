@@ -50,7 +50,7 @@ Name: ${firstName} ${lastName}
 Email: ${email}
 WhatsApp: ${whatsapp || "Not provided"}
 Country of citizenship: ${country}
-Under 18 at intake: ${underEighteen ? "YES, refer out, we do not take minors" : "No"}
+Under 18 at intake: ${underEighteen ? "YES, outside our scope" : "No"}
 Highest diploma: ${diploma}
 
 Study level: ${studyLevel}
@@ -121,7 +121,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
             <Checkbox checked={svcHousing} onChange={e=>setSvcHousing(e.target.checked)} label="Housing via a licensed letting agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
             <Checkbox checked={svcVisa} onChange={e=>setSvcVisa(e.target.checked)} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
             <Checkbox checked={svcArrival} onChange={e=>setSvcArrival(e.target.checked)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
-            <Checkbox checked={underEighteen} onChange={e=>setUnderEighteen(e.target.checked)} label="I will be under 18 when my course starts" description="We only take students who are 18 or over on their first day, because universities require a formal guardianship arrangement for minors and that is not something we arrange. Tick this anyway. We will tell you what your university needs and point you to someone who can help, at no cost."/>
+            <Checkbox checked={underEighteen} onChange={e=>setUnderEighteen(e.target.checked)} label="I will be under 18 when my course starts" description="We work with students who are 18 or over on their first day. Universities require a formal guardianship arrangement for minors and we are not set up to handle that, so we would not be the right fit."/>
             <Checkbox checked={agreed} onChange={e=>setAgreed(e.target.checked)} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
             <a onClick={()=>go('privacy')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'underline',marginLeft:32}}>Read our privacy statement</a>
             </Stagger>

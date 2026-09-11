@@ -50,7 +50,7 @@ const FAQ = [
   ["What if I'm rejected by every university?","If none of your applications lead to an offer for the intake you paid for, we carry your plan to the next intake at no extra cost."],
   ["Can my parents join the calls?","Yes, and on Bridge Settled we schedule a briefing call for them in Hindi, Dutch or English."],
   ["What does Bridge Settled actually add?","Bridge Full stops once you have your keys. Bridge Settled keeps going for a year. The two things students most often miss are allowances, healthcare and rent support you may be entitled to every month, and a huisarts, because practices near student housing fill up and you do not want to be finding one while ill. We also start your second-year housing hunt in January rather than June, which is the difference between choosing a room and taking whatever is left."],
-  ["Will you be under 18 when your course starts?","We only work with students who are 18 or over by their first day. Universities require a formal guardianship arrangement for minors, made through a licensed provider, and that is not something we are set up to arrange. Get in touch anyway. We will tell you what your university needs and point you somewhere that can help, at no cost."]
+  ["Will you be under 18 when your course starts?","Then we are not the right fit, and we would rather say so now than halfway through. Universities require a formal guardianship arrangement for students under 18, and we are not set up to handle that. We work with students who are 18 or over on their first day."]
 ];
 
 /** Accordion row: height-animated answer, rotating chevron. */
