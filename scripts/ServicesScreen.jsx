@@ -45,7 +45,7 @@ const COMPARE = [
 const FAQ = [
   ["Do you guarantee admission?","No. Nobody honestly can. We only put universities on your list where your grades clear their bar, and we tell you the odds in plain numbers."],
   ["Do you guarantee housing?","No. We work with a licensed housing intermediary who sources verified rooms, and we read every contract before you sign. Deposits go straight to the landlord or agency."],
-  ["When do I pay?","After the free 15-minute call, once you accept the route in writing. You can split any plan into three interest-free instalments."],
+  ["When do I pay?","After the free 15-minute call, once you accept the route in writing."],
   ["What if my visa is refused?","We refile once at no cost and, if it fails again, refund the visa portion of your fee."],
   ["What if I'm rejected by every university?","If none of your applications lead to an offer for the intake you paid for, we carry your plan to the next intake at no extra cost."],
   ["Can my parents join the calls?","Yes, and on Bridge Settled we schedule a briefing call for them in Hindi, Dutch or English."],
@@ -125,7 +125,6 @@ function ServicesScreen({ go }) {
                     <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:44,lineHeight:1,color:'var(--text-heading)'}}><MoneyCounter to={p.amount}/></span>
                     <span style={{fontSize:'var(--text-caption)',color:'var(--text-muted)',whiteSpace:'nowrap'}}>{p.note}</span>
                   </div>
-                  <div style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:6}}>or three instalments, no interest</div>
                   <hr className="ub-rule" style={{margin:'var(--space-5) 0'}}/>
                   <div style={{display:'flex',flexDirection:'column',gap:10}}>
                     {p.items.map(([,label])=>(
