@@ -412,20 +412,22 @@ function HomeScreen({ go }) {
         </div>
       </section>
 
-      {/* ── Testimonials ── */}
+      {/* ── What we commit to. Replaces placeholder testimonials: real student
+             quotes go back here once we have written permission to publish them. ── */}
       <section style={{background:'var(--surface-page)',padding:'clamp(80px,11vw,150px) var(--gutter-inline)'}}>
         <div style={{maxWidth:'var(--content-max)',margin:'0 auto'}}>
-          <Reveal><h2 style={{fontSize:'clamp(28px,3.4vw,46px)',letterSpacing:'-.025em',marginBottom:'var(--space-10)'}}>What it felt like on the other side</h2></Reveal>
+          <Reveal><h2 style={{fontSize:'clamp(28px,3.4vw,46px)',letterSpacing:'-.025em',marginBottom:'var(--space-4)'}}>What we commit to, including when the answer is no</h2></Reveal>
+          <Reveal delay={80}><p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'58ch',marginBottom:'var(--space-10)'}}>We are a young company, so we would rather tell you how we work than show you quotes you have no way to check.</p></Reveal>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:'var(--space-5)'}}>
-            {[["Amara O.","University of Amsterdam","I landed on a Tuesday and had my BSN appointment on the Thursday. Nothing was left to figure out at the airport."],["Diego F.","Utrecht University, MSc Data Science","They talked me out of two universities I would have wasted money applying to. That advice paid for the whole service."],["Nour H.","VU Amsterdam, BSc Architecture","Housing was the part I was scared of. Their partner agency found the room and UniBridge read the contract before I signed."]].map(([n,s,q],i)=>(
-              <Reveal key={n} delay={i*110} style={{height:'100%'}}>
+            {[["message-circle","We will talk you out of it","If your grades do not clear a programme, you hear that on the free call, before you have paid us anything or wasted an application fee."],["shield-check","No promises we cannot keep","We do not own housing and we do not sit on admissions panels. What we control is that your file is complete, on time, and that somebody reads your rental contract before you sign it."],["users","One advisor, start to arrival","The same person handles your case from first question to arrival week, in English, Nederlands, Hindi, Tamil or Telugu. You will not be passed around a call centre."]].map(([ic,t,q],i)=>(
+              <Reveal key={t} delay={i*110} style={{height:'100%'}}>
                 <Tilt max={5}>
                   <Card rule padding="var(--space-8)" style={{height:'100%'}}>
-                    <p style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontSize:'var(--text-h4)',lineHeight:1.45,color:'var(--text-heading)'}}>{q}</p>
-                    <div style={{display:'flex',alignItems:'center',gap:12,marginTop:'var(--space-6)'}}>
-                      <div style={{width:38,height:38,borderRadius:999,background:'var(--surface-tertiary-soft)',color:'var(--moss-700)',display:'flex',alignItems:'center',justifyContent:'center',font:'700 14px var(--font-sans)'}}>{n[0]}</div>
-                      <div><div style={{fontSize:'var(--text-body-sm)',fontWeight:700,color:'var(--text-heading)'}}>{n}</div><div style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>{s}</div></div>
-                    </div>
+                    <span style={{display:'inline-flex',width:44,height:44,borderRadius:'var(--radius-md)',alignItems:'center',justifyContent:'center',background:'var(--surface-tertiary-soft)',color:'var(--moss-700)',marginBottom:'var(--space-5)'}}>
+                      <Icon name={ic} size={21}/>
+                    </span>
+                    <h3 style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontSize:'var(--text-h4)',lineHeight:1.3,color:'var(--text-heading)',margin:'0 0 var(--space-3)'}}>{t}</h3>
+                    <p style={{fontSize:'var(--text-body)',lineHeight:1.6,color:'var(--text-muted)',margin:0}}>{q}</p>
                   </Card>
                 </Tilt>
               </Reveal>
