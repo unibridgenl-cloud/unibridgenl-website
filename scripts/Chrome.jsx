@@ -1,7 +1,9 @@
 const { Button, Logo, Icon, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
 
 function SiteHeader({ route, go }) {
-  const nav = [["home","How it works"],["universities","Universities"],["services","Services"],["quiz","Find my field"],["mylist","My list"],["about","About us"]];
+  const _list = (typeof useStudyList === 'function') ? useStudyList() : [];
+  const listCount = _list.length;
+  const nav = [["home","How it works"],["universities","Universities"],["services","Services"],["quiz","Find my field"],["about","About us"]];
   const y = useScrollY();
   const overHero = route === 'home' && y < 70;
   const fg = overHero ? 'var(--cream-200)' : 'var(--text-muted)';
@@ -27,6 +29,11 @@ function SiteHeader({ route, go }) {
             </a>);
           })}
         </nav>
+        <button onClick={()=>go('mylist')} aria-label="My list" title="My study list" style={{position:'relative',display:'inline-flex',alignItems:'center',gap:6,cursor:'pointer',background:'none',border:'1px solid '+(overHero?'rgba(251,244,236,.35)':'var(--border-default)'),borderRadius:'var(--radius-pill)',padding:'7px 12px',color:overHero?'var(--cream-200)':'var(--text-heading)',font:'600 var(--text-body-sm) var(--font-sans)',whiteSpace:'nowrap',transition:'color 400ms var(--ease-standard), border-color 400ms var(--ease-standard)'}}>
+          <Icon name="graduation-cap" size={16}/>
+          <span className="ub-wordmark">List</span>
+          {listCount > 0 && <span style={{minWidth:18,height:18,padding:'0 5px',borderRadius:999,background:'var(--gold-500)',color:'var(--cream-100)',font:'700 11px/18px var(--font-sans)',textAlign:'center'}}>{listCount}</span>}
+        </button>
         <span className="ub-navcall"><Button size="sm" variant={overHero ? 'ghost' : 'secondary'} onClick={()=>go('call')} style={overHero?{color:'var(--cream-200)',border:'1px solid rgba(251,244,236,.35)',whiteSpace:'nowrap'}:{whiteSpace:'nowrap'}}>Free 15-min call</Button></span>
         <Magnetic strength={0.16}><Button size="sm" onClick={()=>go('apply')} style={{whiteSpace:'nowrap'}}>Start free</Button></Magnetic>
       </div>
