@@ -11,8 +11,8 @@ const PLANS = [
     items:[["check","Up to five university applications"],["check","Everything in Bridge Basic"],["check","Housing search with a licensed letting agency"],["check","Contract review before you sign"],["check","Visa & BSN appointment booking"],["check","Bank, insurance and OV chip card"],["check","Arrival week support"],["check","WhatsApp line to your advisor"]],
     excl:[], cta:"primary" },
   { name:"Bridge Together", tier:"Together", price:"€1,750", amount:1750, note:"one-off",
-    who:"Under 18, or parents who want to be walked through every step.",
-    items:[["check","Everything in Bridge Full"],["check","Parent briefing call in your language"],["check","Guardianship paperwork under 18"],["check","Monthly progress call for the family"],["check","Priority WhatsApp, answered same day"]],
+    who:"Under 18, or parents who want to be walked through every step. A parent or legal guardian signs for students under 18.",
+    items:[["check","Everything in Bridge Full"],["check","Parent briefing call in your language"],["check","Guardianship documents prepared and checked"],["check","Monthly progress call for the family"],["check","Priority WhatsApp, answered same day"]],
     excl:[], cta:"secondary" }
 ];
 
@@ -35,7 +35,7 @@ const COMPARE = [
   ["Bank, insurance, OV card","no","yes","yes"],
   ["Arrival week support","no","yes","yes"],
   ["Parent briefing call","no","no","yes"],
-  ["Guardianship under 18","no","no","yes"],
+  ["Guardianship documents prepared","no","no","yes"],
   ["Support channel","Email","WhatsApp","Priority WhatsApp"]
 ];
 
@@ -45,7 +45,9 @@ const FAQ = [
   ["When do I pay?","After the free 15-minute call, once you accept the route in writing. You can split any plan into three interest-free instalments."],
   ["What if my visa is refused?","We refile once at no cost and, if it fails again, refund the visa portion of your fee."],
   ["What if I'm rejected by every university?","If none of your applications lead to an offer for the intake you paid for, we carry your plan to the next intake at no extra cost."],
-  ["Can my parents join the calls?","Yes, and on Bridge Together we schedule a briefing call for them in Hindi, Dutch or English."]
+  ["Can my parents join the calls?","Yes, and on Bridge Together we schedule a briefing call for them in Hindi, Dutch or English."],
+  ["My child is under 18. What exactly do you do about guardianship?","Dutch universities require a guardianship arrangement for students under 18, and that arrangement is made through a licensed guardianship provider, not through us. What we do is tell you precisely what your university asks for, prepare and check the documents, and keep the deadlines moving. We do not act as guardian and we cannot approve the arrangement ourselves. If your university has no provider it works with, say so on the free call and we will point you to one before you pay for anything."],
+  ["Who signs the contract for a student under 18?","A parent or legal guardian. Someone under 18 cannot enter this agreement on their own, so the adult signs and we copy them on everything."]
 ];
 
 /** Accordion row: height-animated answer, rotating chevron. */

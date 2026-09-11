@@ -28,6 +28,9 @@ function ApplyScreen({ go }) {
   const [svcHousing, setSvcHousing] = React.useState(true);
   const [svcVisa, setSvcVisa] = React.useState(false);
   const [svcArrival, setSvcArrival] = React.useState(false);
+  /* Under-18s cannot validly enter this agreement themselves, so we flag it at
+     intake and contract with the parent or legal guardian instead. */
+  const [underEighteen, setUnderEighteen] = React.useState(false);
   const [agreed, setAgreed] = React.useState(false);
 
   const steps = [{label:"About you",meta:"2 min"},{label:"Study plan",meta:"1 min"},{label:"Services",meta:"30 sec"}];
@@ -47,6 +50,7 @@ Name: ${firstName} ${lastName}
 Email: ${email}
 WhatsApp: ${whatsapp || "Not provided"}
 Country of citizenship: ${country}
+Under 18 at intake: ${underEighteen ? "YES, parent or guardian must sign" : "No"}
 Highest diploma: ${diploma}
 
 Study level: ${studyLevel}
@@ -117,6 +121,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
             <Checkbox checked={svcHousing} onChange={e=>setSvcHousing(e.target.checked)} label="Housing via a licensed letting agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
             <Checkbox checked={svcVisa} onChange={e=>setSvcVisa(e.target.checked)} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
             <Checkbox checked={svcArrival} onChange={e=>setSvcArrival(e.target.checked)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
+            <Checkbox checked={underEighteen} onChange={e=>setUnderEighteen(e.target.checked)} label="I will be under 18 when my course starts" description="Dutch universities require a guardianship arrangement for minors, and a parent or legal guardian signs the agreement rather than the student. Tick this and we will explain what your university needs before you pay anything."/>
             <Checkbox checked={agreed} onChange={e=>setAgreed(e.target.checked)} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
             <a onClick={()=>go('privacy')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'underline',marginLeft:32}}>Read our privacy statement</a>
             </Stagger>
