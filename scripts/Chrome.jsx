@@ -3,7 +3,7 @@ const { Button, Logo, Icon, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
 function SiteHeader({ route, go }) {
   const _list = (typeof useStudyList === 'function') ? useStudyList() : [];
   const listCount = _list.length;
-  const nav = [["home","How it works"],["universities","Universities"],["services","Services"],["quiz","Find my field"],["about","About us"]];
+  const nav = [["home","How it works"],["universities","Universities"],["services","Services"],["guide","Handbook"],["quiz","Find my field"],["about","About us"]];
   const y = useScrollY();
   const overHero = route === 'home' && y < 70;
   const fg = overHero ? 'var(--cream-200)' : 'var(--text-muted)';
@@ -47,7 +47,7 @@ function HeaderSpacer() { return <div style={{height:69}}/>; }
 function SiteFooter({ go }) {
   const cols = [
     ["Programmes",[["Bachelor","universities"],["Master","universities"],["Find my field","quiz"],["My study list","mylist"]]],
-    ["Services",[["Enrolment","services"],["Housing","services"],["Visa & BSN","services"],["Plans & pricing","services"]]],
+    ["Services",[["Enrolment","services"],["Housing","services"],["Visa & BSN","services"],["Plans & pricing","services"],["Student handbook, €15","guide"]]],
     ["Company",[["About us","about"],["Partner universities","universities"],["Contact","contact"],["Privacy statement","privacy"]]]
   ];
   return (
@@ -101,6 +101,44 @@ function Placeholder({ label = "Photo", ratio = "4 / 3", style }) {
   );
 }
 
+/** The handbook cover, drawn rather than photographed so it stays sharp at any size.
+    `width` drives every measurement, so the whole thing scales proportionally. */
+function HandbookCover({ width = 280, style }) {
+  const w = width;
+  return (
+    <div style={{width:'100%',maxWidth:w,margin:'0 auto',aspectRatio:'210 / 297',position:'relative',overflow:'hidden',
+      borderRadius:'var(--radius-lg)',background:'var(--ink-900)',color:'var(--cream-200)',boxShadow:'var(--shadow-lg)',
+      display:'flex',flexDirection:'column',justifyContent:'space-between',padding:w*0.095,...style}}>
+      <div aria-hidden="true" style={{position:'absolute',inset:0,pointerEvents:'none',
+        background:'radial-gradient(80% 60% at 12% 18%, rgba(184,124,70,.34), transparent 62%), radial-gradient(70% 55% at 92% 96%, rgba(193,97,63,.26), transparent 64%)'}}/>
+      <div aria-hidden="true" style={{position:'absolute',left:0,top:0,bottom:0,width:Math.max(3,w*0.016),
+        background:'linear-gradient(90deg, rgba(251,244,236,.20), rgba(251,244,236,0))',pointerEvents:'none'}}/>
+
+      <div style={{position:'relative',display:'flex',alignItems:'center',gap:w*0.035}}>
+        <img src="/assets/logo-badge.jpg" alt="" style={{width:w*0.11,height:w*0.11,borderRadius:999,display:'block'}}/>
+        <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,
+          fontSize:w*0.058,color:'var(--cream-200)',lineHeight:1}}>UniBridge NL</span>
+      </div>
+
+      <div style={{position:'relative'}}>
+        <div style={{fontSize:Math.max(7,w*0.034),fontWeight:700,letterSpacing:'.2em',textTransform:'uppercase',
+          color:'var(--gold-300)',marginBottom:w*0.04}}>2026 / 27 edition</div>
+        <div style={{height:Math.max(2,w*0.008),width:w*0.24,background:'var(--gold-500)',marginBottom:w*0.055}}/>
+        <div style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,
+          fontSize:w*0.142,lineHeight:1.05,color:'var(--cream-100)',letterSpacing:'-.02em'}}>
+          The Netherlands<br/>
+          <em style={{fontStyle:'italic',fontWeight:500,color:'var(--gold-300)'}}>Student</em> Handbook
+        </div>
+      </div>
+
+      <div style={{position:'relative',borderTop:'1px solid rgba(251,244,236,.22)',paddingTop:w*0.035,
+        fontSize:Math.max(7,w*0.036),color:'var(--ink-100)',display:'flex',justifyContent:'space-between',gap:8}}>
+        <span>unibridgenl.com</span><span>Amsterdam</span>
+      </div>
+    </div>
+  );
+}
+
 function CookieBanner({ go }) {
   const [visible, setVisible] = React.useState(false);
   React.useEffect(() => {
@@ -124,4 +162,4 @@ function CookieBanner({ go }) {
   );
 }
 
-Object.assign(window, { SiteHeader, HeaderSpacer, SiteFooter, Section, Placeholder, CookieBanner });
+Object.assign(window, { SiteHeader, HeaderSpacer, SiteFooter, Section, Placeholder, CookieBanner, HandbookCover });

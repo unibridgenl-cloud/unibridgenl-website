@@ -28,7 +28,7 @@
 <script type="text/babel" src="/scripts/ServicesScreen.jsx"></script>
 <script type="text/babel">
 const ROUTE = "services";
-const URL_MAP = {home:"/",universities:"/universities/",quiz:"/find-my-field/",services:"/services/",apply:"/apply/",call:"/book-a-call/",privacy:"/privacy/",about:"/about/",contact:"/contact/",mylist:"/my-list/"};
+const URL_MAP = {home:"/",universities:"/universities/",quiz:"/find-my-field/",services:"/services/",apply:"/apply/",call:"/book-a-call/",privacy:"/privacy/",about:"/about/",contact:"/contact/",mylist:"/my-list/",guide:"/guide/"};
 function go(target){
   if (target === ROUTE) { window.scrollTo({top:0,behavior:'smooth'}); return; }
   window.location.href = URL_MAP[target] || "/";
