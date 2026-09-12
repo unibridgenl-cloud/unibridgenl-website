@@ -19,7 +19,7 @@ function SiteHeader({ route, go }) {
           <img src="/assets/logo-badge.jpg" alt="UniBridge NL" style={{width:40,height:40,borderRadius:999}}/>
           <span className="ub-wordmark"><Logo size={26} tone={overHero ? 'cream' : 'ink'}/></span>
         </div>
-        <nav className="ub-nav" style={{display:'flex',flexWrap:'nowrap',gap:'clamp(10px,1.6vw,22px)',marginLeft:'auto',minWidth:0}}>
+        <nav className="ub-nav" style={{display:'flex',flexWrap:'nowrap',gap:'clamp(10px,1.4vw,20px)',marginLeft:'auto',minWidth:0}}>
           {nav.map(([k,l])=>{
             const on = route===k;
             return (
@@ -29,6 +29,8 @@ function SiteHeader({ route, go }) {
             </a>);
           })}
         </nav>
+        <span aria-hidden="true" style={{flex:'0 0 auto',width:1,height:22,marginLeft:'clamp(10px,1.8vw,22px)',
+          background: overHero ? 'rgba(251,244,236,.22)' : 'var(--border-hairline)'}}/>
         <button onClick={()=>go('mylist')} aria-label="My list" title="My study list" style={{position:'relative',display:'inline-flex',alignItems:'center',gap:6,cursor:'pointer',background:'none',border:'1px solid '+(overHero?'rgba(251,244,236,.35)':'var(--border-default)'),borderRadius:'var(--radius-pill)',padding:'7px 12px',color:overHero?'var(--cream-200)':'var(--text-heading)',font:'600 var(--text-body-sm) var(--font-sans)',whiteSpace:'nowrap',transition:'color 400ms var(--ease-standard), border-color 400ms var(--ease-standard)'}}>
           <Icon name="graduation-cap" size={16}/>
           <span className="ub-wordmark">List</span>
