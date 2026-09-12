@@ -436,6 +436,29 @@ function HomeScreen({ go }) {
         </div>
       </section>
 
+      {/* ── The handbook ── */}
+      <section style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'clamp(20px,3vw,40px) var(--gutter-inline)'}}>
+        <Reveal y={28}>
+          <Card padding="clamp(28px,4vw,52px)" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:'clamp(24px,3vw,48px)',alignItems:'center',border:'1px solid var(--gold-300)'}}>
+            <div>
+              <div className="ub-overline">Doing it yourself</div>
+              <hr className="ub-rule" style={{width:48,margin:'12px 0 16px'}}/>
+              <h2 style={{fontSize:'clamp(24px,2.8vw,38px)',letterSpacing:'-.02em',maxWidth:'20ch',marginBottom:'var(--space-3)'}}>The whole thing, written down, for €15</h2>
+              <p style={{color:'var(--text-muted)',fontSize:'var(--text-body-lg)',maxWidth:'46ch',marginBottom:'var(--space-5)'}}>Sixty-one pages on the residence permit, BSN, DigiD, housing and rent law, banking, health insurance, the huisarts, SIM cards, transport and working here. In the order things actually happen to you.</p>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-3)'}}>
+                <Magnetic><Button onClick={()=>go('guide')} iconRight={<Icon name="arrow-right" size={16}/>}>See what is inside</Button></Magnetic>
+                <Button variant="ghost" onClick={()=>go('services')}>Or have us do it</Button>
+              </div>
+            </div>
+            <div style={{display:'flex',justifyContent:'center'}}>
+              <Tilt max={5}>
+                <HandbookCover width={260}/>
+              </Tilt>
+            </div>
+          </Card>
+        </Reveal>
+      </section>
+
       {/* ── Closing CTA ── */}
       <section style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'clamp(60px,8vw,110px) var(--gutter-inline)'}}>
         <Reveal y={36}>
