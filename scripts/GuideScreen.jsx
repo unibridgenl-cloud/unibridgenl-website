@@ -3,9 +3,10 @@ const { PageHero, Reveal, Rise, Tilt, Stagger, Magnetic, MoneyCounter, HandbookC
 
 const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 
-/* Paste a payment link here (Mollie, Stripe, PayPal) to switch the buy button to
-   instant checkout. While it is empty, the button opens the order form below and
-   we send the payment link by email. */
+/* Stripe payment link for the handbook. Paste the URL from the Stripe dashboard
+   (Payment links > the €15 handbook link, it looks like https://buy.stripe.com/...).
+   While this is empty the buy button opens the order form below instead, and we
+   send a payment link by hand. */
 const CHECKOUT_URL = "";
 
 const PRICE = 15;
@@ -57,11 +58,11 @@ const PROOF = [
 ];
 
 const FAQ = [
-  ["How do I get it?", "As a PDF, by email. If you pay by card or iDEAL the link arrives immediately. If you order through the form on this page, we send you a payment link and the file follows as soon as it clears, usually within a few hours."],
+  ["How do I get it?", "As a PDF, by email. If you pay by card or iDEAL the file arrives immediately. If you order through the form on this page, we send you a payment link and the file follows as soon as it clears, usually within a few hours."],
   ["Is it for EU students too?", "Yes. Roughly two thirds applies to everybody, and where the rules split between EU and non-EU, both answers are on the page. Nothing is written as though everyone came from the same place."],
   ["Will it go out of date?", "Most Dutch amounts are re-indexed on 1 January. Every figure in the handbook is dated and labelled, and we tell you where the live number lives. Buy it now and you get the January refresh free, at the same email address."],
   ["Is this the same as your services?", "No. The handbook is everything we know, written down, so you can do it yourself. Our plans are for students who would rather somebody else did it. If you buy the handbook and later book a plan, tell us and we will take the €15 off."],
-  ["Can I share it with a friend?", "It is licensed for the student who bought it. We keep the price at €15 precisely so that nobody has to share."],
+  ["Can I share it with a friend?", "It is licensed for the student who bought it. We keep the price at €15, VAT included, precisely so that nobody has to share."],
   ["What if I am not happy with it?", "Reply to the email within 14 days and tell us why. We will refund you and you keep the file."]
 ];
 
@@ -93,7 +94,7 @@ function GuideScreen({ go }) {
           subject: `Handbook order (€${PRICE}): ${name || "Website visitor"}`,
           from_name: name || "UniBridge NL website",
           email: email,
-          message: `New order for The Netherlands Student Handbook 2026/27 via unibridgenl.com\n\nName: ${name}\nEmail: ${email}\nCity or university: ${city}\nPrice: €${PRICE}\nAgreed to immediate delivery: ${waiver ? "yes" : "no"}\n\nSend the payment link, then the PDF once it clears.`
+          message: `New order for The Netherlands Student Handbook 2026/27 via unibridgenl.com\n\nName: ${name}\nEmail: ${email}\nCity or university: ${city}\nPrice: €${PRICE} including VAT\nAgreed to immediate delivery: ${waiver ? "yes" : "no"}\n\nSend the payment link, then the PDF once it clears.`
         })
       });
       const data = await res.json();
@@ -135,7 +136,7 @@ function GuideScreen({ go }) {
 
               <div style={{display:'flex',alignItems:'baseline',gap:10}}>
                 <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:52,lineHeight:1,color:'var(--text-heading)'}}><MoneyCounter to={PRICE}/></span>
-                <span style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>one-off, no subscription</span>
+                <span style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>one-off, including VAT</span>
               </div>
 
               <hr className="ub-rule" style={{margin:'var(--space-5) 0'}}/>
@@ -158,7 +159,7 @@ function GuideScreen({ go }) {
               <div style={{marginTop:'var(--space-6)'}}>
                 <Magnetic strength={0.16}><Button full size="lg" onClick={buy} iconRight={<Icon name="arrow-right" size={17}/>}>Get the handbook for €{PRICE}</Button></Magnetic>
               </div>
-              <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>PDF by email · 14 day refund if it does not help</div>
+              <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>Price includes VAT · PDF by email · 14 day refund if it does not help</div>
             </Card>
 
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:'var(--space-3)',marginTop:'var(--space-5)'}}>
@@ -281,10 +282,10 @@ function GuideScreen({ go }) {
                 description="You agree that, once the PDF is sent, the 14 day statutory withdrawal right for digital downloads no longer applies. We will still refund you within 14 days if the handbook does not help."/>
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-4)',alignItems:'center',justifyContent:'space-between',marginTop:'var(--space-6)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)'}}>
-              <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>€{PRICE}, one-off. No account, no subscription.</span>
+              <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>€{PRICE} including VAT, one-off. No account, no subscription.</span>
               <Magnetic strength={0.18}><Button disabled={!canOrder} onClick={submit} iconRight={<Icon name="arrow-right" size={16}/>}>{sending ? "Sending…" : "Order the handbook"}</Button></Magnetic>
             </div>
-            {sent && <Alert tone="success" title="Order received" style={{marginTop:'var(--space-5)'}}>Check your inbox. The payment link is on its way, and the PDF follows as soon as it clears. If nothing arrives within a few hours, WhatsApp us on 06 25 29 40 80.</Alert>}
+            {sent && <Alert tone="success" title="Order received" style={{marginTop:'var(--space-5)'}}>Check your inbox. The payment link is on its way, and the PDF follows as soon as it clears. Your order is The Netherlands Student Handbook 2026/27 at €{PRICE} including VAT, delivered straight away, which is why the 14 day withdrawal right no longer applies. If nothing arrives within a few hours, WhatsApp us on 06 25 29 40 80.</Alert>}
             {error && <Alert tone="warning" title="That did not send" style={{marginTop:'var(--space-5)'}}>Please try again, or WhatsApp us on 06 25 29 40 80 and we will sort it out by hand.</Alert>}
           </Card>
         </Reveal>
