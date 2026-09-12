@@ -49,7 +49,7 @@ function HeaderSpacer() { return <div style={{height:69}}/>; }
 function SiteFooter({ go }) {
   const cols = [
     ["Programmes",[["Bachelor","universities"],["Master","universities"],["Find my field","quiz"],["My study list","mylist"]]],
-    ["Services",[["Enrolment","services"],["Housing","services"],["Visa & BSN","services"],["Plans & pricing","services"],["Student handbook, €15","guide"]]],
+    ["Services",[["Enrolment","services"],["Housing","services"],["Visa & BSN","services"],["Plans & pricing","services"],["Student handbook, €19","guide"]]],
     ["Company",[["About us","about"],["Partner universities","universities"],["Contact","contact"],["Privacy statement","privacy"]]]
   ];
   return (
