@@ -1,5 +1,5 @@
 const { Card, Button, Icon, Badge, Alert, Tabs, Checkbox, Tag, Tooltip } = window.UnibridgeNLDesignSystem_3cb2d1;
-const { PageHero, Reveal, Rise, Tilt, Stagger, Magnetic, DrawRule, MoneyCounter } = window;
+const { PageHero, Reveal, Rise, Tilt, Stagger, Magnetic, DrawRule, MoneyCounter, HandbookCover } = window;
 
 const PLANS = [
   { name:"Bridge Basic", tier:"Basic", price:"€500", amount:500, note:"one-off",
@@ -196,7 +196,7 @@ function ServicesScreen({ go }) {
               ))}
             </div>
             <Alert tone="info" title="What you pay elsewhere" style={{marginTop:'var(--space-6)'}}>
-              University application fees (€50 to €100 each), the IND residence permit fee (€243 in 2027) and your housing deposit are paid directly to those parties, never to us.
+              University application fees (€50 to €100 each), the IND residence permit fee (€254 in 2026) and your housing deposit are paid directly to those parties, never to us.
             </Alert>
           </div>
         )}
@@ -211,6 +211,24 @@ function ServicesScreen({ go }) {
           </div>
         )}
         </div>
+      </div>
+
+      <div style={{maxWidth:'var(--content-max)',margin:'var(--space-12) auto 0',padding:'0 var(--gutter-inline)'}}>
+        <Reveal y={26}>
+        <Card padding="clamp(28px,4vw,48px)" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'clamp(20px,3vw,44px)',alignItems:'center',border:'1px solid var(--gold-300)'}}>
+          <div style={{display:'flex',justifyContent:'center',order:2}}>
+            <Tilt max={5}>
+              <HandbookCover width={220}/>
+            </Tilt>
+          </div>
+          <div style={{order:1}}>
+            <span className="ub-overline">Not ready for a plan</span>
+            <h2 style={{fontSize:'clamp(22px,2.6vw,34px)',letterSpacing:'-.02em',margin:'10px 0 var(--space-3)',maxWidth:'20ch'}}>Start with the handbook, €15</h2>
+            <p style={{color:'var(--text-muted)',margin:'0 0 var(--space-5)',maxWidth:'46ch'}}>Sixty-one pages covering the residence permit, BSN, DigiD, housing and rent law, banking, insurance, the huisarts, SIM cards, transport and working here. If you book a plan later, we take the €15 off.</p>
+            <Magnetic><Button onClick={()=>go('guide')} iconRight={<Icon name="arrow-right" size={16}/>}>See what is inside</Button></Magnetic>
+          </div>
+        </Card>
+        </Reveal>
       </div>
 
       <div style={{maxWidth:'var(--content-max)',margin:'var(--section-y) auto 0',padding:'0 var(--gutter-inline)'}}>
