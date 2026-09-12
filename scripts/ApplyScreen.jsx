@@ -117,12 +117,12 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
           <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)'}}>
             <Stagger step={80} y={14}>
             <Alert tone="warning" title="September deadlines close 1 May">Nine weeks left. Applications filed after 15 April get a rush fee from the university, not from us.</Alert>
-            <Checkbox checked={svcEnrolment} onChange={e=>setSvcEnrolment(e.target.checked)} label="University enrolment" description="Up to five applications, documents certified and filed."/>
-            <Checkbox checked={svcHousing} onChange={e=>setSvcHousing(e.target.checked)} label="Housing via a licensed letting agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
-            <Checkbox checked={svcVisa} onChange={e=>setSvcVisa(e.target.checked)} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
-            <Checkbox checked={svcArrival} onChange={e=>setSvcArrival(e.target.checked)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
-            <Checkbox checked={underEighteen} onChange={e=>setUnderEighteen(e.target.checked)} label="I will be under 18 when my course starts" description="We work with students who are 18 or over on their first day. Universities require a formal guardianship arrangement for minors and we are not set up to handle that, so we would not be the right fit."/>
-            <Checkbox checked={agreed} onChange={e=>setAgreed(e.target.checked)} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
+            <Checkbox checked={svcEnrolment} onChange={v=>setSvcEnrolment(v)} label="University enrolment" description="Up to five applications, documents certified and filed."/>
+            <Checkbox checked={svcHousing} onChange={v=>setSvcHousing(v)} label="Housing via a licensed letting agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
+            <Checkbox checked={svcVisa} onChange={v=>setSvcVisa(v)} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
+            <Checkbox checked={svcArrival} onChange={v=>setSvcArrival(v)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
+            <Checkbox checked={underEighteen} onChange={v=>setUnderEighteen(v)} label="I will be under 18 when my course starts" description="We work with students who are 18 or over on their first day. Universities require a formal guardianship arrangement for minors and we are not set up to handle that, so we would not be the right fit."/>
+            <Checkbox checked={agreed} onChange={v=>setAgreed(v)} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
             <a onClick={()=>go('privacy')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'underline',marginLeft:32}}>Read our privacy statement</a>
             </Stagger>
           </div>
