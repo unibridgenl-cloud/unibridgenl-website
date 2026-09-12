@@ -18,11 +18,11 @@ const PLANS = [
 
 const ADDONS = [
   ["file-check","Extra university application","€150","per application beyond your plan"],
-  ["house","Housing search only","€450","licensed agency referral + contract review"],
-  ["id-card","Visa & BSN only","€400","residence permit file and municipality booking"],
+  ["house","Housing search, for you only","€450","we act for you, never the landlord, and take nothing from agencies"],
+  ["id-card","Visa & BSN only","€400","everything around the permit your university does not do"],
   ["plane-takeoff","Arrival week only","€350","keys, bank, insurance, bike"],
   ["languages","Document translation","€60","per certified page, sworn translator"],
-  ["message-circle","Single advice call","€75","45 minutes, credited if you book a plan"]
+  ["message-circle","Single advice call","€75","45 minutes. The first 15 are always free"]
 ];
 
 const COMPARE = [
@@ -44,9 +44,10 @@ const COMPARE = [
 
 const FAQ = [
   ["Do you guarantee admission?","No. Nobody honestly can. We only put universities on your list where your grades clear their bar, and we tell you the odds in plain numbers."],
-  ["Do you guarantee housing?","No. We work with a licensed housing intermediary who sources verified rooms, and we read every contract before you sign. Deposits go straight to the landlord or agency."],
+  ["Do you guarantee housing?","No. We work with a licensed housing intermediary who sources verified rooms, and we read every contract before you sign. Deposits go straight to the landlord or agency. One thing worth saying plainly: when we search for you, we act for you and only for you. We take no fee, commission or referral payment from any landlord or letting agency, which is what Dutch law requires of anyone charging a tenant for a search."],
   ["When do I pay?","After the free 15-minute call, once you accept the route in writing."],
   ["What if my visa is refused?","We refile once at no cost and, if it fails again, refund the visa portion of your fee."],
+  ["Does the university not do the permit anyway?","Partly, and we will not pretend otherwise. Your university is an IND recognised sponsor and it files the application. What it does not do is build your proof of funds so it passes first time, chase your legalised documents, book your council appointment before the September queue, get you through biometrics and collection, and tell you what a delay does to your enrolment. That is what the Visa and BSN work is, and if your university handles all of it already, we will say so on the call and you will not pay for it."],
   ["What if I'm rejected by every university?","If none of your applications lead to an offer for the intake you paid for, we carry your plan to the next intake at no extra cost."],
   ["Can my parents join the calls?","Yes, and on Bridge Settled we schedule a briefing call for them in Hindi, Dutch or English."],
   ["What does Bridge Settled actually add?","Bridge Full stops once you have your keys. Bridge Settled keeps going for a year. The two things students most often miss are allowances, healthcare and rent support you may be entitled to every month, and a huisarts, because practices near student housing fill up and you do not want to be finding one while ill. We also start your second-year housing hunt in January rather than June, which is the difference between choosing a room and taking whatever is left."],
@@ -215,6 +216,16 @@ function ServicesScreen({ go }) {
 
       <div style={{maxWidth:'var(--content-max)',margin:'var(--space-12) auto 0',padding:'0 var(--gutter-inline)'}}>
         <Reveal y={26}>
+        <Card tone="sunken" elevation="none" padding="clamp(28px,4vw,48px)" style={{marginBottom:'var(--space-5)'}}>
+          <span className="ub-overline">Who pays us</span>
+          <h2 style={{fontSize:'clamp(22px,2.6vw,32px)',letterSpacing:'-.02em',margin:'10px 0 var(--space-4)',maxWidth:'26ch'}}>You do, and that is the whole point</h2>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:'var(--space-5)'}}>
+            <p style={{margin:0,color:'var(--text-body)'}}>Plenty of agencies place students in the Netherlands for free. They can, because Dutch universities pay recruiters a commission, commonly ten to fifteen percent of your first year tuition. Around one in five international students here arrives that way, and most of them never know it.</p>
+            <p style={{margin:0,color:'var(--text-body)'}}>It is a real option and sometimes a fine one. But an agency paid per enrolment has a reason to put the paying university at the top of your list. We take nothing from universities, nothing from landlords and nothing from letting agencies, so your shortlist is built from your grades and your budget, and we will tell you when a cheaper route or no agency at all is the right answer.</p>
+          </div>
+        </Card>
+        </Reveal>
+        <Reveal y={26}>
         <Card padding="clamp(28px,4vw,48px)" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'clamp(20px,3vw,44px)',alignItems:'center',border:'1px solid var(--gold-300)'}}>
           <div style={{display:'flex',justifyContent:'center',order:2}}>
             <Tilt max={5}>
@@ -223,8 +234,8 @@ function ServicesScreen({ go }) {
           </div>
           <div style={{order:1}}>
             <span className="ub-overline">Not ready for a plan</span>
-            <h2 style={{fontSize:'clamp(22px,2.6vw,34px)',letterSpacing:'-.02em',margin:'10px 0 var(--space-3)',maxWidth:'20ch'}}>Start with the handbook, €15</h2>
-            <p style={{color:'var(--text-muted)',margin:'0 0 var(--space-5)',maxWidth:'46ch'}}>Sixty-one pages covering the residence permit, BSN, DigiD, housing and rent law, banking, insurance, the huisarts, SIM cards, transport and working here. If you book a plan later, we take the €15 off.</p>
+            <h2 style={{fontSize:'clamp(22px,2.6vw,34px)',letterSpacing:'-.02em',margin:'10px 0 var(--space-3)',maxWidth:'20ch'}}>Start with the handbook, €19</h2>
+            <p style={{color:'var(--text-muted)',margin:'0 0 var(--space-5)',maxWidth:'46ch'}}>Sixty-one pages covering the residence permit, BSN, DigiD, housing and rent law, banking, insurance, the huisarts, SIM cards, transport and working here. If you book a plan later, we take the €19 off.</p>
             <Magnetic><Button onClick={()=>go('guide')} iconRight={<Icon name="arrow-right" size={16}/>}>See what is inside</Button></Magnetic>
           </div>
         </Card>
