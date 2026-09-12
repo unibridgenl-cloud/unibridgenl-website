@@ -4,12 +4,12 @@ const { PageHero, Reveal, Rise, Tilt, Stagger, Magnetic, MoneyCounter, HandbookC
 const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 
 /* Stripe payment link for the handbook. Paste the URL from the Stripe dashboard
-   (Payment links > the €15 handbook link, it looks like https://buy.stripe.com/...).
+   (Payment links > the €19 handbook link, it looks like https://buy.stripe.com/...).
    While this is empty the buy button opens the order form below instead, and we
    send a payment link by hand. */
 const CHECKOUT_URL = "";
 
-const PRICE = 15;
+const PRICE = 19;
 
 const PARTS = [
   ["Before you fly", "plane-takeoff", [
@@ -45,9 +45,9 @@ const PARTS = [
 
 const HIGHLIGHTS = [
   ["file-text", "61 pages", "Written for the 2026/27 intake"],
-  ["shield-check", "Checked in September 2026", "Against official Dutch sources"],
+  ["shield-check", "Checked September 2026", "Against official Dutch sources"],
   ["download", "Instant PDF", "Phone, tablet or printed"],
-  ["refresh-cw", "Free update", "When the January figures change"]
+  ["refresh-cw", "Next edition free", "When the January figures change"]
 ];
 
 const PROOF = [
@@ -60,9 +60,9 @@ const PROOF = [
 const FAQ = [
   ["How do I get it?", "As a PDF, by email. If you pay by card or iDEAL the file arrives immediately. If you order through the form on this page, we send you a payment link and the file follows as soon as it clears, usually within a few hours."],
   ["Is it for EU students too?", "Yes. Roughly two thirds applies to everybody, and where the rules split between EU and non-EU, both answers are on the page. Nothing is written as though everyone came from the same place."],
-  ["Will it go out of date?", "Most Dutch amounts are re-indexed on 1 January. Every figure in the handbook is dated and labelled, and we tell you where the live number lives. Buy it now and you get the January refresh free, at the same email address."],
-  ["Is this the same as your services?", "No. The handbook is everything we know, written down, so you can do it yourself. Our plans are for students who would rather somebody else did it. If you buy the handbook and later book a plan, tell us and we will take the €15 off."],
-  ["Can I share it with a friend?", "It is licensed for the student who bought it. We keep the price at €15, VAT included, precisely so that nobody has to share."],
+  ["Will it go out of date?", "Most Dutch amounts are re-indexed on 1 January, so we put the promise in writing. Every buyer gets the next edition free at the address they bought it with, and anything that changes in the meantime is listed with its date on the updates section further down this page. Buying in November does not leave you with a file that expires in February."],
+  ["Is this the same as your services?", "No. The handbook is everything we know, written down, so you can do it yourself. Our plans are for students who would rather somebody else did it. If you buy the handbook and later book a plan, tell us and we will take the €19 off."],
+  ["Can I share it with a friend?", "Your copy carries your name and order number on every page, so please do not. If you want to send a friend something useful, send them the free sample above. That is what it is for."],
   ["What if I am not happy with it?", "Reply to the email within 14 days and tell us why. We will refund you and you keep the file."]
 ];
 
@@ -77,6 +77,10 @@ function GuideScreen({ go }) {
   const [waiver, setWaiver] = React.useState(false);
 
   const orderRef = React.useRef(null);
+  const seeSample = () => {
+    const el = document.getElementById('sample');
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const buy = () => {
     if (CHECKOUT_URL) { window.open(CHECKOUT_URL, "_blank"); return; }
     if (orderRef.current) orderRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -94,7 +98,7 @@ function GuideScreen({ go }) {
           subject: `Handbook order (€${PRICE}): ${name || "Website visitor"}`,
           from_name: name || "UniBridge NL website",
           email: email,
-          message: `New order for The Netherlands Student Handbook 2026/27 via unibridgenl.com\n\nName: ${name}\nEmail: ${email}\nCity or university: ${city}\nPrice: €${PRICE} including VAT\nAgreed to immediate delivery: ${waiver ? "yes" : "no"}\n\nSend the payment link, then the PDF once it clears.`
+          message: `New order for The Netherlands Student Handbook 2026/27 via unibridgenl.com\n\nName: ${name}\nEmail: ${email}\nCity or university: ${city}\nPrice: €${PRICE} including VAT\nAgreed to immediate delivery: ${waiver ? "yes" : "no"}\n\nSend the payment link, then the personalised PDF once it clears.`
         })
       });
       const data = await res.json();
@@ -109,7 +113,7 @@ function GuideScreen({ go }) {
     <main style={{overflowX:'clip'}}>
       <PageHero overline="The handbook" tone="ink"
         title="Everything you have to arrange, in one file"
-        lead="The Netherlands Student Handbook is the written version of what we walk students through every intake. Sixty-one pages, in the order things actually happen to you, for €15."
+        lead="The Netherlands Student Handbook is the written version of what we walk students through every intake. Sixty-one pages, in the order things actually happen to you, for €19."
         meta={[["file-text","61 pages, 2026/27 edition"],["download","Instant PDF"],["shield-check","Checked against official sources"]].map(([i,t])=>(
           <span key={t} style={{display:'inline-flex',alignItems:'center',gap:8,fontSize:'var(--text-body-sm)'}}><Icon name={i} size={16} color="var(--gold-300)"/>{t}</span>
         ))}/>
@@ -148,7 +152,8 @@ function GuideScreen({ go }) {
                   "A master checklist made to print and tick",
                   "A tenant introduction letter and five messages to copy",
                   "Glossary of the Dutch words on your official post",
-                  "Free update when the January figures change"
+                  "Your copy, with your name on every page",
+                  "Next edition free when the January figures change"
                 ].map(t=>(
                   <div key={t} style={{display:'flex',gap:10,fontSize:'var(--text-body-sm)',color:'var(--text-body)'}}>
                     <Icon name="check" size={16} color="var(--moss-500)" style={{marginTop:2,flex:'0 0 auto'}}/>{t}
@@ -156,10 +161,11 @@ function GuideScreen({ go }) {
                 ))}
               </div>
 
-              <div style={{marginTop:'var(--space-6)'}}>
+              <div style={{marginTop:'var(--space-6)',display:'flex',flexDirection:'column',gap:'var(--space-3)'}}>
                 <Magnetic strength={0.16}><Button full size="lg" onClick={buy} iconRight={<Icon name="arrow-right" size={17}/>}>Get the handbook for €{PRICE}</Button></Magnetic>
+                <Button full variant="secondary" onClick={seeSample} iconLeft={<Icon name="file-text" size={16}/>}>Read a free sample first</Button>
               </div>
-              <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>Price includes VAT · PDF by email · 14 day refund if it does not help</div>
+              <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>Price includes VAT · PDF by email · next edition free · 14 day refund</div>
             </Card>
 
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:'var(--space-3)',marginTop:'var(--space-5)'}}>
@@ -236,7 +242,68 @@ function GuideScreen({ go }) {
         </Reveal>
       </section>
 
-      {/* ---------- Why it is worth more than €15 ---------- */}
+      {/* ---------- Free sample ---------- */}
+      <section id="sample" style={{scrollMarginTop:88,maxWidth:'var(--content-max)',margin:'0 auto',padding:'clamp(48px,7vw,96px) var(--gutter-inline) 0'}}>
+        <Reveal>
+          <div className="ub-overline">Free, no email needed</div>
+          <hr className="ub-rule" style={{width:56,margin:'12px 0 16px'}}/>
+          <h2 style={{fontSize:'clamp(26px,3.2vw,42px)',letterSpacing:'-.02em',maxWidth:'22ch'}}>Read two appendices before you buy anything</h2>
+          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'62ch'}}>Not a teaser. This is Appendix A and Appendix E, exactly as they appear in the handbook. Copy them, print them, send them to whoever is moving with you.</p>
+        </Reveal>
+
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(290px,1fr))',gap:'var(--space-5)',marginTop:'var(--space-8)'}}>
+          <Reveal y={22}>
+            <Card padding="var(--space-6)" style={{height:'100%'}}>
+              <div className="ub-overline">Appendix A</div>
+              <h3 style={{margin:'10px 0 var(--space-4)',fontSize:'var(--text-h4)'}}>The master checklist</h3>
+              {[["Before you fly",["Confirmed in writing that your university is filing your residence permit","Accommodation secured, with a written contract","Birth certificate legalised or apostilled","Proof of funds in the right account, statement dated within three months","The right insurance bought for your situation","Council registration appointment booked","Dutch eSIM or prepaid SIM ready"]],
+                ["Week one",["Photographed the meter readings and the state of every room","Checked the points calculation is attached to your contract","Registered with your council, within five days","Biometrics given, residence document collected in person"]],
+                ["Week two",["BSN received","DigiD applied for, activated within 21 days of the code","Dutch bank account open","Health insurance settled for your actual situation","Registered with a huisarts and a pharmacy"]]
+              ].map(([group,items])=>(
+                <div key={group} style={{marginBottom:'var(--space-5)'}}>
+                  <div style={{fontWeight:700,fontSize:'var(--text-body-sm)',color:'var(--gold-700)',marginBottom:8}}>{group}</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:7}}>
+                    {items.map(t=>(
+                      <div key={t} style={{display:'flex',gap:10,fontSize:'var(--text-body-sm)',color:'var(--text-body)',lineHeight:1.5}}>
+                        <span style={{flex:'0 0 auto',width:13,height:13,marginTop:3,border:'1px solid var(--gold-500)',borderRadius:3,background:'var(--surface-card)'}}/>{t}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <p style={{margin:0,fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>The full checklist carries month one and the six month rent deadline too.</p>
+            </Card>
+          </Reveal>
+
+          <Reveal delay={110} y={22}>
+            <Card padding="var(--space-6)" style={{height:'100%'}}>
+              <div className="ub-overline">Appendix E</div>
+              <h3 style={{margin:'10px 0 var(--space-4)',fontSize:'var(--text-h4)'}}>The words on your letters</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:9}}>
+                {[["Aanmaning","A formal demand. A reminder that has escalated. Deal with it today."],
+                  ["Termijn","A deadline. Look for the date next to it."],
+                  ["Bezwaar","An objection. Most decisions can be objected to, usually within six weeks."],
+                  ["Kale huur","Bare rent, without service costs. The figure the law caps."],
+                  ["Waarborgsom","Deposit. Two months of bare rent at most."],
+                  ["Bemiddelingskosten","Agency fees. A landlord's agent may not charge these to you."],
+                  ["Eigen risico","The annual excess you pay yourself, €385 in 2026."],
+                  ["Zorgtoeslag","Healthcare allowance. Claim it."],
+                  ["Huisartsenpost","Out of hours GP service. Phone first, and it costs you nothing."],
+                  ["Briefadres","A correspondence address, for people with no fixed home."]
+                ].map(([nl,en])=>(
+                  <div key={nl} style={{display:'grid',gridTemplateColumns:'minmax(96px,auto) 1fr',gap:12,fontSize:'var(--text-body-sm)',lineHeight:1.5}}>
+                    <strong style={{color:'var(--text-heading)'}}>{nl}</strong>
+                    <span style={{color:'var(--text-muted)'}}>{en}</span>
+                  </div>
+                ))}
+              </div>
+              <p style={{margin:'var(--space-4) 0 0',fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>The glossary in the handbook runs to about forty terms, grouped by where you meet them.</p>
+            </Card>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ---------- Why it is worth more than the price ---------- */}
       <section style={{background:'var(--surface-page)',marginTop:'clamp(48px,7vw,96px)',padding:'clamp(48px,7vw,96px) 0'}}>
         <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'0 var(--gutter-inline)'}}>
           <Reveal>
@@ -256,7 +323,7 @@ function GuideScreen({ go }) {
           </div>
           <Reveal delay={200}>
             <Alert tone="info" title="Honest about what it is not" style={{marginTop:'var(--space-6)'}}>
-              This is a handbook, not a service. It will not apply to a university for you, find you a room, or sit on hold with the IND. If that is what you need, our plans start with a free 15 minute call and the €15 comes off.
+              This is a handbook, not a service. It will not apply to a university for you, find you a room, or sit on hold with the IND. If that is what you need, our plans start with a free 15 minute call and the €19 comes off.
             </Alert>
           </Reveal>
         </div>
@@ -268,9 +335,9 @@ function GuideScreen({ go }) {
           <Card padding="var(--space-8)">
             <div className="ub-overline">Order</div>
             <h2 style={{fontSize:'clamp(22px,2.4vw,30px)',letterSpacing:'-.02em',margin:'10px 0 var(--space-2)'}}>Get the handbook for €{PRICE}</h2>
-            <p style={{color:'var(--text-muted)',fontSize:'var(--text-body-sm)',marginBottom:'var(--space-6)'}}>Tell us where to send it. You will get a payment link, and the PDF lands in the same inbox as soon as it clears.</p>
+            <p style={{color:'var(--text-muted)',fontSize:'var(--text-body-sm)',marginBottom:'var(--space-6)'}}>Tell us where to send it. You will get a payment link, and your copy lands in the same inbox as soon as it clears.</p>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'var(--space-5)'}}>
-              <Field label="Your name" required><Input placeholder="First and last name" value={name} onChange={e=>setName(e.target.value)}/></Field>
+              <Field label="Your name" required hint="This goes on your copy of the file."><Input placeholder="First and last name" value={name} onChange={e=>setName(e.target.value)}/></Field>
               <Field label="Email" required hint="The PDF goes here, so check the spelling."><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
               <Field label="Where are you heading" style={{gridColumn:'1 / -1'}}>
                 <Select value={city} onChange={e=>setCity(e.target.value)} options={["Not decided yet","Amsterdam","Rotterdam","Utrecht","The Hague","Groningen","Eindhoven","Maastricht","Leiden","Delft","Tilburg","Nijmegen","Somewhere else"]}/>
@@ -285,7 +352,7 @@ function GuideScreen({ go }) {
               <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>€{PRICE} including VAT, one-off. No account, no subscription.</span>
               <Magnetic strength={0.18}><Button disabled={!canOrder} onClick={submit} iconRight={<Icon name="arrow-right" size={16}/>}>{sending ? "Sending…" : "Order the handbook"}</Button></Magnetic>
             </div>
-            {sent && <Alert tone="success" title="Order received" style={{marginTop:'var(--space-5)'}}>Check your inbox. The payment link is on its way, and the PDF follows as soon as it clears. Your order is The Netherlands Student Handbook 2026/27 at €{PRICE} including VAT, delivered straight away, which is why the 14 day withdrawal right no longer applies. If nothing arrives within a few hours, WhatsApp us on 06 25 29 40 80.</Alert>}
+            {sent && <Alert tone="success" title="Order received" style={{marginTop:'var(--space-5)'}}>Check your inbox. The payment link is on its way, and your copy follows as soon as it clears. Your order is The Netherlands Student Handbook 2026/27 at €{PRICE} including VAT, delivered straight away, which is why the 14 day withdrawal right no longer applies. If nothing arrives within a few hours, WhatsApp us on 06 25 29 40 80.</Alert>}
             {error && <Alert tone="warning" title="That did not send" style={{marginTop:'var(--space-5)'}}>Please try again, or WhatsApp us on 06 25 29 40 80 and we will sort it out by hand.</Alert>}
           </Card>
         </Reveal>
@@ -316,18 +383,50 @@ function GuideScreen({ go }) {
         </div>
       </section>
 
+      {/* ---------- Updates and errata ---------- */}
+      <section id="updates" style={{scrollMarginTop:88,maxWidth:'var(--content-max)',margin:'0 auto',padding:'clamp(48px,7vw,96px) var(--gutter-inline) 0'}}>
+        <Reveal>
+          <div className="ub-overline">Updates and errata</div>
+          <hr className="ub-rule" style={{width:56,margin:'12px 0 16px'}}/>
+          <h2 style={{fontSize:'clamp(26px,3.2vw,42px)',letterSpacing:'-.02em',maxWidth:'24ch'}}>What changes, and what we owe you when it does</h2>
+        </Reveal>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:'var(--space-5)',marginTop:'var(--space-8)'}}>
+          <Reveal y={20}>
+            <Card tone="sunken" elevation="none" padding="var(--space-6)" style={{height:'100%'}}>
+              <div className="ub-overline">Current edition</div>
+              <h3 style={{margin:'10px 0 6px',fontSize:'var(--text-h4)'}}>2026/27, first edition</h3>
+              <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>Published September 2026. Every figure checked against the responsible Dutch authority that month. 61 pages.</p>
+            </Card>
+          </Reveal>
+          <Reveal delay={100} y={20}>
+            <Card tone="sunken" elevation="none" padding="var(--space-6)" style={{height:'100%'}}>
+              <div className="ub-overline">Corrections since publication</div>
+              <h3 style={{margin:'10px 0 6px',fontSize:'var(--text-h4)'}}>None yet</h3>
+              <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>Anything we get wrong, or anything that changes before the next edition, is listed here with the date it changed. If it is material, buyers get an email.</p>
+            </Card>
+          </Reveal>
+          <Reveal delay={200} y={20}>
+            <Card padding="var(--space-6)" style={{height:'100%',border:'1px solid var(--gold-300)'}}>
+              <div className="ub-overline">The promise</div>
+              <h3 style={{margin:'10px 0 6px',fontSize:'var(--text-h4)'}}>Next edition free</h3>
+              <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>Dutch amounts re-index on 1 January: the permit fee, the funds you must show, insurance, the minimum wage, rent caps, allowances. When the 2027 edition lands, everyone who bought this one gets it free at the same email address. Nothing to claim.</p>
+            </Card>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ---------- Closing ---------- */}
       <div style={{maxWidth:'var(--content-max)',margin:'var(--section-y) auto 0',padding:'0 var(--gutter-inline)'}}>
         <Reveal>
           <Card tone="ink" padding="clamp(32px,5vw,56px)" style={{position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:'var(--space-10)',alignItems:'center',borderRadius:'var(--radius-2xl)'}}>
             <div className="ub-aurora" aria-hidden="true" style={{position:'absolute',inset:'-40%',opacity:.55,pointerEvents:'none'}}/>
             <div style={{position:'relative'}}>
-              <h2 style={{color:'var(--cream-200)',fontSize:'var(--text-h2)',maxWidth:'22ch'}}>Fifteen euro, and the next three months make sense</h2>
+              <h2 style={{color:'var(--cream-200)',fontSize:'var(--text-h2)',maxWidth:'22ch'}}>Nineteen euro, and the next three months make sense</h2>
               <p style={{color:'var(--ink-100)',fontSize:'var(--text-body-lg)',margin:0,maxWidth:'50ch'}}>One file, sixty-one pages, written in Amsterdam by people who do this every intake.</p>
             </div>
             <div style={{position:'relative',display:'flex',flexDirection:'column',gap:'var(--space-3)',alignItems:'flex-start'}}>
               <Magnetic><Button size="lg" onClick={buy} iconLeft={<Icon name="download" size={17}/>}>Get the handbook for €{PRICE}</Button></Magnetic>
-              <Button size="lg" variant="ghost" style={{color:'var(--cream-200)'}} onClick={()=>go('services')}>Or see the full service plans</Button>
+              <Button size="lg" variant="ghost" style={{color:'var(--cream-200)'}} onClick={seeSample}>Or read the free sample</Button>
             </div>
           </Card>
         </Reveal>
