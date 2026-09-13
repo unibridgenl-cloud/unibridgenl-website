@@ -1,0 +1,11 @@
+# Local tooling state, not part of the site
+.claude-flow/
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor scratch
+*.swp
+*~
