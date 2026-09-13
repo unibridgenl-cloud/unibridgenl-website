@@ -235,7 +235,7 @@ function ServicesScreen({ go }) {
           <div style={{order:1}}>
             <span className="ub-overline">Not ready for a plan</span>
             <h2 style={{fontSize:'clamp(22px,2.6vw,34px)',letterSpacing:'-.02em',margin:'10px 0 var(--space-3)',maxWidth:'20ch'}}>Start with the handbook, €19</h2>
-            <p style={{color:'var(--text-muted)',margin:'0 0 var(--space-5)',maxWidth:'46ch'}}>Sixty-one pages covering the residence permit, BSN, DigiD, housing and rent law, banking, insurance, the huisarts, SIM cards, transport and working here. If you book a plan later, we take the €19 off.</p>
+            <p style={{color:'var(--text-muted)',margin:'0 0 var(--space-5)',maxWidth:'46ch'}}>Sixty-two pages covering the residence permit, BSN, DigiD, housing and rent law, banking, insurance, the huisarts, SIM cards, transport and working here. If you book a plan later, we take the €19 off.</p>
             <Magnetic><Button onClick={()=>go('guide')} iconRight={<Icon name="arrow-right" size={16}/>}>See what is inside</Button></Magnetic>
           </div>
         </Card>
