@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thank you, your handbook is on its way — UniBridge NL</title>
+<meta name="description" content="Your payment for The Netherlands Student Handbook has gone through. Here is what happens next and when your copy arrives.">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://unibridgenl.com/guide/thanks/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Thank you, your handbook is on its way — UniBridge NL">
+<meta property="og:description" content="Your payment for The Netherlands Student Handbook has gone through. Here is what happens next and when your copy arrives.">
+<meta property="og:url" content="https://unibridgenl.com/guide/thanks/">
+<meta property="og:image" content="https://unibridgenl.com/assets/logo-badge.jpg">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/jpeg" href="/assets/logo-badge.jpg">
+<link rel="stylesheet" href="/styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="/ds-bundle.js"></script>
+<style>body{background:var(--surface-card)}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="/scripts/Motion.jsx"></script>
+<script type="text/babel" src="/scripts/Chrome.jsx"></script>
+<script type="text/babel" src="/scripts/ThanksScreen.jsx"></script>
+<script type="text/babel">
+const ROUTE = "thanks";
+const URL_MAP = {home:"/",universities:"/universities/",quiz:"/find-my-field/",services:"/services/",apply:"/apply/",call:"/book-a-call/",privacy:"/privacy/",about:"/about/",contact:"/contact/",mylist:"/my-list/",guide:"/guide/",thanks:"/guide/thanks/"};
+function go(target){
+  if (target === ROUTE) { window.scrollTo({top:0,behavior:'smooth'}); return; }
+  window.location.href = URL_MAP[target] || "/";
+}
+function Page(){
+  return (<div><ScrollBar/><SiteHeader route={ROUTE} go={go}/><HeaderSpacer/><div className="ub-page"><ThanksScreen go={go}/></div><SiteFooter go={go}/><CookieBanner go={go}/></div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Page/>);
+</script>
+</body>
+</html>

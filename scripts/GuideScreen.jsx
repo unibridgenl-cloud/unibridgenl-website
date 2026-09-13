@@ -3,11 +3,11 @@ const { PageHero, Reveal, Rise, Tilt, Stagger, Magnetic, MoneyCounter, HandbookC
 
 const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 
-/* Stripe payment link for the handbook. Paste the URL from the Stripe dashboard
-   (Payment links > the €19 handbook link, it looks like https://buy.stripe.com/...).
-   While this is empty the buy button opens the order form below instead, and we
-   send a payment link by hand. */
-const CHECKOUT_URL = "";
+/* Stripe payment link for the handbook. Live since 13 September 2026.
+   Checkout redirects to /guide/thanks/ on success. To take payments offline
+   again, set this back to "" and the buy buttons fall through to the order
+   form further down this page. */
+const CHECKOUT_URL = "https://buy.stripe.com/3cI9ASgC7gGAcYMgcee3e00";
 
 const PRICE = 19;
 
@@ -44,7 +44,7 @@ const PARTS = [
 ];
 
 const HIGHLIGHTS = [
-  ["file-text", "62 pages", "Written for the 2026/27 intake"],
+  ["file-text", "61 pages", "Written for the 2026/27 intake"],
   ["shield-check", "Checked September 2026", "Against official Dutch sources"],
   ["download", "Instant PDF", "Phone, tablet or printed"],
   ["refresh-cw", "Next edition free", "When the January figures change"]
@@ -58,7 +58,7 @@ const PROOF = [
 ];
 
 const FAQ = [
-  ["How do I get it?", "As a PDF, by email. If you pay by card or iDEAL the file arrives immediately. If you order through the form on this page, we send you a payment link and the file follows as soon as it clears, usually within a few hours."],
+  ["How do I get it?", "As a PDF, by email. If you pay by card or iDEAL your copy is prepared with your name on it and sent to the address you paid with, usually within minutes and at the latest within a few hours. If you order through the form on this page, we send you a payment link and the file follows as soon as it clears, usually within a few hours."],
   ["Is it for EU students too?", "Yes. Roughly two thirds applies to everybody, and where the rules split between EU and non-EU, both answers are on the page. Nothing is written as though everyone came from the same place."],
   ["Will it go out of date?", "Most Dutch amounts are re-indexed on 1 January, so we put the promise in writing. Every buyer gets the next edition free at the address they bought it with, and anything that changes in the meantime is listed with its date on the updates section further down this page. Buying in November does not leave you with a file that expires in February."],
   ["Is this the same as your services?", "No. The handbook is everything we know, written down, so you can do it yourself. Our plans are for students who would rather somebody else did it. If you buy the handbook and later book a plan, tell us and we will take the €19 off."],
@@ -113,8 +113,8 @@ function GuideScreen({ go }) {
     <main style={{overflowX:'clip'}}>
       <PageHero overline="The handbook" tone="ink"
         title="Everything you have to arrange, in one file"
-        lead="The Netherlands Student Handbook is the written version of what we walk students through every intake. Sixty-two pages, in the order things actually happen to you, for €19."
-        meta={[["file-text","62 pages, 2026/27 edition"],["download","Instant PDF"],["shield-check","Checked against official sources"]].map(([i,t])=>(
+        lead="The Netherlands Student Handbook is the written version of what we walk students through every intake. Sixty-one pages, in the order things actually happen to you, for €19."
+        meta={[["file-text","61 pages, 2026/27 edition"],["download","Instant PDF"],["shield-check","Checked against official sources"]].map(([i,t])=>(
           <span key={t} style={{display:'inline-flex',alignItems:'center',gap:8,fontSize:'var(--text-body-sm)'}}><Icon name={i} size={16} color="var(--gold-300)"/>{t}</span>
         ))}/>
 
@@ -126,7 +126,7 @@ function GuideScreen({ go }) {
             <Tilt max={4}>
               <HandbookCover/>
             </Tilt>
-            <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:12}}>62 pages, A4, made to read on a phone or printed</div>
+            <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:12}}>61 pages, A4, made to read on a phone or printed</div>
           </Reveal>
 
           <Reveal delay={120} y={24} style={{order:1,flex:'1.35 1 min(100%,360px)',minWidth:0}}>
@@ -147,7 +147,7 @@ function GuideScreen({ go }) {
 
               <div style={{display:'flex',flexDirection:'column',gap:10}}>
                 {[
-                  "62 pages, written for the 2026/27 intake",
+                  "61 pages, written for the 2026/27 intake",
                   "Every figure checked against official Dutch sources",
                   "A master checklist made to print and tick",
                   "A tenant introduction letter and five messages to copy",
@@ -247,41 +247,49 @@ function GuideScreen({ go }) {
         <Reveal>
           <div className="ub-overline">Free, no email needed</div>
           <hr className="ub-rule" style={{width:56,margin:'12px 0 16px'}}/>
-          <h2 style={{fontSize:'clamp(26px,3.2vw,42px)',letterSpacing:'-.02em',maxWidth:'22ch'}}>See the writing before you pay for it</h2>
-          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'62ch'}}>Two short extracts, exactly as they appear in the file: the first page of the master checklist, and ten of the Dutch words that cost students the most money when they are misread.</p>
+          <h2 style={{fontSize:'clamp(26px,3.2vw,42px)',letterSpacing:'-.02em',maxWidth:'22ch'}}>Read two appendices before you buy anything</h2>
+          <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'62ch'}}>Not a teaser. This is Appendix A and Appendix E, exactly as they appear in the handbook. Copy them, print them, send them to whoever is moving with you.</p>
         </Reveal>
 
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(290px,1fr))',gap:'var(--space-5)',marginTop:'var(--space-8)'}}>
           <Reveal y={22}>
             <Card padding="var(--space-6)" style={{height:'100%'}}>
-              <div className="ub-overline">Appendix A, first page of five</div>
-              <h3 style={{margin:'10px 0 var(--space-4)',fontSize:'var(--text-h4)'}}>Before you fly</h3>
-              <div style={{display:'flex',flexDirection:'column',gap:7}}>
-                {["Confirmed in writing that your university is filing your residence permit application","Accommodation secured, with a written contract","Birth certificate legalised or apostilled","Proof of funds in the right account, statement dated within three months","MVV sticker collected, if you need one","The right insurance bought for your situation","Council registration appointment booked","Dutch eSIM or prepaid SIM ready","Everything scanned to the cloud and to your phone offline","Documents in hand luggage, never the hold"].map(t=>(
-                  <div key={t} style={{display:'flex',gap:10,fontSize:'var(--text-body-sm)',color:'var(--text-body)',lineHeight:1.5}}>
-                    <span style={{flex:'0 0 auto',width:13,height:13,marginTop:3,border:'1px solid var(--gold-500)',borderRadius:3,background:'var(--surface-card)'}}/>{t}
+              <div className="ub-overline">Appendix A</div>
+              <h3 style={{margin:'10px 0 var(--space-4)',fontSize:'var(--text-h4)'}}>The master checklist</h3>
+              {[["Before you fly",["Confirmed in writing that your university is filing your residence permit","Accommodation secured, with a written contract","Birth certificate legalised or apostilled","Proof of funds in the right account, statement dated within three months","The right insurance bought for your situation","Council registration appointment booked","Dutch eSIM or prepaid SIM ready"]],
+                ["Week one",["Photographed the meter readings and the state of every room","Checked the points calculation is attached to your contract","Registered with your council, within five days","Biometrics given, residence document collected in person"]],
+                ["Week two",["BSN received","DigiD applied for, activated within 21 days of the code","Dutch bank account open","Health insurance settled for your actual situation","Registered with a huisarts and a pharmacy"]]
+              ].map(([group,items])=>(
+                <div key={group} style={{marginBottom:'var(--space-5)'}}>
+                  <div style={{fontWeight:700,fontSize:'var(--text-body-sm)',color:'var(--gold-700)',marginBottom:8}}>{group}</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:7}}>
+                    {items.map(t=>(
+                      <div key={t} style={{display:'flex',gap:10,fontSize:'var(--text-body-sm)',color:'var(--text-body)',lineHeight:1.5}}>
+                        <span style={{flex:'0 0 auto',width:13,height:13,marginTop:3,border:'1px solid var(--gold-500)',borderRadius:3,background:'var(--surface-card)'}}/>{t}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <p style={{margin:'var(--space-4) 0 0',fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>The checklist carries on through week one, week two, month one and the six month rent deadline.</p>
+                </div>
+              ))}
+              <p style={{margin:0,fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>The full checklist carries month one and the six month rent deadline too.</p>
             </Card>
           </Reveal>
 
           <Reveal delay={110} y={22}>
             <Card padding="var(--space-6)" style={{height:'100%'}}>
-              <div className="ub-overline">Appendix E, ten words of about forty</div>
-              <h3 style={{margin:'10px 0 var(--space-4)',fontSize:'var(--text-h4)'}}>The words that cost money</h3>
+              <div className="ub-overline">Appendix E</div>
+              <h3 style={{margin:'10px 0 var(--space-4)',fontSize:'var(--text-h4)'}}>The words on your letters</h3>
               <div style={{display:'flex',flexDirection:'column',gap:9}}>
-                {[["Aanmaning","A formal demand. A reminder that has already escalated. Deal with it today."],
-                  ["Termijn","A deadline or period. Look for the date next to it."],
+                {[["Aanmaning","A formal demand. A reminder that has escalated. Deal with it today."],
+                  ["Termijn","A deadline. Look for the date next to it."],
                   ["Bezwaar","An objection. Most decisions can be objected to, usually within six weeks."],
-                  ["Incasso","Debt collection. Never ignore it. Phone and arrange a payment plan."],
-                  ["Terugvordering","A reclaim. Usually an allowance you were overpaid and now owe back."],
-                  ["Kale huur","Bare rent, without service costs. The only figure the law caps."],
+                  ["Kale huur","Bare rent, without service costs. The figure the law caps."],
                   ["Waarborgsom","Deposit. Two months of bare rent at most."],
-                  ["Bemiddelingskosten","Agency fees. A landlord's agent may not charge these to you at all."],
-                  ["Eigen risico","The annual health insurance excess you pay yourself, €385 in 2026."],
-                  ["Zorgtoeslag","Healthcare allowance. Up to €129 a month, and nobody will remind you to claim it."]
+                  ["Bemiddelingskosten","Agency fees. A landlord's agent may not charge these to you."],
+                  ["Eigen risico","The annual excess you pay yourself, €385 in 2026."],
+                  ["Zorgtoeslag","Healthcare allowance. Claim it."],
+                  ["Huisartsenpost","Out of hours GP service. Phone first, and it costs you nothing."],
+                  ["Briefadres","A correspondence address, for people with no fixed home."]
                 ].map(([nl,en])=>(
                   <div key={nl} style={{display:'grid',gridTemplateColumns:'minmax(96px,auto) 1fr',gap:12,fontSize:'var(--text-body-sm)',lineHeight:1.5}}>
                     <strong style={{color:'var(--text-heading)'}}>{nl}</strong>
@@ -293,10 +301,6 @@ function GuideScreen({ go }) {
             </Card>
           </Reveal>
         </div>
-
-        <Reveal delay={180}>
-          <p style={{marginTop:'var(--space-6)',fontSize:'var(--text-body-sm)',color:'var(--text-subtle)',maxWidth:'62ch'}}>Copy any of this, print it, send it to whoever is moving with you. The handbook is the part that tells you what to do when one of these lines will not tick.</p>
-        </Reveal>
       </section>
 
       {/* ---------- Why it is worth more than the price ---------- */}
@@ -391,7 +395,7 @@ function GuideScreen({ go }) {
             <Card tone="sunken" elevation="none" padding="var(--space-6)" style={{height:'100%'}}>
               <div className="ub-overline">Current edition</div>
               <h3 style={{margin:'10px 0 6px',fontSize:'var(--text-h4)'}}>2026/27, first edition</h3>
-              <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>Published September 2026. Every figure checked against the responsible Dutch authority that month. 62 pages.</p>
+              <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>Published September 2026. Every figure checked against the responsible Dutch authority that month. 61 pages.</p>
             </Card>
           </Reveal>
           <Reveal delay={100} y={20}>
@@ -418,7 +422,7 @@ function GuideScreen({ go }) {
             <div className="ub-aurora" aria-hidden="true" style={{position:'absolute',inset:'-40%',opacity:.55,pointerEvents:'none'}}/>
             <div style={{position:'relative'}}>
               <h2 style={{color:'var(--cream-200)',fontSize:'var(--text-h2)',maxWidth:'22ch'}}>Nineteen euro, and the next three months make sense</h2>
-              <p style={{color:'var(--ink-100)',fontSize:'var(--text-body-lg)',margin:0,maxWidth:'50ch'}}>One file, sixty-two pages, written in Amsterdam by people who do this every intake.</p>
+              <p style={{color:'var(--ink-100)',fontSize:'var(--text-body-lg)',margin:0,maxWidth:'50ch'}}>One file, sixty-one pages, written in Amsterdam by people who do this every intake.</p>
             </div>
             <div style={{position:'relative',display:'flex',flexDirection:'column',gap:'var(--space-3)',alignItems:'flex-start'}}>
               <Magnetic><Button size="lg" onClick={buy} iconLeft={<Icon name="download" size={17}/>}>Get the handbook for €{PRICE}</Button></Magnetic>
