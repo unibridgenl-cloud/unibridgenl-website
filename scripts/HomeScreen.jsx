@@ -444,7 +444,7 @@ function HomeScreen({ go }) {
               <div className="ub-overline">Doing it yourself</div>
               <hr className="ub-rule" style={{width:48,margin:'12px 0 16px'}}/>
               <h2 style={{fontSize:'clamp(24px,2.8vw,38px)',letterSpacing:'-.02em',maxWidth:'20ch',marginBottom:'var(--space-3)'}}>The whole thing, written down, for €19</h2>
-              <p style={{color:'var(--text-muted)',fontSize:'var(--text-body-lg)',maxWidth:'46ch',marginBottom:'var(--space-5)'}}>Sixty-one pages on the residence permit, BSN, DigiD, housing and rent law, banking, health insurance, the huisarts, SIM cards, transport and working here. In the order things actually happen to you.</p>
+              <p style={{color:'var(--text-muted)',fontSize:'var(--text-body-lg)',maxWidth:'46ch',marginBottom:'var(--space-5)'}}>Sixty-two pages on the residence permit, BSN, DigiD, housing and rent law, banking, health insurance, the huisarts, SIM cards, transport and working here. In the order things actually happen to you.</p>
               <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-3)'}}>
                 <Magnetic><Button onClick={()=>go('guide')} iconRight={<Icon name="arrow-right" size={16}/>}>See what is inside</Button></Magnetic>
                 <Button variant="ghost" onClick={()=>go('services')}>Or have us do it</Button>
