@@ -402,11 +402,13 @@ const DATA = {
 
        'browser'    — built-in speech synthesis. Zero setup, works
                       offline, robotic. This is the default.
-       'elevenlabs' — your cloned/designed voice. Needs `proxyUrl`
-                      pointing at a small server endpoint of YOURS
-                      that holds the API key and returns audio/mpeg
-                      for  POST {text, voiceId}. Never put an API
-                      key in this file — it ships to every visitor.
+       'elevenlabs' — your own designed voice. `proxyUrl` is the SAME
+                      Apps Script /exec URL as the data source: it holds
+                      the ElevenLabs key server-side and answers
+                      POST {action:'tts', token, text} with base64 mp3.
+                      A plain audio/mpeg response works too, if you ever
+                      move it somewhere else. Never put an API key in
+                      this file — it ships to every visitor.
        'clip'       — play fixed pre-rendered mp3s (kiosk / demo).
 
      `sampleClip` is the uploaded voice sample. It plays once at boot
@@ -416,9 +418,9 @@ const DATA = {
     engine: 'browser',
     sampleClip: 'assets/voice-sample.mp3',
     elevenlabs: {
-      proxyUrl: '',                     // e.g. 'https://api.yoursite.com/tts'
-      voiceId: '',                      // ElevenLabs voice id
-      modelId: 'eleven_turbo_v2_5'
+      proxyUrl: '',                     // same /exec URL as DATA.sources.endpoint
+      token: ''                         // same FRIDAY_TOKEN
+      /* voice id and model live in Script Properties, not here */
     },
     clips: {}                           // engine 'clip': { 'exact reply text': 'assets/x.mp3' }
   },
@@ -446,6 +448,24 @@ const DATA = {
     token: '',                 // sent as ?token= — see backend/Code.gs
     refreshSeconds: 180,       // how often to re-poll
     timeoutMs: 8000
+  },
+
+  /* ---- 1.1d CONVERSATIONAL REPLIES ----------------------------
+     Off by default, and she still works without it: the built-in
+     keyword engine answers from the same numbers, it just cannot hold
+     a conversation. Turn this on and replies come from Claude instead,
+     grounded in the metrics the backend reads server-side — so she
+     cannot be talked into quoting figures that were never in the data.
+
+     `proxyUrl` is the same Apps Script /exec URL again. The API key
+     lives in Script Properties, never here. If the call fails for any
+     reason she falls back to the keyword engine rather than going
+     silent.                                                          */
+  brain: {
+    enabled: false,
+    proxyUrl: '',              // same /exec URL
+    token: '',                 // same FRIDAY_TOKEN
+    historyTurns: 6            // how much of the conversation she remembers
   },
 
   /* ---- 1.2 STATUS PILLS ---------------------------------------
@@ -1193,21 +1213,34 @@ function playAudioUrl(url, onDone, revoke){
   });
 }
 
-/* ElevenLabs via YOUR proxy (the key must live server-side). */
+/* Her real voice, via YOUR proxy. The API key stays server-side.
+   text/plain is deliberate: it avoids a CORS preflight that Apps Script
+   cannot answer — the same trick the quiz and booking forms already use. */
 async function speakElevenLabs(text, onDone){
   const cfg = DATA.voice.elevenlabs;
   setState('thinking');
   try {
     const res = await fetch(cfg.proxyUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voiceId: cfg.voiceId, modelId: cfg.modelId })
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'tts', token: cfg.token || '', text })
     });
     if (!res.ok) throw new Error('proxy ' + res.status);
-    const url = URL.createObjectURL(await res.blob());
+
+    const type = res.headers.get('content-type') || '';
+    if (type.includes('audio')){                       // raw audio response
+      return playAudioUrl(URL.createObjectURL(await res.blob()), onDone, true);
+    }
+    const data = await res.json();                     // Apps Script: base64 in JSON
+    if (data.error) throw new Error(data.error);
+    if (!data.audio) throw new Error('no audio returned');
+
+    const bytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: data.mime || 'audio/mpeg' }));
+    if (data.cached) diagnostic('Voice served from cache', 'sys');
     playAudioUrl(url, onDone, true);
   } catch (err) {
-    diagnostic('Voice proxy unavailable — falling back to browser voice', 'warnln');
+    diagnostic('Voice proxy unavailable (' + err.message + ') — using browser voice', 'warnln');
     speakBrowser(text, onDone);
   }
 }
@@ -1273,11 +1306,55 @@ function respondWith(text, alsoSpeak){
 /* ================================================================
    ▓▓ 9. ANSWER ENGINE — every reply is built from DATA ▓▓
    ================================================================ */
+/* Short rolling memory, so follow-ups like "and housing?" make sense. */
+const convo = [];
+function remember(role, text){
+  convo.push({ role, text });
+  const cap = Math.max(2, (DATA.brain && DATA.brain.historyTurns) || 6);
+  while (convo.length > cap) convo.shift();
+}
+
 function handleUtterance(text){
   telemetry('YOU ▸ ' + text, 'usr');
   showSay('… ' + text, false);
   setState('thinking');
-  setTimeout(() => respondWith(answer(text)), 420);
+
+  /* The morning brief stays deterministic even with the brain on — it is a
+     recital of the numbers, and it should read the same way every time. */
+  if (/morning brief|brief me|briefing|daily brief/i.test(text)){
+    remember('user', text);
+    return setTimeout(runBrief, 300);
+  }
+
+  const b = DATA.brain || {};
+  if (b.enabled && b.proxyUrl) return askClaude(text);
+  setTimeout(() => { remember('user', text); const a = answer(text); remember('assistant', a); respondWith(a); }, 420);
+}
+
+/* Conversational reply via YOUR proxy. Falls back to the keyword engine
+   on any failure, so a dead endpoint degrades instead of breaking. */
+async function askClaude(text){
+  const b = DATA.brain;
+  const history = convo.slice();
+  remember('user', text);
+  try {
+    const res = await fetch(b.proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'chat', token: b.token || '', text, history })
+    });
+    if (!res.ok) throw new Error('proxy ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.reply) throw new Error('empty reply');
+    remember('assistant', data.reply);
+    respondWith(data.reply);
+  } catch (err) {
+    diagnostic('Brain unavailable (' + err.message + ') — answering from local data', 'warnln');
+    const a = answer(text);
+    remember('assistant', a);
+    respondWith(a);
+  }
 }
 
 function answer(qRaw){
@@ -1461,9 +1538,11 @@ function revealPanels(){
     showSay(greeting);
     /* If a voice sample is configured, the greeting is spoken by that
        clip; otherwise the selected engine renders the text.          */
-    if (DATA.voice && DATA.voice.sampleClip){
-      telemetry('Voice sample engaged — ' + DATA.voice.sampleClip, 'okln');
-      playAudioUrl(DATA.voice.sampleClip);
+    const v = DATA.voice || {};
+    const realVoice = v.engine === 'elevenlabs' && v.elevenlabs && v.elevenlabs.proxyUrl;
+    if (!realVoice && v.sampleClip){
+      telemetry('Voice sample engaged — ' + v.sampleClip, 'okln');
+      playAudioUrl(v.sampleClip);
     } else {
       speak(greeting);
     }

@@ -1,0 +1,16 @@
+# GitHub Pages build configuration.
+#
+# `exclude` replaces Jekyll's default list, so the usual entries are repeated
+# here on purpose — dropping them would start publishing build files.
+#
+# friday/ is the internal mission control dashboard. It is kept OUT of the
+# published site: the repo is the source of truth for it, but GitHub Pages
+# cannot put a login in front of anything, so serving it from unibridgenl.com
+# would make it readable by anyone who guessed the URL. It is deployed
+# separately, behind access control — see friday/backend/README.md.
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - friday

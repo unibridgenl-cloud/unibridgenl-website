@@ -47,6 +47,11 @@
  *        CALENDAR_MATCH     (optional) text that appears in your call events,
  *                           e.g. "UniBridge" — leave unset to skip Calendar
  *        STRIPE_SECRET_KEY  (optional) sk_live_... — leave unset to skip Stripe
+ *        ELEVEN_API_KEY     (optional) ElevenLabs key, for her real voice
+ *        ELEVEN_VOICE_ID    (optional) the voice id to speak with
+ *        ELEVEN_MODEL_ID    (optional) defaults to eleven_turbo_v2_5
+ *        ANTHROPIC_API_KEY  (optional) sk-ant-... , for conversational replies
+ *        ANTHROPIC_MODEL    (optional) defaults to claude-opus-5
  *
  * 4. Deploy → New deployment → Web app.
  *        Execute as:    Me
@@ -65,6 +70,73 @@
  * Stripe key anywhere but Script Properties, which stay server-side.
  */
 
+/**
+ * POST endpoint — speech, and later the conversational replies.
+ * The page posts text/plain on purpose: it avoids a CORS preflight that
+ * Apps Script cannot answer, the same trick the quiz and booking forms use.
+ *
+ * Request:  { "action": "tts", "token": "...", "text": "Good morning." }
+ * Response: { "audio": "<base64 mp3>", "mime": "audio/mpeg" }
+ */
+function doPost(e) {
+  var body = {};
+  try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); }
+  catch (err) { return json({ error: 'bad json' }); }
+
+  var props = PropertiesService.getScriptProperties();
+  var expected = props.getProperty('FRIDAY_TOKEN');
+  if (expected && body.token !== expected) return json({ error: 'bad token' });
+
+  if (body.action === 'tts')  return json(speakElevenLabs(props, body.text));
+  if (body.action === 'chat') return json(askClaude(props, body.text, body.history));
+  return json({ error: 'unknown action' });
+}
+
+/**
+ * ElevenLabs text to speech. The API key never leaves this script.
+ * Identical phrases are cached for six hours, so the boot greeting and
+ * repeated answers do not spend credits twice.
+ */
+function speakElevenLabs(props, text) {
+  var key = props.getProperty('ELEVEN_API_KEY');
+  var voiceId = props.getProperty('ELEVEN_VOICE_ID');
+  if (!key || !voiceId) return { error: 'voice not configured' };
+
+  text = String(text || '').slice(0, 2500);           // keep one reply from draining credits
+  if (!text.trim()) return { error: 'no text' };
+
+  var cache = CacheService.getScriptCache();
+  var cacheKey = 'tts_' + Utilities.base64EncodeWebSafe(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, text + voiceId));
+  var hit = cache.get(cacheKey);
+  if (hit) return { audio: hit, mime: 'audio/mpeg', cached: true };
+
+  try {
+    var res = UrlFetchApp.fetch(
+      'https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId),
+      {
+        method: 'post',
+        contentType: 'application/json',
+        headers: { 'xi-api-key': key, 'Accept': 'audio/mpeg' },
+        payload: JSON.stringify({
+          text: text,
+          model_id: props.getProperty('ELEVEN_MODEL_ID') || 'eleven_turbo_v2_5',
+          voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.2 }
+        }),
+        muteHttpExceptions: true
+      });
+
+    if (res.getResponseCode() !== 200)
+      return { error: 'elevenlabs ' + res.getResponseCode() + ': ' + res.getContentText().slice(0, 200) };
+
+    var b64 = Utilities.base64Encode(res.getBlob().getBytes());
+    if (b64.length < 95000) cache.put(cacheKey, b64, 21600);   // cache cap is 100KB per key
+    return { audio: b64, mime: 'audio/mpeg' };
+  } catch (err) {
+    return { error: 'tts failed: ' + err.message };
+  }
+}
+
 function doGet(e) {
   var params = (e && e.parameter) || {};
   var props  = PropertiesService.getScriptProperties();
@@ -74,14 +146,16 @@ function doGet(e) {
   var expected = props.getProperty('FRIDAY_TOKEN');
   if (expected && params.token !== expected) return json({ error: 'bad token' });
 
-  var out = { generatedAt: new Date().toISOString(), telemetry: [] };
+  return json(buildMetrics(props));
+}
 
+function buildMetrics(props) {
+  var out = { generatedAt: new Date().toISOString(), telemetry: [] };
   readSheet(props, out);
   readCalendar(props, out);
   readStripe(props, out);
   derive(out);
-
-  return json(out);
+  return out;
 }
 
 /* --- 1. the sheet ------------------------------------------------------- */
@@ -177,6 +251,89 @@ function derive(out) {
     s.conversion = Math.round((o.current / (s.calls7d * 4)) * 100);   // calls7d ≈ weekly rate
   }
   out.stats = s;
+}
+
+/**
+ * Conversational replies, grounded in the same numbers the dashboard shows.
+ *
+ * The metrics are read server-side rather than trusted from the page, so she
+ * can never be talked into quoting figures the caller made up. They are cached
+ * for a minute so a back-and-forth does not re-hit Calendar and Stripe on
+ * every sentence.
+ *
+ * Apps Script has no npm, so this is the documented raw HTTP shape.
+ */
+function askClaude(props, text, history) {
+  var key = props.getProperty('ANTHROPIC_API_KEY');
+  if (!key) return { error: 'brain not configured' };
+
+  text = String(text || '').slice(0, 1000);
+  if (!text.trim()) return { error: 'no text' };
+
+  var cache = CacheService.getScriptCache();
+  var snapshot = cache.get('metrics_snapshot');
+  if (!snapshot) {
+    var metrics = buildMetrics(props);
+    snapshot = JSON.stringify(metrics);
+    cache.put('metrics_snapshot', snapshot, 60);
+  }
+
+  var system =
+    'You are F.R.I.D.A.Y., the mission control assistant for UniBridge NL, a service that helps ' +
+    'international students get into Dutch universities and settle in the Netherlands: enrolment, ' +
+    'housing, residence permit, BSN, bank account and arrival week.\n\n' +
+    'You are speaking out loud through a voice synthesiser, so: reply in at most three short ' +
+    'sentences, plain spoken prose only. No markdown, no bullet points, no lists, no emoji, no ' +
+    'headings, no asterisks. Write numbers the way you would say them.\n\n' +
+    'Your manner is calm, dry and precise, like a trusted chief of staff. Address the operator as ' +
+    'Commander only when it lands naturally, not every sentence.\n\n' +
+    'Ground every figure in the dashboard data below. Never invent a number, a name or a date. If ' +
+    'the answer is not in the data, say plainly that you do not have that reading, and say what you ' +
+    'do have. If asked for judgement, give it briefly and say what it rests on.\n\n' +
+    'Current dashboard data as JSON:\n' + snapshot;
+
+  var messages = [];
+  if (history && history.length) {
+    for (var i = 0; i < history.length; i++) {
+      var turn = history[i];
+      if (!turn || !turn.role || !turn.text) continue;
+      messages.push({ role: turn.role === 'assistant' ? 'assistant' : 'user', content: String(turn.text).slice(0, 1000) });
+    }
+  }
+  messages.push({ role: 'user', content: text });
+
+  try {
+    var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      payload: JSON.stringify({
+        model: props.getProperty('ANTHROPIC_MODEL') || 'claude-opus-5',
+        max_tokens: 400,                       // she is speaking; long answers are a bug
+        output_config: { effort: 'low' },      // a spoken reply wants speed, not deliberation
+        system: system,
+        messages: messages
+      }),
+      muteHttpExceptions: true
+    });
+
+    if (res.getResponseCode() !== 200)
+      return { error: 'claude ' + res.getResponseCode() + ': ' + res.getContentText().slice(0, 300) };
+
+    var data = JSON.parse(res.getContentText());
+
+    // Safety classifiers can decline with HTTP 200 — check before reading content.
+    if (data.stop_reason === 'refusal')
+      return { reply: 'I cannot answer that one, Commander.' };
+
+    var out = '';
+    for (var j = 0; j < (data.content || []).length; j++) {
+      if (data.content[j].type === 'text') out += data.content[j].text;
+    }
+    return { reply: out.trim() || 'I have nothing to add.', usage: data.usage };
+  } catch (err) {
+    return { error: 'chat failed: ' + err.message };
+  }
 }
 
 function json(obj) {
