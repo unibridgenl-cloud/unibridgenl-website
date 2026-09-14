@@ -3288,7 +3288,7 @@ function SiteFooter({
       fontSize: 'var(--text-caption)',
       color: 'var(--ink-200)'
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\xA9 2026 UniBridge NL \xB7 Amsterdam, KvK 90210345"), /*#__PURE__*/React.createElement("span", null, "Made for students, not for paperwork.")));
+  }, /*#__PURE__*/React.createElement("span", null, "\xA9 2026 UniBridge NL \xB7 Amsterdam, KvK 42087386"), /*#__PURE__*/React.createElement("span", null, "Made for students, not for paperwork.")));
 }
 function Section({
   overline,

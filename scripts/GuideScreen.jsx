@@ -348,7 +348,7 @@ function GuideScreen({ go }) {
               <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>€{PRICE} including VAT, one-off. No account, no subscription.</span>
               <Magnetic strength={0.18}><Button disabled={!canOrder} onClick={submit} iconRight={<Icon name="arrow-right" size={16}/>}>{sending ? "Sending…" : "Order the handbook"}</Button></Magnetic>
             </div>
-            {sent && <Alert tone="success" title="Order received" style={{marginTop:'var(--space-5)'}}>Check your inbox. The payment link is on its way, and your copy follows as soon as it clears. Your order is The Netherlands Student Handbook 2026/27 at €{PRICE} including VAT, delivered straight away, which is why the 14 day withdrawal right no longer applies. If nothing arrives within a few hours, WhatsApp us on 06 25 29 40 80.</Alert>}
+            {sent && <Alert tone="success" title="Order received" style={{marginTop:'var(--space-5)'}}>Check your inbox. The payment link is on its way, and your copy follows as soon as it clears. Your order is The Netherlands Student Handbook 2026/27 at €{PRICE}, delivered straight away. If nothing arrives within a few hours, WhatsApp us on 06 25 29 40 80.</Alert>}
             {error && <Alert tone="warning" title="That did not send" style={{marginTop:'var(--space-5)'}}>Please try again, or WhatsApp us on 06 25 29 40 80 and we will sort it out by hand.</Alert>}
           </Card>
         </Reveal>
