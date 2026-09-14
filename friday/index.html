@@ -416,6 +416,18 @@ const DATA = {
      amplitude, not a simulation. Set it to null to disable.        */
   voice: {
     engine: 'browser',
+
+    /* Pin the browser voice by name so she sounds the same every time.
+       Leave empty and she picks the best available once, then remembers it.
+       To see what your device offers, open the browser console and run:
+           FRIDAY.voices()
+       then paste a name in here, e.g. 'Google UK English Female'.
+       Note that voices differ per device — the only way to sound identical
+       everywhere is the elevenlabs engine below.                          */
+    browserVoice: '',
+
+    /* Played ONLY when engine is 'clip'. It is a fixed recording, so mixing
+       it with the browser voice made her change voice mid-conversation. */
     sampleClip: 'assets/voice-sample.mp3',
     elevenlabs: {
       proxyUrl: '',                     // same /exec URL as DATA.sources.endpoint
@@ -894,7 +906,23 @@ const FRIDAY = {
   applyLive(payload){ const n = applyLive(payload); this.refresh(); setDataMode('LIVE'); return n; },
   sync: fetchLive,
   say: (t) => respondWith(t),
-  log: telemetry
+  log: telemetry,
+  /* List the voices this device offers, to pin one in DATA.voice.browserVoice */
+  voices(){
+    const list = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
+    console.table(list.map(v => ({ name: v.name, lang: v.lang, default: v.default })));
+    console.log('Currently speaking as:', voice ? voice.name : '(none yet)');
+    return list.map(v => v.name);
+  },
+  /* Switch voice and remember it: FRIDAY.setVoice('Google UK English Female') */
+  setVoice(name){
+    const list = window.speechSynthesis.getVoices();
+    const found = list.find(v => v.name === name);
+    if (!found){ console.warn('No such voice. Try FRIDAY.voices()'); return false; }
+    voice = found; safeSet(VOICE_KEY, name);
+    respondWith('Voice set. This is how I will sound from now on.');
+    return true;
+  }
 };
 window.FRIDAY = FRIDAY;
 
@@ -1160,20 +1188,44 @@ function stopListening(){
 
 /* --- speech synthesis ------------------------------------------ */
 let voice = null;
-function pickVoice(){
-  const voices = window.speechSynthesis.getVoices();
+const VOICE_KEY = 'friday.voice.name';
+
+/* The voice list loads asynchronously. Speaking before it is ready gets the
+   system default, and picking again afterwards is what made her change voice
+   mid-conversation. So: resolve once, remember the choice, never re-pick. */
+const voicesReady = new Promise((resolve) => {
+  if (!('speechSynthesis' in window)) return resolve([]);
+  const got = () => {
+    const list = window.speechSynthesis.getVoices();
+    if (list.length){ resolve(list); return true; }
+    return false;
+  };
+  if (got()) return;
+  window.speechSynthesis.onvoiceschanged = () => got();
+  setTimeout(() => resolve(window.speechSynthesis.getVoices() || []), 2500); // never hang
+});
+
+voicesReady.then((voices) => {
   if (!voices.length) return;
-  /* Prefer an Irish voice, then any female English voice, then anything. */
-  voice = voices.find(v => /en-IE/i.test(v.lang))
-       || voices.find(v => /^en/i.test(v.lang) && /(female|moira|siobhan|karen|serena|fiona|samantha|martha|libby)/i.test(v.name))
+  const byName = (n) => n && voices.find(v => v.name === n);
+
+  /* 1. an explicit choice in the config, 2. the one she settled on before,
+     3. a fresh pick — Irish, then a female English voice, then any English. */
+  voice = byName(DATA.voice && DATA.voice.browserVoice)
+       || byName(safeGet(VOICE_KEY))
+       || voices.find(v => /en-IE/i.test(v.lang))
+       || voices.find(v => /^en/i.test(v.lang) && /(female|moira|siobhan|karen|serena|fiona|samantha|martha|libby|zira|aria)/i.test(v.name))
        || voices.find(v => /en-GB/i.test(v.lang))
        || voices.find(v => /^en/i.test(v.lang))
        || voices[0];
-}
-if ('speechSynthesis' in window){
-  pickVoice();
-  window.speechSynthesis.onvoiceschanged = pickVoice;
-}
+
+  if (voice) safeSet(VOICE_KEY, voice.name);
+});
+
+/* Storage can throw in a private window, and a missing voice memory is not
+   worth breaking speech over. */
+function safeGet(k){ try { return localStorage.getItem(k); } catch(_){ return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch(_){} }
 /* --- real audio playback: mp3 clip or ElevenLabs proxy ----------
    Drives `liveLevel` from an analyser so the orb and the waveform
    react to the actual audio instead of a simulation.               */
@@ -1268,8 +1320,9 @@ function speak(text, onDone){
     return playAudioUrl(v.clips[text], onDone);
   return speakBrowser(text, onDone);
 }
-function speakBrowser(text, onDone){
+async function speakBrowser(text, onDone){
   if (!('speechSynthesis' in window)){ setState('idle'); onDone && onDone(); return; }
+  await voicesReady;                    // so the first sentence is not the system default
   const u = new SpeechSynthesisUtterance(text);
   if (voice) u.voice = voice;
   u.lang = DATA.meta.voiceLang;
@@ -1578,14 +1631,9 @@ function revealPanels(){
     showSay(greeting);
     /* If a voice sample is configured, the greeting is spoken by that
        clip; otherwise the selected engine renders the text.          */
-    const v = DATA.voice || {};
-    const realVoice = v.engine === 'elevenlabs' && v.elevenlabs && v.elevenlabs.proxyUrl;
-    if (!realVoice && v.sampleClip){
-      telemetry('Voice sample engaged — ' + v.sampleClip, 'okln');
-      playAudioUrl(v.sampleClip);
-    } else {
-      speak(greeting);
-    }
+    /* Whatever engine is configured speaks the greeting too — mixing a fixed
+       clip with a synthesised voice is what made her sound like two people. */
+    speak(greeting);
   }, after);
   setTimeout(() => $('#bootveil').remove(), after + 800);
 }
