@@ -1,0 +1,18 @@
+# Safety net for Cloudflare Workers static assets.
+#
+# wrangler.jsonc points the asset directory at ./friday, so nothing here
+# should ever be uploaded. But if that config is missing or overridden,
+# wrangler falls back to serving the repository root — which is how the
+# first deploy ended up publishing .git to the internet.
+#
+# These patterns apply whenever the repo root IS the asset directory, and
+# keep the repository plumbing out of any such deploy.
+.git
+.git/**
+.github
+.github/**
+node_modules
+node_modules/**
+.wrangler
+.wrangler/**
+*.md

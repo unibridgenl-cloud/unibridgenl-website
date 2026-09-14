@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
+Disallow: /friday/
 Sitemap: https://unibridgenl.com/sitemap.xml

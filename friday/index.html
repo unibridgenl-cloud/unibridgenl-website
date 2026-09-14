@@ -1,0 +1,1647 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>F.R.I.D.A.Y. — UniBridge NL Mission Control</title>
+<style>
+/* ============================================================
+   F.R.I.D.A.Y. MISSION CONTROL — all styles inline, no CDN.
+   Palette: deep navy ground, cyan-blue line work, amber accents.
+   ============================================================ */
+:root{
+  --navy-0:#03070f;
+  --navy-1:#06101d;
+  --navy-2:#08182b;
+  --cyan:#6fe9ff;
+  --cyan-hot:#b9f6ff;
+  --cyan-dim:rgba(111,233,255,.52);
+  --cyan-faint:rgba(111,233,255,.16);
+  --line:rgba(111,233,255,.26);
+  --line-soft:rgba(111,233,255,.12);
+  --amber:#ffb457;
+  --red:#ff6b6b;
+  --green:#5cffb1;
+  --glow:0 0 6px rgba(111,233,255,.55), 0 0 18px rgba(111,233,255,.22);
+  --glow-soft:0 0 4px rgba(111,233,255,.35);
+  --mono:'JetBrains Mono','IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace;
+  --pad:10px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 42%, #0b2036 0%, #05101d 45%, var(--navy-0) 100%);
+  color:var(--cyan);
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* --- background grid + scanline shimmer ------------------- */
+.bg-grid,.bg-scan,.bg-vignette{position:fixed;inset:0;pointer-events:none;z-index:0}
+.bg-grid{
+  background-image:
+    repeating-linear-gradient(0deg, rgba(111,233,255,.055) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(111,233,255,.055) 0 1px, transparent 1px 44px);
+  mask-image:radial-gradient(ellipse 90% 75% at 50% 45%, #000 20%, transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 75% at 50% 45%, #000 20%, transparent 100%);
+}
+.bg-scan{
+  background:repeating-linear-gradient(180deg, rgba(111,233,255,.045) 0 1px, transparent 1px 3px);
+  opacity:.55;
+  animation:scandrift 9s linear infinite;
+}
+.bg-scan::after{
+  content:'';position:absolute;left:0;right:0;height:26vh;
+  background:linear-gradient(180deg, transparent, rgba(111,233,255,.055), transparent);
+  animation:sweepdown 7.5s linear infinite;
+}
+@keyframes scandrift{from{background-position-y:0}to{background-position-y:3px}}
+@keyframes sweepdown{0%{top:-30vh}100%{top:110vh}}
+.bg-vignette{box-shadow:inset 0 0 200px 40px rgba(0,0,0,.85)}
+
+/* --- shell ------------------------------------------------- */
+#shell{
+  position:relative;z-index:1;height:100vh;height:100dvh;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  gap:8px;padding:10px 12px;
+}
+main{
+  display:grid;
+  grid-template-columns:minmax(210px,17vw) minmax(0,1fr) minmax(210px,17vw);
+  gap:10px;min-height:0;
+}
+.col{display:grid;gap:10px;min-height:0}
+.col-left{grid-template-rows:auto minmax(0,1fr)}
+.col-right{grid-template-rows:auto auto minmax(0,1fr)}
+
+/* --- panel chrome ------------------------------------------ */
+.panel{
+  position:relative;border:1px solid var(--line);background:rgba(6,18,32,.46);
+  box-shadow:inset 0 0 22px rgba(111,233,255,.05), 0 0 10px rgba(111,233,255,.05);
+  padding:var(--pad);min-height:0;display:flex;flex-direction:column;
+  backdrop-filter:blur(1px);
+}
+.panel::before,.panel::after{
+  content:'';position:absolute;width:9px;height:9px;border:1px solid var(--cyan);opacity:.75;
+}
+.panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.panel-title{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:9.5px;color:var(--cyan);text-shadow:var(--glow-soft);
+  padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid var(--line-soft);flex:0 0 auto;
+}
+.panel-title .tag{color:var(--cyan-dim);font-size:8.5px;letter-spacing:.12em}
+.panel-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+
+/* --- header ------------------------------------------------ */
+header{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;
+  border:1px solid var(--line);background:rgba(6,18,32,.46);padding:8px 12px;
+  box-shadow:inset 0 0 22px rgba(111,233,255,.05);
+}
+.brand h1{
+  margin:0;font-size:clamp(17px,2.1vw,26px);letter-spacing:.34em;font-weight:500;
+  color:var(--cyan-hot);text-shadow:0 0 8px rgba(111,233,255,.75),0 0 26px rgba(111,233,255,.35);
+}
+.brand .sub{margin-top:3px;font-size:8.5px;color:var(--cyan-dim);letter-spacing:.19em}
+.brand .obj{margin-top:5px;font-size:9.5px;color:var(--amber);text-shadow:0 0 7px rgba(255,180,87,.4)}
+.pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.pill{
+  display:flex;align-items:center;gap:6px;border:1px solid var(--line);
+  padding:4px 9px;font-size:8.5px;color:var(--cyan-dim);background:rgba(111,233,255,.04);
+}
+.pill .dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);animation:blip 2.4s ease-in-out infinite}
+.pill.warn .dot{background:var(--amber);box-shadow:0 0 7px var(--amber)}
+.pill.cy .dot{background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+.pill:nth-child(2) .dot{animation-delay:.4s}
+.pill:nth-child(3) .dot{animation-delay:.8s}
+.pill:nth-child(4) .dot{animation-delay:1.2s}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.25}}
+.clockwrap{text-align:right}
+.clock{
+  font-size:clamp(18px,2.4vw,30px);letter-spacing:.06em;color:var(--cyan-hot);
+  text-shadow:0 0 9px rgba(111,233,255,.7);font-variant-numeric:tabular-nums;line-height:1
+}
+.clock .cs{font-size:.55em;color:var(--cyan-dim)}
+.clockwrap .meta{margin-top:5px;font-size:8.5px;color:var(--cyan-dim);letter-spacing:.14em}
+
+/* --- vitals ------------------------------------------------ */
+.vital{margin-bottom:9px}
+.vital:last-child{margin-bottom:0}
+.vital .row{display:flex;justify-content:space-between;font-size:8.5px;color:var(--cyan-dim);margin-bottom:4px}
+.vital .row b{color:var(--cyan-hot);font-weight:500;text-shadow:var(--glow-soft)}
+.track{height:6px;border:1px solid var(--line-soft);background:rgba(111,233,255,.05);position:relative;overflow:hidden}
+.fill{
+  position:absolute;inset:0 auto 0 0;width:0%;
+  background:linear-gradient(90deg, rgba(111,233,255,.35), var(--cyan));
+  box-shadow:0 0 9px rgba(111,233,255,.55);
+  transition:width .85s cubic-bezier(.22,.8,.3,1);
+}
+.fill.warn{background:linear-gradient(90deg, rgba(255,180,87,.3), var(--amber));box-shadow:0 0 9px rgba(255,180,87,.5)}
+.fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:2px;background:var(--cyan-hot);box-shadow:0 0 8px var(--cyan-hot)}
+
+/* --- log feeds --------------------------------------------- */
+.log{
+  flex:1 1 auto;min-height:0;overflow-y:auto;font-size:9px;line-height:1.55;
+  color:var(--cyan-dim);scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+}
+.log::-webkit-scrollbar{width:3px}
+.log::-webkit-scrollbar-thumb{background:var(--line)}
+.log .ln{display:flex;gap:6px;padding:1px 0;animation:linein .45s ease both}
+.log .ts{color:rgba(111,233,255,.34);flex:0 0 auto}
+.log .tx{flex:1 1 auto;word-break:break-word}
+.log .ln.usr .tx{color:var(--cyan-hot);text-shadow:var(--glow-soft)}
+.log .ln.sys .tx{color:var(--cyan-dim)}
+.log .ln.warnln .tx{color:var(--amber)}
+.log .ln.okln .tx{color:var(--green)}
+@keyframes linein{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+
+/* --- center column ----------------------------------------- */
+.col-center{display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:8px;min-height:0}
+.orbstage{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#orb{width:100%;height:100%;display:block}
+.orbstage .hint{
+  position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  font-size:8.5px;color:var(--cyan-dim);letter-spacing:.2em;pointer-events:none;
+  animation:blip 3.4s ease-in-out infinite;
+}
+.saystage{
+  border:1px solid var(--line);background:rgba(6,18,32,.5);padding:8px 12px;min-height:62px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  box-shadow:inset 0 0 22px rgba(111,233,255,.05);
+}
+#say{font-size:10px;line-height:1.6;color:var(--cyan-hot);text-shadow:var(--glow-soft);max-height:82px;overflow:hidden}
+#say .caret{display:inline-block;width:6px;height:11px;background:var(--cyan);margin-left:3px;vertical-align:-1px;animation:blip 1s steps(1) infinite}
+.controls{display:flex;gap:8px;align-items:stretch}
+button.hud{
+  font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:9px;
+  color:var(--cyan);background:rgba(111,233,255,.05);border:1px solid var(--line);
+  padding:8px 12px;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s;white-space:nowrap;
+}
+button.hud:hover{background:rgba(111,233,255,.14);color:var(--cyan-hot);box-shadow:0 0 12px rgba(111,233,255,.28)}
+button.hud.live{background:rgba(255,180,87,.14);border-color:rgba(255,180,87,.5);color:var(--amber);box-shadow:0 0 14px rgba(255,180,87,.3)}
+button.hud:disabled{opacity:.35;cursor:not-allowed}
+#ask{
+  flex:1 1 auto;min-width:0;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;
+  font-size:9px;color:var(--cyan-hot);background:rgba(111,233,255,.04);
+  border:1px solid var(--line);padding:8px 10px;outline:none;
+}
+#ask::placeholder{color:rgba(111,233,255,.32)}
+#ask:focus{border-color:var(--cyan-dim);box-shadow:0 0 12px rgba(111,233,255,.2)}
+
+/* --- radar / waveform -------------------------------------- */
+.canvasbox{position:relative;width:100%}
+#radar{width:100%;height:clamp(92px,13vh,128px);display:block}
+#wave{width:100%;height:clamp(44px,6.5vh,62px);display:block}
+.contacts{margin-top:7px;font-size:8.5px;color:var(--cyan-dim);line-height:1.6}
+.contacts .c{display:flex;justify-content:space-between;gap:8px}
+.contacts .c b{color:var(--cyan-hot);font-weight:500}
+.audiometa{display:flex;justify-content:space-between;font-size:8.5px;color:var(--cyan-dim);margin-top:5px}
+
+/* --- objective card ---------------------------------------- */
+.objective{
+  border:1px solid var(--line);background:rgba(6,18,32,.5);padding:10px 14px;
+  box-shadow:inset 0 0 26px rgba(111,233,255,.06);position:relative;
+}
+.objective::before,.objective::after{content:'';position:absolute;width:11px;height:11px;border:1px solid var(--cyan);opacity:.75}
+.objective::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.objective::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.objgrid{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:16px;align-items:center}
+.objlabel{font-size:8.5px;color:var(--cyan-dim);letter-spacing:.16em;margin-bottom:3px}
+.bignum{
+  font-size:clamp(26px,4vw,46px);line-height:1;color:var(--cyan-hot);
+  text-shadow:0 0 12px rgba(111,233,255,.6),0 0 34px rgba(111,233,255,.28);font-variant-numeric:tabular-nums;
+}
+.bignum.target{color:var(--amber);text-shadow:0 0 12px rgba(255,180,87,.5)}
+.bignum .u{font-size:.42em;color:var(--cyan-dim);margin-left:3px}
+.segbar{display:flex;gap:2px;height:11px;margin-top:8px}
+.seg{flex:1 1 0;border:1px solid var(--line-soft);background:rgba(111,233,255,.04);transition:background .3s,box-shadow .3s}
+.seg.on{background:linear-gradient(180deg,var(--cyan),rgba(111,233,255,.45));box-shadow:0 0 8px rgba(111,233,255,.5);border-color:transparent}
+.seg.edge{background:var(--cyan-hot);box-shadow:0 0 12px var(--cyan-hot)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:9px}
+.stat{min-width:84px}
+.stat .k{font-size:8px;color:rgba(111,233,255,.45);letter-spacing:.13em}
+.stat .v{font-size:13px;color:var(--cyan-hot);text-shadow:var(--glow-soft);font-variant-numeric:tabular-nums;margin-top:2px}
+.stat .v.am{color:var(--amber)}
+.readouts{display:grid;gap:9px;text-align:right}
+.readout .k{font-size:8px;color:rgba(111,233,255,.45);letter-spacing:.13em}
+.readout .v{font-size:15px;color:var(--cyan-hot);text-shadow:var(--glow-soft);font-variant-numeric:tabular-nums}
+.readout .v.ok{color:var(--green)}
+.readout .v.am{color:var(--amber)}
+
+/* --- boot sequence ----------------------------------------- */
+.boot{opacity:0}
+.boot.up{animation:flickerin .62s ease forwards}
+@keyframes flickerin{
+  0%{opacity:0}12%{opacity:.85}18%{opacity:.1}30%{opacity:.95}
+  38%{opacity:.25}52%{opacity:1}60%{opacity:.5}100%{opacity:1}
+}
+#bootveil{
+  position:fixed;inset:0;z-index:50;background:var(--navy-0);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+  transition:opacity .7s ease;
+}
+#bootveil.gone{opacity:0;pointer-events:none}
+#bootveil .bl{font-size:11px;color:var(--cyan);text-shadow:var(--glow);letter-spacing:.28em}
+#bootveil .bbar{width:min(340px,60vw);height:2px;background:rgba(111,233,255,.14);overflow:hidden}
+#bootveil .bbar i{display:block;height:100%;width:0;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+
+@media (max-height:680px){
+  :root{--pad:8px}
+  .brand .sub{display:none}
+  .contacts{display:none}
+}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-scan"></div>
+<div class="bg-vignette"></div>
+
+<div id="bootveil">
+  <div class="bl" id="bootline">INITIALISING F.R.I.D.A.Y.</div>
+  <div class="bbar"><i id="bootbar"></i></div>
+</div>
+
+<div id="shell">
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="boot" data-boot="0">
+    <div class="brand">
+      <h1>F.R.I.D.A.Y.</h1>
+      <div class="sub">Female replacement intelligent digital assistant youth</div>
+      <div class="obj">Objective: <span id="hdrObjective">—</span></div>
+    </div>
+    <div class="pills" id="pills"></div>
+    <div class="clockwrap">
+      <div class="clock" id="clock">00:00:00<span class="cs">.00</span></div>
+      <div class="meta"><span id="dateline">—</span> &nbsp;//&nbsp; SES <span id="sessionid">—</span></div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN ==================== -->
+  <main>
+    <!-- ---------- LEFT ---------- -->
+    <div class="col col-left">
+      <section class="panel boot" data-boot="1">
+        <div class="panel-title"><span>System vitals</span><span class="tag" id="vitalsTag">NOMINAL</span></div>
+        <div class="panel-body" id="vitals"></div>
+      </section>
+      <section class="panel boot" data-boot="2">
+        <div class="panel-title"><span>Telemetry</span><span class="tag">FEED 01</span></div>
+        <div class="panel-body"><div class="log" id="telemetry"></div></div>
+      </section>
+    </div>
+
+    <!-- ---------- CENTER ---------- -->
+    <div class="col-center">
+      <div class="orbstage boot" data-boot="3" id="orbstage" title="Click to talk — or hold SPACE">
+        <canvas id="orb"></canvas>
+        <div class="hint" id="orbhint">Tap to talk &nbsp;//&nbsp; hold SPACE</div>
+      </div>
+      <div class="saystage boot" data-boot="4"><div id="say">Standby.<span class="caret"></span></div></div>
+      <div class="controls boot" data-boot="5">
+        <button class="hud" id="btnTalk">▲ Engage voice</button>
+        <button class="hud" id="btnBrief">◆ Morning brief</button>
+        <input id="ask" autocomplete="off" spellcheck="false" placeholder="Type a command…">
+        <button class="hud" id="btnSend">Send ▸</button>
+      </div>
+    </div>
+
+    <!-- ---------- RIGHT ---------- -->
+    <div class="col col-right">
+      <section class="panel boot" data-boot="6">
+        <div class="panel-title"><span>Proximity</span><span class="tag" id="radarTag">SWEEP</span></div>
+        <div class="panel-body">
+          <div class="canvasbox"><canvas id="radar"></canvas></div>
+          <div class="contacts" id="contacts"></div>
+        </div>
+      </section>
+      <section class="panel boot" data-boot="7">
+        <div class="panel-title"><span>Audio I/O</span><span class="tag" id="audioTag">IDLE</span></div>
+        <div class="panel-body">
+          <div class="canvasbox"><canvas id="wave"></canvas></div>
+          <div class="audiometa"><span id="audioMode">MIC: STANDBY</span><span id="audioLvl">LVL 00</span></div>
+        </div>
+      </section>
+      <section class="panel boot" data-boot="8">
+        <div class="panel-title"><span>Diagnostics</span><span class="tag">FEED 02</span></div>
+        <div class="panel-body"><div class="log" id="diagnostics"></div></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==================== OBJECTIVE ==================== -->
+  <section class="objective boot" data-boot="9">
+    <div class="objgrid">
+      <div>
+        <div class="objlabel">Target</div>
+        <div class="bignum target" id="objTarget">0</div>
+      </div>
+      <div>
+        <div class="objlabel">Current</div>
+        <div class="bignum" id="objCurrent">0</div>
+      </div>
+      <div>
+        <div class="objlabel">Primary objective &nbsp;//&nbsp; <span id="objName">—</span></div>
+        <div class="segbar" id="segbar"></div>
+        <div class="stats" id="stats"></div>
+      </div>
+      <div class="readouts">
+        <div class="readout"><div class="k">Progress</div><div class="v" id="objPct">0%</div></div>
+        <div class="readout"><div class="k">Status</div><div class="v ok" id="objStatus">—</div></div>
+        <div class="readout"><div class="k">ETA</div><div class="v am" id="objEta">—</div></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ================================================================
+   ▓▓ 1. CENTRAL MOCK DATA OBJECT ▓▓
+   ----------------------------------------------------------------
+   EVERY number on this dashboard is read from DATA below.
+   Nothing else in the file hardcodes a business figure, so you can
+   swap each field for a real source without touching the design.
+
+   To go live, replace the literal values with whatever your source
+   returns (fetch / websocket / Supabase / Sheets / Stripe API...),
+   then call  FRIDAY.refresh()  to repaint the dashboard.
+
+   Example:
+     const live = await (await fetch('/api/metrics')).json();
+     DATA.objective.current = live.signedStudents;
+     DATA.stats[0].value    = live.applicationsLive;
+     FRIDAY.refresh();
+   ================================================================ */
+const DATA = {
+
+  /* ---- 1.1 IDENTITY -------------------------------------------
+     Who the system is talking to and what it calls itself.        */
+  meta: {
+    operator: 'Commander',              // how FRIDAY addresses you in speech
+    company: 'UniBridge NL',            // spoken in the morning brief
+    // Header objective line. Replace the placeholder with your real
+    // goal, or point it at a CRM field (e.g. crm.currentQuarterGoal).
+    objectiveLine: '[YOUR CURRENT GOAL]',
+    sessionId: null,                    // null => auto-generated per load
+    voiceLang: 'en-IE',                 // preferred speech-synthesis accent (Irish, like FRIDAY)
+    timezoneLabel: 'CET'
+  },
+
+  /* ---- 1.1b VOICE OUTPUT --------------------------------------
+     How FRIDAY speaks. Three engines, in order of fidelity:
+
+       'browser'    — built-in speech synthesis. Zero setup, works
+                      offline, robotic. This is the default.
+       'elevenlabs' — your own designed voice. `proxyUrl` is the SAME
+                      Apps Script /exec URL as the data source: it holds
+                      the ElevenLabs key server-side and answers
+                      POST {action:'tts', token, text} with base64 mp3.
+                      A plain audio/mpeg response works too, if you ever
+                      move it somewhere else. Never put an API key in
+                      this file — it ships to every visitor.
+       'clip'       — play fixed pre-rendered mp3s (kiosk / demo).
+
+     `sampleClip` is the uploaded voice sample. It plays once at boot
+     as the greeting; the orb and waveform are driven by its REAL
+     amplitude, not a simulation. Set it to null to disable.        */
+  voice: {
+    engine: 'browser',
+
+    /* Pin the browser voice by name so she sounds the same every time.
+       Leave empty and she picks the best available once, then remembers it.
+       To see what your device offers, open the browser console and run:
+           FRIDAY.voices()
+       then paste a name in here, e.g. 'Google UK English Female'.
+       Note that voices differ per device — the only way to sound identical
+       everywhere is the elevenlabs engine below.                          */
+    browserVoice: '',
+
+    /* Played ONLY when engine is 'clip'. It is a fixed recording, so mixing
+       it with the browser voice made her change voice mid-conversation. */
+    sampleClip: 'assets/voice-sample.mp3',
+    elevenlabs: {
+      proxyUrl: '',                     // same /exec URL as DATA.sources.endpoint
+      token: ''                         // same FRIDAY_TOKEN
+      /* voice id and model live in Script Properties, not here */
+    },
+    clips: {}                           // engine 'clip': { 'exact reply text': 'assets/x.mp3' }
+  },
+
+  /* ---- 1.1c LIVE DATA SOURCE ----------------------------------
+     Where the real numbers come from. While `enabled` is false the
+     dashboard runs entirely on the mock values below and says MOCK
+     in the header, so it is always safe to open.
+
+     `endpoint` should return the JSON contract documented in
+     friday/backend/README.md — keys match the `id` of each metric:
+
+       { "objective": { "current": 34, "target": 50 },
+         "stats":     { "appsLive": 61, "calls7d": 12, ... },
+         "vitals":    { "housingCapacity": 48, ... },
+         "proximity": { "hotLeads": 9, ... },
+         "telemetry": [ { "kind": "okln", "text": "..." } ] }
+
+     Anything the payload omits keeps its mock value, so you can wire
+     one field today and the rest whenever you like. A field that
+     arrives live stops its random jitter automatically.             */
+  sources: {
+    enabled: false,
+    endpoint: '',              // Apps Script /exec URL, or your own /api/metrics
+    token: '',                 // sent as ?token= — see backend/Code.gs
+    refreshSeconds: 180,       // how often to re-poll
+    timeoutMs: 8000
+  },
+
+  /* ---- 1.1d CONVERSATIONAL REPLIES ----------------------------
+     Off by default, and she still works without it: the built-in
+     keyword engine answers from the same numbers, it just cannot hold
+     a conversation. Turn this on and replies come from Claude instead,
+     grounded in the metrics the backend reads server-side — so she
+     cannot be talked into quoting figures that were never in the data.
+
+     `proxyUrl` is the same Apps Script /exec URL again. The API key
+     lives in Script Properties, never here. If the call fails for any
+     reason she falls back to the keyword engine rather than going
+     silent.                                                          */
+  brain: {
+    enabled: false,
+    proxyUrl: '',              // same /exec URL
+    token: '',                 // same FRIDAY_TOKEN
+    historyTurns: 6            // how much of the conversation she remembers
+  },
+
+  /* ---- 1.2 STATUS PILLS ---------------------------------------
+     Header chips. state: 'ok' | 'warn' | 'cy' (drives the dot).   */
+  pills: [
+    { label: 'ONLINE',    state: 'ok'   },  // <- uptime monitor
+    { label: 'SECURE',    state: 'ok'   },  // <- auth / session check
+    { label: 'ENCRYPTED', state: 'cy'   },  // <- TLS / vault status
+    { label: 'AUTO-LVL8', state: 'warn' }   // <- automation autonomy level
+  ],
+
+  /* ---- 1.3 PRIMARY OBJECTIVE ----------------------------------
+     The one number that matters. Bottom card + progress maths.    */
+  objective: {
+    /* Pre-revenue, so the objective is the first real milestone rather than
+       a revenue figure. Nothing here is invented: it is 0 because it is 0.
+       When the first student signs, change `current` to 1 and raise the
+       target — or swap the whole thing for a leading indicator you can move
+       every day, e.g. name: 'QUALIFIED CONVERSATIONS', target: 20.        */
+    name: 'FIRST SIGNED STUDENT',
+    unit: '',
+    target: 1,                 // <- the milestone that changes everything
+    current: 0,                // <- sheet: objective.current
+    startedAt: '2026-09-01',   // when you started counting
+    deadline: '2027-01-15',    // Studielink deadline for the Sept 2027 intake
+    decimals: 0
+  },
+
+  /* ---- 1.4 KEY STATS ------------------------------------------
+     The row under the progress bar. Add/remove freely — the card
+     re-renders from this array. format: 'int' | 'eur' | 'pct'.    */
+  /* Everything here is measurable from day one: the inbox, the calendar and
+     Stripe. No student counts, because there are no students yet — the point
+     of the dashboard is to make the first one arrive, not to flatter you.  */
+  stats: [
+    { id:'emailsIn',      key:'ENQUIRIES 30D', value:0, format:'int' },  // <- Gmail, auto
+    { id:'awaitingReply', key:'OWE A REPLY',   value:0, format:'int' },  // <- Gmail, auto
+    { id:'replyRate',     key:'REPLY RATE',    value:0, format:'pct' },  // <- Gmail, auto
+    { id:'calls7d',       key:'CALLS / 7D',    value:0, format:'int' },  // <- Calendar, auto
+    { id:'revenue30d',    key:'REVENUE 30D',   value:0, format:'eur' },  // <- Stripe, auto
+    { id:'signed',        key:'SIGNED',        value:0, format:'int', accent:true } // <- sheet
+  ],
+
+  /* ---- 1.5 SYSTEM VITALS --------------------------------------
+     Six animated bars. value 0-100. drift = live jitter amplitude
+     (set drift:0 once a field is wired to a real metric).         */
+  /* The first four are computed from Gmail and Calendar. The last two are
+     yours to type into the sheet — there is no API for how ready you feel.
+     `drift` is cosmetic jitter for the mock state and switches itself off
+     the moment a real number arrives.                                      */
+  vitals: [
+    { id:'inboxClear',    key:'INBOX CLEARED',    value:0, drift:0, unit:'%' },  // <- Gmail: replied / received
+    { id:'replySpeed',    key:'REPLY SPEED',      value:0, drift:0, unit:'%' },  // <- Gmail: 100 at under 2h, 0 at 48h+
+    { id:'leadFlow',      key:'LEAD FLOW',        value:0, drift:0, unit:'%' },  // <- Gmail: enquiries vs weekly goal
+    { id:'callPipeline',  key:'CALL PIPELINE',    value:0, drift:0, unit:'%' },  // <- Calendar: booked vs weekly goal
+    { id:'siteReadiness', key:'SITE READINESS',   value:0, drift:0, unit:'%' },  // <- sheet, your call
+    { id:'cashRunway',    key:'CASH RUNWAY',      value:0, drift:0, unit:'%' }   // <- sheet, your call
+  ],
+
+  /* ---- 1.6 PROXIMITY CONTACTS ---------------------------------
+     Radar blips. angle 0-360°, dist 0-1 (1 = outer ring).
+     Wire to: leads by stage, partner universities, open tickets.  */
+  proximity: [
+    { id:'awaitingReply', label:'OWE A REPLY',   count:0, angle:42,  dist:.38 },  // <- Gmail
+    { id:'newEnquiries',  label:'NEW / 7D',      count:0, angle:128, dist:.62 },  // <- Gmail
+    { id:'callsAhead',    label:'CALLS AHEAD',   count:0, angle:214, dist:.80 },  // <- Calendar
+    { id:'openThreads',   label:'OPEN THREADS',  count:0, angle:305, dist:.50 }   // <- Gmail
+  ],
+
+  /* ---- 1.7 TELEMETRY FEED -------------------------------------
+     Left-hand rolling log. Swap for a real event stream / webhook.
+     kind: 'sys' | 'okln' | 'warnln'.                              */
+  /* Placeholders only, shown until Gmail is wired — at which point real
+     inbox events replace them. Deliberately not fake wins.                */
+  telemetry: [
+    { kind:'sys',   text:'No mailbox connected — showing standby feed' },
+    { kind:'sys',   text:'Awaiting first enquiry' },
+    { kind:'sys',   text:'Quiz funnel armed — Find My Field' },
+    { kind:'sys',   text:'Booking calendar armed' },
+    { kind:'sys',   text:'Stripe checkout live — handbook' },
+    { kind:'sys',   text:'Standing by for inbound' }
+  ],
+
+  /* ---- 1.8 DIAGNOSTICS FEED -----------------------------------
+     Right-hand rolling log. Wire to uptime/CI/infra events.       */
+  diagnostics: [
+    { kind:'sys',   text:'Heartbeat OK — edge node AMS-3' },
+    { kind:'okln',  text:'Backup verified — 04:00 snapshot, 0 errors' },
+    { kind:'sys',   text:'Cache warm — 98.2% hit rate' },
+    { kind:'sys',   text:'Mail poller idle — no source configured' },
+    { kind:'sys',   text:'Cert valid — 71 days to renewal' },
+    { kind:'okln',  text:'Deploy green — site build 1.4.2' },
+    { kind:'sys',   text:'Crawl complete — site indexed' },
+    { kind:'sys',   text:'Stripe webhook reachable' },
+    { kind:'sys',   text:'Queue depth 0 — worker pool idle' },
+    { kind:'okln',  text:'Integrity scan clean — no anomalies' }
+  ],
+
+  /* ---- 1.9 RECOMMENDATIONS ------------------------------------
+     Top 3 spoken at the end of the MORNING BRIEF. Wire to whatever
+     scoring engine you like — order matters, highest first.       */
+  /* At zero, the only honest advice is about getting the first conversation,
+     not optimising a funnel that does not exist yet. Replace these as the
+     picture changes — or let the brain generate them from the live numbers. */
+  recommendations: [
+    'Answer everyone who wrote to you before writing anything new. An unanswered enquiry is the only lead you can lose today.',
+    'The first signed student will come from a conversation, not from the website. Pick ten people who fit and write to them by hand.',
+    'You have a booking page and a Stripe checkout already live. Send both to every enquiry rather than explaining the service twice.'
+  ],
+
+  /* ---- 1.10 BRIEF COPY ----------------------------------------
+     Optional fixed lines for the morning brief. Leave empty to let
+     FRIDAY generate everything from the numbers above.            */
+  brief: {
+    greeting: 'Good morning, {operator}.',
+    closing:  'That is the picture. I will keep watch.'
+  }
+};
+
+/* ================================================================
+   ▓▓ 2. SMALL HELPERS ▓▓
+   ================================================================ */
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const pad2 = (n) => String(n).padStart(2,'0');
+const rnd  = (a,b) => a + Math.random()*(b-a);
+const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
+
+function fmtNum(v, format, decimals){
+  const n = Number(v)||0;
+  if (format === 'eur') return '€' + n.toLocaleString('en-GB', {maximumFractionDigits:0});
+  if (format === 'pct') return n.toFixed(0) + '%';
+  return n.toLocaleString('en-GB', {minimumFractionDigits:decimals||0, maximumFractionDigits:decimals||0});
+}
+function daysBetween(a,b){ return Math.round((new Date(b) - new Date(a)) / 86400000); }
+function stamp(d){ d = d || new Date(); return pad2(d.getHours())+':'+pad2(d.getMinutes())+':'+pad2(d.getSeconds()); }
+
+/* Session ID — stable for the life of the page. */
+const SESSION_ID = DATA.meta.sessionId || (
+  'UB-' + Math.random().toString(36).slice(2,6).toUpperCase() + '-' +
+  String(Date.now()).slice(-4)
+);
+
+/* Assistant state drives the orb, the waveform and the audio panel.
+   'idle' | 'listening' | 'thinking' | 'speaking'                  */
+let STATE = 'idle';
+let energy = 0;            // smoothed 0..1 excitement level for the orb
+function setState(s){
+  STATE = s;
+  const tag = $('#audioTag'), mode = $('#audioMode'), hint = $('#orbhint');
+  const map = {
+    idle:      ['IDLE',      'MIC: STANDBY',   'Tap to talk // hold SPACE'],
+    listening: ['LISTENING', 'MIC: OPEN',      'Listening…'],
+    thinking:  ['PROCESSING','MIC: CLOSED',    'Processing…'],
+    speaking:  ['OUTPUT',    'TTS: ACTIVE',    'Speaking…']
+  };
+  tag.textContent = map[s][0];
+  mode.textContent = map[s][1];
+  hint.textContent = map[s][2];
+  $('#btnTalk').classList.toggle('live', s === 'listening');
+}
+
+/* ================================================================
+   ▓▓ 3. RENDER — everything below reads DATA, never literals ▓▓
+   ================================================================ */
+
+/* ---- 3.1 header ------------------------------------------------ */
+function renderHeader(){
+  $('#hdrObjective').textContent = DATA.meta.objectiveLine;
+  $('#sessionid').textContent = SESSION_ID;
+  $('#pills').innerHTML = DATA.pills.map(p =>
+    `<div class="pill ${p.state === 'warn' ? 'warn' : p.state === 'cy' ? 'cy' : ''}">
+       <i class="dot"></i>${p.label}
+     </div>`).join('')
+    + `<div class="pill ${dataMode === 'LIVE' ? '' : 'warn'}" id="pillData" title="">
+         <i class="dot"></i>DATA ${dataMode}
+       </div>`;
+}
+
+/* ---- 3.2 clock (hours : minutes : seconds . hundredths) -------- */
+function tickClock(){
+  const d = new Date();
+  const cs = pad2(Math.floor(d.getMilliseconds()/10));
+  $('#clock').innerHTML = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}<span class="cs">.${cs}</span>`;
+  $('#dateline').textContent =
+    d.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase()
+    + ' ' + DATA.meta.timezoneLabel;
+  requestAnimationFrame(tickClock);
+}
+
+/* ---- 3.3 system vitals ---------------------------------------- */
+function renderVitals(){
+  $('#vitals').innerHTML = DATA.vitals.map((v,i) => `
+    <div class="vital">
+      <div class="row"><span>${v.key}</span><b id="vv${i}">${Math.round(v.value)}${v.unit||''}</b></div>
+      <div class="track"><div class="fill ${v.warn?'warn':''}" id="vf${i}"></div></div>
+    </div>`).join('');
+  paintVitals();
+}
+function paintVitals(){
+  DATA.vitals.forEach((v,i) => {
+    const f = $('#vf'+i), t = $('#vv'+i);
+    if (!f) return;
+    f.style.width = clamp(v.value,0,100).toFixed(1) + '%';
+    t.textContent = Math.round(v.value) + (v.unit||'');
+  });
+  const lowest = Math.min(...DATA.vitals.map(v => v.value));
+  $('#vitalsTag').textContent = lowest < 40 ? 'DEGRADED' : lowest < 60 ? 'WATCH' : 'NOMINAL';
+}
+/* Live jitter. Set a vital's drift to 0 once it is wired to a real feed. */
+setInterval(() => {
+  DATA.vitals.forEach(v => {
+    if (!v.drift) return;
+    v.base = v.base ?? v.value;
+    v.value = clamp(v.base + rnd(-v.drift, v.drift), 2, 100);
+  });
+  paintVitals();
+}, 1900);
+
+/* ---- 3.4 log feeds -------------------------------------------- */
+const MAX_LINES = 60;
+function logLine(target, text, kind){
+  const box = $(target);
+  if (!box) return;
+  const el = document.createElement('div');
+  el.className = 'ln ' + (kind || 'sys');
+  el.innerHTML = `<span class="ts">${stamp()}</span><span class="tx"></span>`;
+  el.querySelector('.tx').textContent = text;
+  box.appendChild(el);
+  while (box.children.length > MAX_LINES) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+}
+const telemetry = (t,k) => logLine('#telemetry', t, k);
+const diagnostic = (t,k) => logLine('#diagnostics', t, k);
+
+let telIdx = 0, diagIdx = 0;
+function startFeeds(){
+  const nextTel = () => {
+    const item = DATA.telemetry[telIdx++ % DATA.telemetry.length];
+    telemetry(item.text, item.kind);
+    setTimeout(nextTel, rnd(3200, 6200));
+  };
+  const nextDiag = () => {
+    const item = DATA.diagnostics[diagIdx++ % DATA.diagnostics.length];
+    diagnostic(item.text, item.kind);
+    setTimeout(nextDiag, rnd(4200, 7800));
+  };
+  setTimeout(nextTel, 900);
+  setTimeout(nextDiag, 1700);
+}
+
+/* ---- 3.5 proximity contact list -------------------------------- */
+function renderContacts(){
+  $('#contacts').innerHTML = DATA.proximity.map(c =>
+    `<div class="c"><span>${c.label}</span><b>${c.count}</b></div>`).join('');
+}
+
+/* ---- 3.6 primary objective card -------------------------------- */
+const SEGMENTS = 44;
+let displayedCurrent = 0;         // animated counter value
+let counterAnim = null;
+
+function objectiveMaths(){
+  const o = DATA.objective;
+  const pct = clamp((o.current / o.target) * 100, 0, 100);
+  const today = new Date();
+  const daysLeft = Math.max(0, daysBetween(today, o.deadline));
+  const elapsed = Math.max(1, daysBetween(o.startedAt, today));
+  const rate = o.current / elapsed;                        // units per day so far
+  const projected = o.current + rate * daysLeft;
+  const needed = Math.max(0, o.target - o.current);
+  const daysToTarget = rate > 0 ? Math.ceil(needed / rate) : Infinity;
+  const onTrack = projected >= o.target;
+  return { pct, daysLeft, rate, projected, needed, daysToTarget, onTrack };
+}
+
+function renderObjective(animateCounter){
+  const o = DATA.objective, m = objectiveMaths();
+
+  $('#objName').textContent = o.name;
+  $('#objTarget').innerHTML = fmtNum(o.target, o.unit === '€' ? 'eur' : 'int', o.decimals)
+    + (o.unit && o.unit !== '€' ? `<span class="u">${o.unit}</span>` : '');
+
+  /* segmented progress bar */
+  const filled = Math.round((m.pct/100) * SEGMENTS);
+  $('#segbar').innerHTML = Array.from({length:SEGMENTS}, (_,i) =>
+    `<div class="seg ${i < filled ? 'on' : ''} ${i === filled-1 ? 'edge' : ''}"></div>`).join('');
+
+  /* stat row */
+  $('#stats').innerHTML = DATA.stats.map(s =>
+    `<div class="stat"><div class="k">${s.key}</div>
+       <div class="v ${s.accent?'am':''}">${fmtNum(s.value, s.format)}</div></div>`).join('');
+
+  /* readouts */
+  $('#objPct').textContent = m.pct.toFixed(0) + '%';
+  const st = $('#objStatus');
+  /* At zero there is no pace to be behind, so say so rather than scoring
+     the operator against a projection built from no data at all. */
+  const notStarted = o.current === 0;
+  st.textContent = m.needed === 0 ? 'COMPLETE' : notStarted ? 'NOT STARTED' : m.onTrack ? 'ON TRACK' : 'BEHIND PACE';
+  st.className = 'v ' + (m.needed === 0 ? 'ok' : notStarted ? 'am' : m.onTrack ? 'ok' : 'am');
+  $('#objEta').textContent = m.needed === 0 ? 'COMPLETE'
+    : notStarted ? m.daysLeft + 'D LEFT'
+    : (isFinite(m.daysToTarget) ? m.daysToTarget + 'D' : '∞') + ' / ' + m.daysLeft + 'D LEFT';
+
+  /* counter — counts up when the value changes */
+  if (animateCounter === false){ displayedCurrent = o.current; paintCounter(); }
+  else animateCounterTo(o.current);
+}
+function paintCounter(){
+  const o = DATA.objective;
+  $('#objCurrent').innerHTML = fmtNum(displayedCurrent, o.unit === '€' ? 'eur' : 'int', o.decimals)
+    + (o.unit && o.unit !== '€' ? `<span class="u">${o.unit}</span>` : '');
+}
+function animateCounterTo(v){
+  cancelAnimationFrame(counterAnim);
+  const from = displayedCurrent, to = v, t0 = performance.now(), dur = 900;
+  if (from === to){ paintCounter(); return; }
+  const step = (t) => {
+    const k = clamp((t - t0)/dur, 0, 1);
+    const e = 1 - Math.pow(1-k, 3);                   // ease-out cubic
+    displayedCurrent = from + (to - from) * e;
+    paintCounter();
+    if (k < 1) counterAnim = requestAnimationFrame(step);
+    else { displayedCurrent = to; paintCounter(); }
+  };
+  counterAnim = requestAnimationFrame(step);
+}
+
+/* ---- 3.7 LIVE DATA — fetch, merge, and say so ------------------
+   applyLive() is deliberately forgiving: it takes whatever fields the
+   payload happens to contain, keyed by each metric's `id`, and leaves
+   everything else on its mock value. So you can wire one number today
+   and the rest next month without touching this file again.        */
+let dataMode = 'MOCK';          // MOCK | LIVE | STALE
+let lastSync = null;
+
+function setDataMode(mode, note){
+  dataMode = mode;
+  const pill = $('#pillData');
+  if (pill){
+    pill.className = 'pill ' + (mode === 'LIVE' ? '' : mode === 'STALE' ? 'warn' : 'warn');
+    pill.innerHTML = `<i class="dot"></i>DATA ${mode}`;
+    pill.title = note || '';
+  }
+}
+
+function applyLive(payload){
+  if (!payload || typeof payload !== 'object') return 0;
+  let n = 0;
+  const num = (v) => (typeof v === 'number' && isFinite(v)) ? v : null;
+
+  /* objective */
+  if (payload.objective){
+    const c = num(payload.objective.current), t = num(payload.objective.target);
+    if (c !== null){ DATA.objective.current = c; n++; }
+    if (t !== null){ DATA.objective.target  = t; n++; }
+    if (payload.objective.name)     { DATA.objective.name = payload.objective.name; n++; }
+    if (payload.objective.deadline) { DATA.objective.deadline = payload.objective.deadline; n++; }
+  }
+  /* collections keyed by id */
+  const merge = (list, obj, field) => {
+    if (!obj) return;
+    list.forEach(item => {
+      const v = num(obj[item.id]);
+      if (v === null) return;
+      item[field] = v;
+      if (field === 'value') item.drift = 0;      // real number: stop the jitter
+      item.live = true; n++;
+    });
+  };
+  merge(DATA.stats,     payload.stats,     'value');
+  merge(DATA.vitals,    payload.vitals,    'value');
+  merge(DATA.proximity, payload.proximity, 'count');
+
+  /* objective line + feed lines the backend wants to push */
+  if (payload.objectiveLine) { DATA.meta.objectiveLine = payload.objectiveLine; n++; }
+  if (Array.isArray(payload.telemetry))
+    payload.telemetry.slice(0,12).forEach(l => telemetry(String(l.text||l), l.kind || 'sys'));
+  if (Array.isArray(payload.recommendations) && payload.recommendations.length)
+    DATA.recommendations = payload.recommendations.map(String);
+
+  lastSync = new Date();
+  return n;
+}
+
+async function fetchLive(){
+  const src = DATA.sources || {};
+  if (!src.enabled || !src.endpoint) return;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), src.timeoutMs || 8000);
+  try {
+    const url = src.endpoint
+      + (src.endpoint.includes('?') ? '&' : '?')
+      + 'action=metrics' + (src.token ? '&token=' + encodeURIComponent(src.token) : '');
+    const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const payload = await res.json();
+    if (payload && payload.error) throw new Error(payload.error);
+    const n = applyLive(payload);
+    FRIDAY.refresh();
+    setDataMode('LIVE', 'Last sync ' + stamp(lastSync));
+    diagnostic(`Live sync OK — ${n} fields from source`, 'okln');
+  } catch (err) {
+    setDataMode(lastSync ? 'STALE' : 'MOCK', 'Last sync ' + (lastSync ? stamp(lastSync) : 'never'));
+    diagnostic('Live sync failed — ' + err.message + ' (holding last known values)', 'warnln');
+  } finally { clearTimeout(timer); }
+}
+
+function startSync(){
+  const src = DATA.sources || {};
+  if (!src.enabled || !src.endpoint){
+    diagnostic('Running on mock data — set DATA.sources.enabled to go live', 'warnln');
+    return;
+  }
+  fetchLive();
+  setInterval(fetchLive, Math.max(30, src.refreshSeconds || 180) * 1000);
+}
+
+/* ---- 3.8 public refresh hook ----------------------------------- */
+const FRIDAY = {
+  data: DATA,
+  refresh(){ renderHeader(); paintVitals(); renderContacts(); renderObjective(true); },
+  /* Push numbers in from anywhere: FRIDAY.applyLive({stats:{appsLive:70}}) */
+  applyLive(payload){ const n = applyLive(payload); this.refresh(); setDataMode('LIVE'); return n; },
+  sync: fetchLive,
+  say: (t) => respondWith(t),
+  log: telemetry,
+  /* List the voices this device offers, to pin one in DATA.voice.browserVoice */
+  voices(){
+    const list = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
+    console.table(list.map(v => ({ name: v.name, lang: v.lang, default: v.default })));
+    console.log('Currently speaking as:', voice ? voice.name : '(none yet)');
+    return list.map(v => v.name);
+  },
+  /* Switch voice and remember it: FRIDAY.setVoice('Google UK English Female') */
+  setVoice(name){
+    const list = window.speechSynthesis.getVoices();
+    const found = list.find(v => v.name === name);
+    if (!found){ console.warn('No such voice. Try FRIDAY.voices()'); return false; }
+    voice = found; safeSet(VOICE_KEY, name);
+    respondWith('Voice set. This is how I will sound from now on.');
+    return true;
+  }
+};
+window.FRIDAY = FRIDAY;
+
+/* ================================================================
+   ▓▓ 4. THE ORB — particle sphere + concentric HUD rings ▓▓
+   ================================================================ */
+const orb = $('#orb'), octx = orb.getContext('2d');
+const PARTICLES = 920;
+const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+const pts = [];
+for (let i = 0; i < PARTICLES; i++){
+  const y = 1 - (i / (PARTICLES - 1)) * 2;
+  const r = Math.sqrt(Math.max(0, 1 - y*y));
+  const th = GOLDEN * i;
+  pts.push({ x: Math.cos(th)*r, y, z: Math.sin(th)*r, s: rnd(.55, 1.35) });
+}
+
+let ow = 0, oh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+function sizeCanvas(cv, ctx){
+  const rect = cv.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width)), h = Math.max(1, Math.floor(rect.height));
+  cv.width = w * dpr; cv.height = h * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return [w,h];
+}
+function resizeAll(){
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  [ow, oh] = sizeCanvas(orb, octx);
+  sizeCanvas(radar, rctx);
+  sizeCanvas(wave, wctx);
+}
+window.addEventListener('resize', () => { resizeAll(); });
+
+let spin = 0, ringA = 0, t0 = performance.now();
+
+function drawOrb(now){
+  const dt = Math.min(50, now - t0); t0 = now;
+
+  /* energy: how excited the orb looks. Speaking/thinking pulse harder. */
+  const targetE = liveLevel !== null ? clamp(.35 + liveLevel, 0, 1)
+                : STATE === 'speaking' ? 1 : STATE === 'thinking' ? .72 : STATE === 'listening' ? .5 : .16;
+  energy += (targetE - energy) * 0.06;
+
+  const pulse = 1 + energy * 0.16 * Math.sin(now / (STATE === 'speaking' ? 110 : 320));
+  spin  += 0.00042 * dt * (1 + energy * 0.85);
+  ringA += 0.00020 * dt;
+
+  octx.clearRect(0,0,ow,oh);
+  const cx = ow/2, cy = oh/2;
+  const R = Math.min(ow, oh) * 0.325 * pulse;       // sphere radius
+  const tilt = 0.42 + Math.sin(now/9000) * 0.12;
+
+  /* --- soft core glow --- */
+  const g = octx.createRadialGradient(cx, cy, 0, cx, cy, R*1.9);
+  g.addColorStop(0,   `rgba(140,240,255,${0.16 + energy*0.20})`);
+  g.addColorStop(0.35,`rgba(90,200,255,${0.08 + energy*0.10})`);
+  g.addColorStop(1,   'rgba(10,40,70,0)');
+  octx.fillStyle = g;
+  octx.beginPath(); octx.arc(cx, cy, R*1.9, 0, Math.PI*2); octx.fill();
+
+  /* --- particles --- */
+  const cosY = Math.cos(spin), sinY = Math.sin(spin);
+  const cosX = Math.cos(tilt), sinX = Math.sin(tilt);
+  for (let i = 0; i < pts.length; i++){
+    const p = pts[i];
+    let x = p.x*cosY - p.z*sinY;
+    let z = p.x*sinY + p.z*cosY;
+    let y = p.y*cosX - z*sinX;
+    z = p.y*sinX + z*cosX;
+    const persp = 1 / (1.9 - z*0.55);
+    const sx = cx + x * R * persp * 1.6;
+    const sy = cy + y * R * persp * 1.6;
+    const depth = (z + 1) / 2;                       // 0 back .. 1 front
+    const a = (0.16 + depth*0.80) * (0.62 + energy*0.50);
+    const size = p.s * (0.55 + depth*1.05) * (1 + energy*0.35);
+    octx.fillStyle = depth > 0.82
+      ? `rgba(190,250,255,${clamp(a,0,1)})`
+      : `rgba(111,233,255,${clamp(a,0,1)})`;
+    octx.fillRect(sx - size/2, sy - size/2, size, size);
+  }
+
+  /* --- two concentric HUD rings with tick marks --- */
+  const R1 = Math.min(ow, oh) * 0.415;
+  const R2 = Math.min(ow, oh) * 0.335;
+  drawRing(cx, cy, R1, ringA,        90, 0.26);
+  drawRing(cx, cy, R2, -ringA * 1.6, 60, 0.20);
+
+  /* --- slowly rotating arc segments --- */
+  arc(cx, cy, R1 + 6,  ringA*2.2,        1.15, 1.6, .55);
+  arc(cx, cy, R1 + 6,  ringA*2.2 + 3.3,  0.55, 1.6, .35);
+  arc(cx, cy, R2 - 7, -ringA*3.1,        0.85, 1.2, .45);
+  arc(cx, cy, R2 - 7, -ringA*3.1 + 2.2,  0.35, 1.2, .25);
+  arc(cx, cy, R*1.35 , ringA*5.0,        0.30, 1.0, .30 + energy*.4);
+
+  requestAnimationFrame(drawOrb);
+}
+function drawRing(cx, cy, r, rot, ticks, alpha){
+  octx.save();
+  octx.strokeStyle = `rgba(111,233,255,${alpha})`;
+  octx.lineWidth = 1;
+  octx.beginPath(); octx.arc(cx, cy, r, 0, Math.PI*2); octx.stroke();
+  for (let i = 0; i < ticks; i++){
+    const a = rot + (i/ticks) * Math.PI*2;
+    const long = i % 5 === 0;
+    const l = long ? 7 : 3.2;
+    octx.globalAlpha = long ? 0.95 : 0.45;
+    octx.beginPath();
+    octx.moveTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
+    octx.lineTo(cx + Math.cos(a)*(r+l), cy + Math.sin(a)*(r+l));
+    octx.stroke();
+  }
+  octx.restore();
+}
+function arc(cx, cy, r, start, len, lw, alpha){
+  octx.save();
+  octx.strokeStyle = `rgba(140,240,255,${clamp(alpha,0,1)})`;
+  octx.lineWidth = lw;
+  octx.shadowColor = 'rgba(111,233,255,.8)';
+  octx.shadowBlur = 8;
+  octx.beginPath(); octx.arc(cx, cy, r, start, start + len); octx.stroke();
+  octx.restore();
+}
+
+/* ================================================================
+   ▓▓ 5. PROXIMITY RADAR ▓▓
+   ================================================================ */
+const radar = $('#radar'), rctx = radar.getContext('2d');
+let sweep = 0;
+function drawRadar(){
+  const w = radar.width/dpr, h = radar.height/dpr;
+  const cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 4;
+  rctx.clearRect(0,0,w,h);
+
+  rctx.strokeStyle = 'rgba(111,233,255,.22)';
+  rctx.lineWidth = 1;
+  [1,.72,.44,.18].forEach(k => { rctx.beginPath(); rctx.arc(cx,cy,R*k,0,Math.PI*2); rctx.stroke(); });
+  rctx.beginPath(); rctx.moveTo(cx-R,cy); rctx.lineTo(cx+R,cy);
+  rctx.moveTo(cx,cy-R); rctx.lineTo(cx,cy+R); rctx.stroke();
+
+  sweep += 0.016;
+  const grad = rctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  grad.addColorStop(0,'rgba(111,233,255,.30)');
+  grad.addColorStop(1,'rgba(111,233,255,0)');
+  rctx.save();
+  rctx.beginPath(); rctx.moveTo(cx,cy);
+  rctx.arc(cx,cy,R,sweep-0.55,sweep); rctx.closePath();
+  rctx.fillStyle = grad; rctx.fill();
+  rctx.restore();
+  rctx.strokeStyle = 'rgba(180,245,255,.75)';
+  rctx.beginPath(); rctx.moveTo(cx,cy);
+  rctx.lineTo(cx+Math.cos(sweep)*R, cy+Math.sin(sweep)*R); rctx.stroke();
+
+  /* blips — positions come straight from DATA.proximity */
+  DATA.proximity.forEach(c => {
+    const a = (c.angle * Math.PI) / 180;
+    const x = cx + Math.cos(a)*R*c.dist, y = cy + Math.sin(a)*R*c.dist;
+    let diff = (sweep - a) % (Math.PI*2); if (diff < 0) diff += Math.PI*2;
+    const fresh = clamp(1 - diff/(Math.PI*2), 0, 1);   // fades until next pass
+    rctx.fillStyle = `rgba(140,240,255,${0.15 + fresh*0.85})`;
+    rctx.beginPath(); rctx.arc(x, y, 2 + fresh*1.8, 0, Math.PI*2); rctx.fill();
+    if (fresh > .72){
+      rctx.strokeStyle = `rgba(140,240,255,${(fresh-.72)*2})`;
+      rctx.beginPath(); rctx.arc(x, y, 5 + (1-fresh)*22, 0, Math.PI*2); rctx.stroke();
+    }
+  });
+  requestAnimationFrame(drawRadar);
+}
+
+/* ================================================================
+   ▓▓ 6. AUDIO WAVEFORM — animates on listen/speak, flat when idle ▓▓
+   ================================================================ */
+const wave = $('#wave'), wctx = wave.getContext('2d');
+let wphase = 0, wamp = 0;
+function drawWave(){
+  const w = wave.width/dpr, h = wave.height/dpr, mid = h/2;
+  wctx.clearRect(0,0,w,h);
+
+  const target = liveLevel !== null ? clamp(liveLevel, .05, 1)
+              : STATE === 'speaking' ? 1 : STATE === 'listening' ? .78 : STATE === 'thinking' ? .3 : 0;
+  wamp += (target - wamp) * 0.08;
+  wphase += STATE === 'speaking' ? 0.16 : 0.09;
+
+  wctx.strokeStyle = 'rgba(111,233,255,.10)';
+  wctx.lineWidth = 1;
+  wctx.beginPath(); wctx.moveTo(0,mid); wctx.lineTo(w,mid); wctx.stroke();
+
+  wctx.beginPath();
+  for (let x = 0; x <= w; x += 2){
+    const k = x / w;
+    const envelope = Math.sin(k * Math.PI);                      // taper at both ends
+    const n = Math.sin(k*22 + wphase) * 0.55
+            + Math.sin(k*47 - wphase*1.7) * 0.28
+            + Math.sin(k*9  + wphase*0.5) * 0.34;
+    const jitter = wamp > .05 ? (Math.random()-.5) * 0.5 * wamp : 0;
+    const y = mid + (n + jitter) * envelope * wamp * (h*0.40);
+    x === 0 ? wctx.moveTo(x,y) : wctx.lineTo(x,y);
+  }
+  wctx.strokeStyle = STATE === 'speaking' ? 'rgba(185,246,255,.95)' : 'rgba(111,233,255,.85)';
+  wctx.lineWidth = 1.4;
+  wctx.shadowColor = 'rgba(111,233,255,.75)';
+  wctx.shadowBlur = 7;
+  wctx.stroke();
+  wctx.shadowBlur = 0;
+
+  $('#audioLvl').textContent = 'LVL ' + pad2(Math.round(wamp * 99));
+  requestAnimationFrame(drawWave);
+}
+
+/* ================================================================
+   ▓▓ 7. VOICE — speech recognition in, speech synthesis out ▓▓
+   ================================================================ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null, recognising = false, wantsToListen = false, audioUnlocked = false;
+
+if (SR){
+  recog = new SR();
+  recog.lang = 'en-GB';   // input locale — leave as your own accent
+  recog.interimResults = true;
+  recog.continuous = false;
+  recog.maxAlternatives = 1;
+
+  recog.onstart = () => { recognising = true; setState('listening'); diagnostic('Speech input opened','okln'); };
+  recog.onerror = (e) => {
+    recognising = false;
+    const msg = e.error === 'not-allowed' ? 'Microphone blocked — grant permission or use the text input.'
+              : e.error === 'no-speech'   ? 'No speech detected.'
+              : 'Speech input error: ' + e.error;
+    diagnostic(msg, 'warnln');
+    if (e.error === 'not-allowed') respondWith(msg, false);
+    setState('idle');
+  };
+  recog.onend = () => {
+    recognising = false;
+    if (STATE === 'listening') setState('idle');
+    if (wantsToListen) startListening();      // spacebar still held
+  };
+  recog.onresult = (ev) => {
+    let finalText = '', interim = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++){
+      const r = ev.results[i];
+      if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript;
+    }
+    if (interim) showSay('… ' + interim.trim(), false);
+    if (finalText.trim()){
+      wantsToListen = false;
+      handleUtterance(finalText.trim());
+    }
+  };
+} else {
+  DATA.pills.push({ label:'VOICE N/A', state:'warn' });
+}
+
+function startListening(){
+  if (!recog){ respondWith('Speech recognition is not available in this browser. Use the text input below.'); return; }
+  if (recognising) return;
+  try { window.speechSynthesis.cancel(); recog.start(); }
+  catch(_){ /* already starting */ }
+}
+function stopListening(){
+  wantsToListen = false;
+  if (recog && recognising){ try { recog.stop(); } catch(_){} }
+}
+
+/* --- speech synthesis ------------------------------------------ */
+let voice = null;
+const VOICE_KEY = 'friday.voice.name';
+
+/* The voice list loads asynchronously. Speaking before it is ready gets the
+   system default, and picking again afterwards is what made her change voice
+   mid-conversation. So: resolve once, remember the choice, never re-pick. */
+const voicesReady = new Promise((resolve) => {
+  if (!('speechSynthesis' in window)) return resolve([]);
+  const got = () => {
+    const list = window.speechSynthesis.getVoices();
+    if (list.length){ resolve(list); return true; }
+    return false;
+  };
+  if (got()) return;
+  window.speechSynthesis.onvoiceschanged = () => got();
+  setTimeout(() => resolve(window.speechSynthesis.getVoices() || []), 2500); // never hang
+});
+
+voicesReady.then((voices) => {
+  if (!voices.length) return;
+  const byName = (n) => n && voices.find(v => v.name === n);
+
+  /* 1. an explicit choice in the config, 2. the one she settled on before,
+     3. a fresh pick — Irish, then a female English voice, then any English. */
+  voice = byName(DATA.voice && DATA.voice.browserVoice)
+       || byName(safeGet(VOICE_KEY))
+       || voices.find(v => /en-IE/i.test(v.lang))
+       || voices.find(v => /^en/i.test(v.lang) && /(female|moira|siobhan|karen|serena|fiona|samantha|martha|libby|zira|aria)/i.test(v.name))
+       || voices.find(v => /en-GB/i.test(v.lang))
+       || voices.find(v => /^en/i.test(v.lang))
+       || voices[0];
+
+  if (voice) safeSet(VOICE_KEY, voice.name);
+});
+
+/* Storage can throw in a private window, and a missing voice memory is not
+   worth breaking speech over. */
+function safeGet(k){ try { return localStorage.getItem(k); } catch(_){ return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch(_){} }
+/* --- real audio playback: mp3 clip or ElevenLabs proxy ----------
+   Drives `liveLevel` from an analyser so the orb and the waveform
+   react to the actual audio instead of a simulation.               */
+let audioCtx = null, liveLevel = null, currentAudio = null;
+function playAudioUrl(url, onDone, revoke){
+  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch(_){}
+  if (currentAudio){ currentAudio.pause(); currentAudio = null; }
+
+  const a = new Audio(url);
+  a.crossOrigin = 'anonymous';
+  currentAudio = a;
+  let raf = null, analyser = null, buf = null;
+
+  const finish = () => {
+    cancelAnimationFrame(raf);
+    liveLevel = null;
+    if (revoke) URL.revokeObjectURL(url);
+    if (currentAudio === a) currentAudio = null;
+    setState('idle');
+    onDone && onDone();
+  };
+  a.onended = finish;
+  a.onerror = () => { diagnostic('Audio clip failed to load', 'warnln'); finish(); };
+
+  a.play().then(() => {
+    setState('speaking');
+    /* analyser is best-effort — blocked on file:// in some browsers */
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const src = audioCtx.createMediaElementSource(a);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      src.connect(analyser); analyser.connect(audioCtx.destination);
+      buf = new Uint8Array(analyser.frequencyBinCount);
+      const sample = () => {
+        analyser.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++){ const v = (buf[i]-128)/128; sum += v*v; }
+        liveLevel = clamp(Math.sqrt(sum/buf.length) * 3.2, 0, 1);
+        raf = requestAnimationFrame(sample);
+      };
+      sample();
+    } catch(_){ liveLevel = null; }
+  }).catch(() => {
+    /* autoplay blocked — wait for a gesture and retry once */
+    diagnostic('Audio blocked by browser — interact to enable', 'warnln');
+    const retry = () => { a.play().then(() => setState('speaking')).catch(finish); };
+    window.addEventListener('pointerdown', retry, { once:true });
+    window.addEventListener('keydown', retry, { once:true });
+  });
+}
+
+/* Her real voice, via YOUR proxy. The API key stays server-side.
+   text/plain is deliberate: it avoids a CORS preflight that Apps Script
+   cannot answer — the same trick the quiz and booking forms already use. */
+async function speakElevenLabs(text, onDone){
+  const cfg = DATA.voice.elevenlabs;
+  setState('thinking');
+  try {
+    const res = await fetch(cfg.proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'tts', token: cfg.token || '', text })
+    });
+    if (!res.ok) throw new Error('proxy ' + res.status);
+
+    const type = res.headers.get('content-type') || '';
+    if (type.includes('audio')){                       // raw audio response
+      return playAudioUrl(URL.createObjectURL(await res.blob()), onDone, true);
+    }
+    const data = await res.json();                     // Apps Script: base64 in JSON
+    if (data.error) throw new Error(data.error);
+    if (!data.audio) throw new Error('no audio returned');
+
+    const bytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: data.mime || 'audio/mpeg' }));
+    if (data.cached) diagnostic('Voice served from cache', 'sys');
+    playAudioUrl(url, onDone, true);
+  } catch (err) {
+    diagnostic('Voice proxy unavailable (' + err.message + ') — using browser voice', 'warnln');
+    speakBrowser(text, onDone);
+  }
+}
+
+let speakQueue = 0;
+function speak(text, onDone){
+  const v = DATA.voice || { engine:'browser' };
+  if (v.engine === 'elevenlabs' && v.elevenlabs && v.elevenlabs.proxyUrl)
+    return speakElevenLabs(text, onDone);
+  if (v.engine === 'clip' && v.clips && v.clips[text])
+    return playAudioUrl(v.clips[text], onDone);
+  return speakBrowser(text, onDone);
+}
+async function speakBrowser(text, onDone){
+  if (!('speechSynthesis' in window)){ setState('idle'); onDone && onDone(); return; }
+  await voicesReady;                    // so the first sentence is not the system default
+  const u = new SpeechSynthesisUtterance(text);
+  if (voice) u.voice = voice;
+  u.lang = DATA.meta.voiceLang;
+  u.rate = 1.03; u.pitch = 1.06; u.volume = 1;
+  speakQueue++;
+  u.onstart = () => setState('speaking');
+  u.onend = u.onerror = () => {
+    speakQueue = Math.max(0, speakQueue - 1);
+    if (speakQueue === 0){ setState('idle'); onDone && onDone(); }
+  };
+  window.speechSynthesis.speak(u);
+}
+/* Browsers block audio until the user interacts — unlock on first gesture. */
+function unlockAudio(){
+  if (audioUnlocked || !('speechSynthesis' in window)) return;
+  audioUnlocked = true;
+  const u = new SpeechSynthesisUtterance(' ');
+  u.volume = 0; window.speechSynthesis.speak(u);
+}
+['pointerdown','keydown'].forEach(e => window.addEventListener(e, unlockAudio, { once:true }));
+
+/* ================================================================
+   ▓▓ 8. THE REPLY LINE UNDER THE ORB ▓▓
+   ================================================================ */
+let typeTimer = null;
+function showSay(text, typeIt){
+  clearInterval(typeTimer);
+  const el = $('#say');
+  if (typeIt === false){ el.innerHTML = ''; el.textContent = text; return; }
+  el.textContent = '';
+  let i = 0;
+  typeTimer = setInterval(() => {
+    el.textContent = text.slice(0, ++i);
+    if (i >= text.length){
+      clearInterval(typeTimer);
+      el.innerHTML = el.textContent + '<span class="caret"></span>';
+    }
+  }, 14);
+}
+function respondWith(text, alsoSpeak){
+  showSay(text);
+  telemetry('FRIDAY ▸ ' + text, 'sys');
+  if (alsoSpeak === false){ setState('idle'); return; }
+  setState('thinking');
+  setTimeout(() => speak(text), 180);
+}
+
+/* ================================================================
+   ▓▓ 9. ANSWER ENGINE — every reply is built from DATA ▓▓
+   ================================================================ */
+/* Short rolling memory, so follow-ups like "and housing?" make sense. */
+const convo = [];
+function remember(role, text){
+  convo.push({ role, text });
+  const cap = Math.max(2, (DATA.brain && DATA.brain.historyTurns) || 6);
+  while (convo.length > cap) convo.shift();
+}
+
+function handleUtterance(text){
+  telemetry('YOU ▸ ' + text, 'usr');
+  showSay('… ' + text, false);
+  setState('thinking');
+
+  /* The morning brief stays deterministic even with the brain on — it is a
+     recital of the numbers, and it should read the same way every time. */
+  if (/morning brief|brief me|briefing|daily brief/i.test(text)){
+    remember('user', text);
+    return setTimeout(runBrief, 300);
+  }
+
+  const b = DATA.brain || {};
+  if (b.enabled && b.proxyUrl) return askClaude(text);
+  setTimeout(() => { remember('user', text); const a = answer(text); remember('assistant', a); respondWith(a); }, 420);
+}
+
+/* Conversational reply via YOUR proxy. Falls back to the keyword engine
+   on any failure, so a dead endpoint degrades instead of breaking. */
+async function askClaude(text){
+  const b = DATA.brain;
+  const history = convo.slice();
+  remember('user', text);
+  try {
+    const res = await fetch(b.proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'chat', token: b.token || '', text, history })
+    });
+    if (!res.ok) throw new Error('proxy ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.reply) throw new Error('empty reply');
+    remember('assistant', data.reply);
+    respondWith(data.reply);
+  } catch (err) {
+    diagnostic('Brain unavailable (' + err.message + ') — answering from local data', 'warnln');
+    const a = answer(text);
+    remember('assistant', a);
+    respondWith(a);
+  }
+}
+
+function answer(qRaw){
+  const q = qRaw.toLowerCase();
+  const o = DATA.objective, m = objectiveMaths();
+  const op = DATA.meta.operator;
+  const has = (...w) => w.some(k => q.includes(k));
+  const stat = (k) => DATA.stats.find(s => s.key.toLowerCase().includes(k));
+  const statTxt = (k, fallback) => { const s = stat(k); return s ? fmtNum(s.value, s.format) : fallback; };
+  const prox = (id) => (DATA.proximity.find(c => c.id === id) || {count:0}).count;
+  const vital = (id) => Math.round((DATA.vitals.find(v => v.id === id) || {value:0}).value);
+  const plural = (n, one, many) => n === 1 ? one : many;
+
+  if (has('morning brief','brief me','briefing','daily brief')) { runBrief(); return 'Compiling the morning brief.'; }
+
+  if (has('hello','hi ','hey','good morning','good evening','you there','are you there'))
+    return `${DATA.brief.greeting.replace('{operator}', op)} ` +
+      (o.current === 0
+        ? `Nothing signed yet. ${statTxt('owe','0')} people are waiting on a reply from you.`
+        : `${o.current} of ${o.target} on the primary objective.`);
+
+  if (has('objective','goal','target','how are we doing','progress','on track'))
+    return o.current === 0
+      ? `Primary objective: ${o.name.toLowerCase()}. Still at zero, with ${m.daysLeft} days until the deadline. ` +
+        `There is no pace to measure yet, so the only number that matters is how many conversations you start this week.`
+      : `Primary objective: ${o.name.toLowerCase()}. ${o.current} of ${o.target}, ${m.pct.toFixed(0)} percent complete. ` +
+        (m.onTrack ? `At the current pace of ${m.rate.toFixed(2)} per day you reach target in about ${m.daysToTarget} days, with ${m.daysLeft} days to spare.`
+                   : `Current pace is ${m.rate.toFixed(2)} per day, which projects to ${Math.round(m.projected)} by the deadline. You are behind pace and need ${m.needed} more.`);
+
+  if (has('vital','system','health','status of the system','diagnostic'))
+    return 'Vitals: ' + DATA.vitals.map(v => `${v.key.toLowerCase()} ${Math.round(v.value)} percent`).join(', ') +
+           `. Weakest link is ${DATA.vitals.slice().sort((a,b)=>a.value-b.value)[0].key.toLowerCase()}.`;
+
+  if (has('email','inbox','mail','enquir','inquir','reply','replies','unanswered','owe'))
+    return `${statTxt('enquiries','0')} enquiries in the last thirty days, ` +
+           `${statTxt('owe','0')} still waiting on you, reply rate ${statTxt('reply rate','unknown')}. ` +
+           (prox('awaitingReply') > 0
+             ? `The oldest one is the one to answer first.`
+             : `Inbox is clear. Nothing is waiting on a reply.`);
+
+  if (has('housing','room','accommodation','application','apply','studielink','enrol','enrolment','student'))
+    return `No students signed, no applications in flight and no housing placed yet — that is the honest picture. ` +
+           `What exists today is ${statTxt('enquiries','0')} ${plural((stat('enquiries')||{value:0}).value,'enquiry','enquiries')} ` +
+           `and ${statTxt('calls','0')} ${plural((stat('calls')||{value:0}).value,'call','calls')} booked this week.`;
+
+  if (has('revenue','money','cash','stripe','deal','euro','€','income','paid','sales')){
+    const rev = (stat('revenue') || {value:0}).value;
+    return `Stripe has taken ${statTxt('revenue','€0')} in the last thirty days. ` +
+           (rev > 0
+             ? 'That is the whole picture — Stripe is the only money flowing.'
+             : 'Nothing yet. Stripe is the only money flowing, so that is the whole picture.');
+  }
+
+  if (has('lead','call','booking','funnel','conversation'))
+    return `${statTxt('calls','0')} ${plural((stat('calls')||{value:0}).value,'call','calls')} booked in the last seven days, ` +
+           `${prox('callsAhead')} on the calendar ahead, and ${prox('newEnquiries')} new enquiries this week.`;
+
+  if (has('recommend','advice','what should i','priority','focus','next'))
+    return 'Top priority: ' + DATA.recommendations[0];
+
+  if (has('deadline','eta','how long','days left','when'))
+    return `${m.daysLeft} days remain until ${new Date(o.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'long'})}. ` +
+           (m.needed ? `You need ${m.needed} more to hit target.` : 'Target already met.');
+
+  if (has('time','clock','what time'))
+    return `It is ${new Date().toLocaleTimeString('en-GB')} ${DATA.meta.timezoneLabel}, ` +
+           `${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}.`;
+
+  if (has('how fast','response time','reply speed','slow','behind'))
+    return `Reply speed is at ${vital('replySpeed')} percent and the inbox is ${vital('inboxClear')} percent cleared. ` +
+           `${prox('openThreads')} threads are open in total.`;
+
+  if (has('live data','data live','real data','data source','last sync','sync','up to date','fresh','mock','stale'))
+    return dataMode === 'LIVE'
+      ? `Running on live data. Last sync at ${stamp(lastSync)}, refreshing every ${Math.round((DATA.sources.refreshSeconds||180)/60)} minutes.`
+      : dataMode === 'STALE'
+        ? `The live source is not answering. I am holding the last known values from ${stamp(lastSync)}.`
+        : (DATA.sources.enabled && DATA.sources.endpoint)
+          ? 'A live source is configured but has not answered yet. I am showing mock figures until it does.'
+          : 'I am running on mock figures. No live source is configured yet.';
+
+  if (has('thank','cheers','nice work','well done')) return `Always a pleasure, ${op}.`;
+  if (has('help','what can you do','commands'))
+    return 'Ask me about the inbox, who is waiting on a reply, calls booked, revenue, the objective, vitals or the deadline. Say morning brief for the full picture.';
+
+  return `I have no reading on that, ${op}. Try inbox, replies, calls, revenue, objective, vitals or morning brief.`;
+}
+
+/* ================================================================
+   ▓▓ 10. MORNING BRIEF ▓▓
+   ================================================================ */
+function runBrief(){
+  const o = DATA.objective, m = objectiveMaths(), op = DATA.meta.operator;
+  const lines = [];
+  lines.push(DATA.brief.greeting.replace('{operator}', op));
+  lines.push(`It is ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}. Here is the ${DATA.meta.company} picture.`);
+  lines.push(o.current === 0
+    ? `Primary objective, ${o.name.toLowerCase()}: still at zero, ${m.daysLeft} days to the deadline.`
+    : `Primary objective, ${o.name.toLowerCase()}: ${o.current} of ${o.target}, ${m.pct.toFixed(0)} percent complete, ${m.daysLeft} days to deadline. ` +
+      (m.onTrack ? 'You are on pace.' : `You are behind pace and need ${m.needed} more at ${(m.needed/Math.max(1,m.daysLeft)*7).toFixed(1)} per week.`));
+  lines.push('Key numbers: ' + DATA.stats.map(s => `${s.key.toLowerCase()} ${fmtNum(s.value, s.format)}`).join(', ') + '.');
+
+  /* The inbox is the whole business right now, so it leads the brief. */
+  const owed = (DATA.proximity.find(c => c.id === 'awaitingReply') || {count:0}).count;
+  if (owed > 0) lines.push(`${owed} ${owed === 1 ? 'person is' : 'people are'} waiting on a reply from you. That is the first job of the day.`);
+  else if (dataMode === 'LIVE') lines.push('Nobody is waiting on a reply. The inbox is clear.');
+  const weak = DATA.vitals.slice().sort((a,b)=>a.value-b.value)[0];
+  lines.push(`Vitals are ${$('#vitalsTag').textContent.toLowerCase()}. The weakest is ${weak.key.toLowerCase()} at ${Math.round(weak.value)} percent.`);
+  lines.push('My three recommendations for today.');
+  DATA.recommendations.slice(0,3).forEach((r,i) => lines.push(`${['One','Two','Three'][i]}. ${r}`));
+  lines.push(DATA.brief.closing);
+
+  telemetry('MORNING BRIEF — compiling', 'okln');
+  lines.forEach((l,i) => setTimeout(() => telemetry('BRIEF ▸ ' + l, i >= lines.length-4 ? 'okln' : 'sys'), i*260));
+  showSay(lines[0] + ' ' + lines[1]);
+  setState('thinking');
+  speak(lines.join(' '), () => showSay('Brief complete. Standing by.'));
+}
+
+/* ================================================================
+   ▓▓ 11. CONTROLS ▓▓
+   ================================================================ */
+$('#orbstage').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
+$('#btnTalk').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
+$('#btnBrief').addEventListener('click', runBrief);
+
+function sendTyped(){
+  const v = $('#ask').value.trim();
+  if (!v) return;
+  $('#ask').value = '';
+  handleUtterance(v);
+}
+$('#btnSend').addEventListener('click', sendTyped);
+$('#ask').addEventListener('keydown', (e) => { if (e.key === 'Enter'){ e.preventDefault(); sendTyped(); } });
+
+/* Hold SPACE to talk (ignored while typing in the input). */
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' || e.repeat) return;
+  if (document.activeElement === $('#ask')) return;
+  e.preventDefault();
+  wantsToListen = true;
+  startListening();
+});
+window.addEventListener('keyup', (e) => {
+  if (e.code !== 'Space') return;
+  if (document.activeElement === $('#ask')) return;
+  e.preventDefault();
+  wantsToListen = false;
+  stopListening();
+});
+
+/* ================================================================
+   ▓▓ 12. BOOT SEQUENCE ▓▓
+   ================================================================ */
+const BOOT_LINES = [
+  'INITIALISING F.R.I.D.A.Y.',
+  'MOUNTING DATA LAYER',
+  'CALIBRATING PARTICLE CORE',
+  'LINKING TELEMETRY BUS',
+  'ARMING PROXIMITY SWEEP',
+  'ALL SYSTEMS NOMINAL'
+];
+function boot(){
+  renderHeader();
+  renderVitals();
+  renderContacts();
+  renderObjective(false);
+  displayedCurrent = 0; paintCounter();   // so the arrival counter counts up
+  resizeAll();
+  requestAnimationFrame(drawOrb);
+  requestAnimationFrame(drawRadar);
+  requestAnimationFrame(drawWave);
+  requestAnimationFrame(tickClock);
+  setState('idle');
+
+  let i = 0;
+  const bar = $('#bootbar'), line = $('#bootline');
+  const step = () => {
+    line.textContent = BOOT_LINES[i];
+    bar.style.transition = 'width .3s linear';
+    bar.style.width = Math.round(((i+1)/BOOT_LINES.length)*100) + '%';
+    i++;
+    if (i < BOOT_LINES.length) setTimeout(step, 240);
+    else setTimeout(revealPanels, 320);
+  };
+  step();
+}
+function revealPanels(){
+  $('#bootveil').classList.add('gone');
+  const panels = $$('[data-boot]').sort((a,b) => a.dataset.boot - b.dataset.boot);
+  panels.forEach((el, i) => setTimeout(() => el.classList.add('up'), i * 115));
+
+  const after = panels.length * 115 + 400;
+  setTimeout(() => {
+    startFeeds();
+    startSync();
+    diagnostic('Boot complete — ' + SESSION_ID, 'okln');
+    telemetry('Interface online. Awaiting instruction.', 'okln');
+    renderObjective(true);                       // counter counts up on arrival
+    const o = DATA.objective;
+    const greeting = `${DATA.brief.greeting.replace('{operator}', DATA.meta.operator)} ` +
+      `${DATA.meta.company} systems are online. ` +
+      (o.current === 0
+        ? `${o.name.toLowerCase()} is still the objective, and we are at zero. `
+        : `Primary objective stands at ${o.current} of ${o.target}, ${objectiveMaths().pct.toFixed(0)} percent. `) +
+      'Say morning brief, or hold space and ask me anything.';
+    showSay(greeting);
+    /* If a voice sample is configured, the greeting is spoken by that
+       clip; otherwise the selected engine renders the text.          */
+    /* Whatever engine is configured speaks the greeting too — mixing a fixed
+       clip with a synthesised voice is what made her sound like two people. */
+    speak(greeting);
+  }, after);
+  setTimeout(() => $('#bootveil').remove(), after + 800);
+}
+
+let booted = false;
+function bootOnce(){ if (booted) return; booted = true; boot(); }
+document.addEventListener('DOMContentLoaded', bootOnce);
+if (document.readyState !== 'loading') bootOnce();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  // Cloudflare Workers deployment for the FRIDAY dashboard.
+  //
+  // This is an assets-only Worker: there is no server code, Cloudflare just
+  // serves the contents of ./friday as a static site. The marketing site in
+  // the repo root is NOT included — only the directory named below is
+  // uploaded, which is what keeps the dashboard separate from unibridgenl.com.
+  //
+  // The dashboard's build command `npx wrangler deploy` reads this file.
+  //
+  // The deployed URL comes from "name" below, so it lands at
+  //   https://friday.<your-subdomain>.workers.dev
+  // That URL is PUBLIC until a Cloudflare Access policy is put in front of
+  // it — see friday/DEPLOY.md step 3. Do not fill in the Apps Script token
+  // in friday/index.html until that login wall is live.
+  "name": "friday",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./friday"
+  }
+}
