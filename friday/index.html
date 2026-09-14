@@ -228,6 +228,12 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
 .contacts .c{display:flex;justify-content:space-between;gap:8px}
 .contacts .c b{color:var(--cyan-hot);font-weight:500}
 .audiometa{display:flex;justify-content:space-between;font-size:8.5px;color:var(--cyan-dim);margin-top:5px}
+.audiowarn{
+  display:none;margin-top:6px;padding:4px 6px;font-size:8px;letter-spacing:.08em;
+  color:var(--amber);border:1px solid rgba(255,180,87,.45);background:rgba(255,180,87,.07);
+  cursor:pointer;animation:blip 2s ease-in-out infinite;
+}
+.audiowarn.on{display:block}
 
 /* --- objective card ---------------------------------------- */
 .objective{
@@ -361,6 +367,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
         <div class="panel-body">
           <div class="canvasbox"><canvas id="wave"></canvas></div>
           <div class="audiometa"><span id="audioMode">MIC: STANDBY</span><span id="audioLvl">LVL 00</span></div>
+          <div class="audiowarn" id="audioWarn">◼ VOICE BLOCKED — CLICK ANYWHERE TO ENABLE</div>
         </div>
       </section>
       <section class="panel boot" data-boot="8">
@@ -1031,6 +1038,20 @@ const FRIDAY = {
     console.log('Currently speaking as:', voice ? voice.name : '(none yet)');
     return list.map(v => v.name);
   },
+  /* Say a line on demand — the quickest way to tell a blocked browser
+     from a muted tab or a device with no voices installed. */
+  testVoice(){
+    const voices = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
+    console.log('voices installed:', voices.length, '| speaking as:', voice ? voice.name : '(none)');
+    if (!voices.length){
+      diagnostic('No speech voices installed on this device', 'warnln');
+      showSay('This device has no speech voices installed, so I cannot speak here.', false);
+      return false;
+    }
+    respondWith('Voice check. If you can hear this, audio is working.');
+    return true;
+  },
+
   /* Connect her to the Apps Script backend. Data, voice and brain all run
      through the same endpoint; pass data/voice/brain: false to skip one. */
   connect(conn){
@@ -1506,6 +1527,19 @@ function sentences(text, max = 170){
   return out.length ? out : [String(text)];
 }
 
+/* Browsers refuse to speak until the page has been interacted with, and
+   they refuse SILENTLY — no error, no event, just nothing. That is
+   indistinguishable from a broken assistant, so we watch for the case
+   where speech is requested and never starts, say so on screen, and
+   speak it the moment the page is touched. */
+let voiceBlocked = false, pendingSpeech = null;
+
+function showVoiceWarning(on){
+  voiceBlocked = on;
+  const el = $('#audioWarn');
+  if (el) el.classList.toggle('on', on);
+}
+
 async function speakBrowser(text, onDone){
   if (!('speechSynthesis' in window)){ setState('idle'); onDone && onDone(); return; }
   await voicesReady;                    // so the first sentence is not the system default
@@ -1514,21 +1548,43 @@ async function speakBrowser(text, onDone){
   const parts = sentences(text);
   let i = 0, started = false;
 
+  /* If nothing has begun after a second and a half, it is being blocked. */
+  const watchdog = setTimeout(() => {
+    if (started) return;
+    pendingSpeech = { text, onDone };
+    showVoiceWarning(true);
+    diagnostic('Browser is blocking speech until you interact with the page', 'warnln');
+    setState('idle');
+  }, 1500);
+
   const next = () => {
-    if (i >= parts.length){ setState('idle'); onDone && onDone(); return; }
+    if (i >= parts.length){ clearTimeout(watchdog); setState('idle'); onDone && onDone(); return; }
     const u = new SpeechSynthesisUtterance(parts[i++]);
     if (voice) u.voice = voice;
     u.lang = DATA.meta.voiceLang;
     u.rate = 0.98;            // a shade under default reads as composed, not rushed
     u.pitch = 1.04;
     u.volume = 1;
-    u.onstart = () => { if (!started){ started = true; setState('speaking'); } };
+    u.onstart = () => {
+      if (!started){ started = true; clearTimeout(watchdog); showVoiceWarning(false); setState('speaking'); }
+    };
     u.onerror = () => next();
     u.onend = () => setTimeout(next, 90);   // a beat between sentences
     window.speechSynthesis.speak(u);
   };
   next();
 }
+
+/* The first real interaction releases whatever was held back. */
+function releaseHeldSpeech(){
+  if (!pendingSpeech) return;
+  const held = pendingSpeech;
+  pendingSpeech = null;
+  showVoiceWarning(false);
+  speakBrowser(held.text, held.onDone);
+}
+['pointerdown','keydown','touchstart'].forEach(e =>
+  window.addEventListener(e, releaseHeldSpeech, { capture: true }));
 /* Browsers block audio until the user interacts — unlock on first gesture. */
 function unlockAudio(){
   if (audioUnlocked || !('speechSynthesis' in window)) return;
@@ -1672,11 +1728,14 @@ function answer(qRaw){
            `. Weakest link is ${DATA.vitals.slice().sort((a,b)=>a.value-b.value)[0].key.toLowerCase()}.`;
 
   if (has('email','inbox','mail','enquir','inquir','reply','replies','unanswered','owe'))
-    return `${statTxt('enquiries','0')} enquiries in the last thirty days, ` +
+    return `${statTxt('enquiries','0')} ${plural((stat('enquiries')||{value:0}).value,'enquiry','enquiries')} in the last thirty days, ` +
            `${statTxt('owe','0')} still waiting on you, reply rate ${statTxt('reply rate','unknown')}. ` +
-           (prox('awaitingReply') > 0
-             ? `The oldest one is the one to answer first.`
-             : `Inbox is clear. Nothing is waiting on a reply.`);
+           (() => {
+             const w = (DATA.meta.waitingOn || [])[0];
+             if (!w) return 'Inbox is clear. Nothing is waiting on a reply.';
+             const age = w.hours < 24 ? Math.round(w.hours) + ' hours' : Math.round(w.hours / 24) + ' days';
+             return `The oldest is ${w.who}, waiting ${age}. That is the one to answer first.`;
+           })();
 
   if (has('housing','room','accommodation','application','apply','studielink','enrol','enrolment','student'))
     return `No students signed, no applications in flight and no housing placed yet — that is the honest picture. ` +
@@ -1768,6 +1827,10 @@ function runBrief(){
 $('#orbstage').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
 $('#btnTalk').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
 $('#btnBrief').addEventListener('click', runBrief);
+$('#audioWarn').addEventListener('click', () => {
+  if (pendingSpeech) releaseHeldSpeech();
+  else FRIDAY.testVoice();
+});
 
 function sendTyped(){
   const v = $('#ask').value.trim();
@@ -2104,6 +2167,7 @@ function readMailbox(mcp){
       const now = Date.now(), weekAgo = now - 7 * 86400000;
 
       let people = 0, answered = 0, awaiting = 0, newThisWeek = 0, oldestWait = 0;
+      const waitingOn = [];
 
       threads.forEach(t => {
         const msgs = t.messages || [];
@@ -2114,15 +2178,30 @@ function readMailbox(mcp){
         if (!fromOthers.length) return;         // machinery, or only my own writing
 
         people++;
-        const replied = msgs.some(m => (m.labelIds || []).includes('SENT'));
-        if (replied) answered++; else awaiting++;
 
-        const last = msgs[msgs.length - 1];
+        /* Who spoke LAST is the only question that matters. "Have I ever
+           replied in this thread" marks a live conversation as handled the
+           moment you answer once — which is exactly backwards for an
+           ongoing exchange where they have come back to you. Sort by time
+           rather than trusting the array order. */
+        const byTime = msgs.slice().sort((a, b) =>
+          (Number(a.internalDate) || Date.parse(a.date) || 0) -
+          (Number(b.internalDate) || Date.parse(b.date) || 0));
+        const last = byTime[byTime.length - 1];
+        const lastFrom = String(last.sender || '').toLowerCase();
+        const lastIsMine = lastFrom.includes(me) || (last.labelIds || []).includes('SENT');
+
+        if (lastIsMine) answered++; else awaiting++;
+
         const lastAt = Number(last.internalDate) || Date.parse(last.date) || now;
         if (lastAt > weekAgo) newThisWeek++;
-        if (!replied){
+        if (!lastIsMine){
           const waited = (now - lastAt) / 3600000;
           if (waited > oldestWait) oldestWait = waited;
+          waitingOn.push({
+            who: (lastFrom.match(/<([^>]+)>/) || [null, lastFrom])[1] || lastFrom,
+            hours: waited
+          });
         }
       });
 
@@ -2147,6 +2226,18 @@ function readMailbox(mcp){
         if (!people) telemetry('Nothing but notifications in there so far — no enquiries yet', 'sys');
         mailbox.first = false;
       }
+
+      /* Name them, oldest first. A count tells you there is a problem; a
+         name tells you what to do about it. */
+      waitingOn.sort((a, b) => b.hours - a.hours);
+      waitingOn.slice(0, 4).forEach(w => {
+        const key = w.who + '|' + Math.floor(w.hours / 6);
+        if (mailbox.announced.has(key)) return;
+        mailbox.announced.add(key);
+        const age = w.hours < 24 ? Math.round(w.hours) + ' hours' : Math.round(w.hours / 24) + ' days';
+        telemetry(`Waiting ${age} — ${w.who}`, w.hours > 48 ? 'warnln' : 'sys');
+      });
+      DATA.meta.waitingOn = waitingOn;
     },
     { refetchInterval: Math.max(1, DATA.gmail.refetchMinutes) * 60 * 1000 }
   );
