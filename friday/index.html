@@ -898,6 +898,42 @@ function startSync(){
   setInterval(fetchLive, Math.max(30, src.refreshSeconds || 180) * 1000);
 }
 
+/* ---- 3.7b STORED CONNECTION -------------------------------------
+   The backend URL and token are kept in this browser rather than baked
+   into the HTML. Two reasons: you can connect without editing and
+   re-uploading the file, and the token never ends up inside a page that
+   is served to whoever reaches it.
+
+   Connect once, from the browser console on the dashboard:
+
+     FRIDAY.connect({ url: '<your /exec URL>', token: '<FRIDAY_TOKEN>' })
+
+   It is remembered on this device until you run FRIDAY.disconnect().   */
+const CONN_KEY = 'friday.connection';
+
+function applyStoredConnection(){
+  let conn = null;
+  try { conn = JSON.parse(localStorage.getItem(CONN_KEY) || 'null'); } catch(_){}
+  if (!conn || !conn.url) return false;
+
+  if (conn.data !== false){
+    DATA.sources.enabled  = true;
+    DATA.sources.endpoint = conn.url;
+    DATA.sources.token    = conn.token || '';
+  }
+  if (conn.voice !== false){
+    DATA.voice.engine = 'elevenlabs';
+    DATA.voice.elevenlabs.proxyUrl = conn.url;
+    DATA.voice.elevenlabs.token    = conn.token || '';
+  }
+  if (conn.brain !== false){
+    DATA.brain.enabled  = true;
+    DATA.brain.proxyUrl = conn.url;
+    DATA.brain.token    = conn.token || '';
+  }
+  return true;
+}
+
 /* ---- 3.8 public refresh hook ----------------------------------- */
 const FRIDAY = {
   data: DATA,
@@ -913,6 +949,42 @@ const FRIDAY = {
     console.table(list.map(v => ({ name: v.name, lang: v.lang, default: v.default })));
     console.log('Currently speaking as:', voice ? voice.name : '(none yet)');
     return list.map(v => v.name);
+  },
+  /* Connect her to the Apps Script backend. Data, voice and brain all run
+     through the same endpoint; pass data/voice/brain: false to skip one. */
+  connect(conn){
+    if (!conn || !conn.url){
+      console.warn("Usage: FRIDAY.connect({ url: '<exec URL>', token: '<token>' })");
+      return false;
+    }
+    try { localStorage.setItem(CONN_KEY, JSON.stringify(conn)); }
+    catch(_){ console.warn('Could not save — private window? Connection is for this session only.'); }
+    applyStoredConnection();
+    this.refresh();
+    diagnostic('Backend connected — ' + conn.url.slice(0, 48) + '…', 'okln');
+    fetchLive();
+    respondWith('Backend connected. Let me take a look at the numbers.');
+    return true;
+  },
+  disconnect(){
+    try { localStorage.removeItem(CONN_KEY); } catch(_){}
+    DATA.sources.enabled = false; DATA.brain.enabled = false; DATA.voice.engine = 'browser';
+    setDataMode('MOCK');
+    this.refresh();
+    respondWith('Disconnected. Back to mock figures and the local voice.');
+    return true;
+  },
+  status(){
+    const conn = (() => { try { return JSON.parse(localStorage.getItem(CONN_KEY) || 'null'); } catch(_){ return null; } })();
+    console.table({
+      backend:   conn ? conn.url : '(not connected)',
+      data:      dataMode,
+      lastSync:  lastSync ? stamp(lastSync) : 'never',
+      voice:     DATA.voice.engine,
+      brain:     DATA.brain.enabled ? 'claude' : 'local keyword engine',
+      speakingAs: voice ? voice.name : '(browser default)'
+    });
+    return conn ? 'connected' : 'not connected';
   },
   /* Switch voice and remember it: FRIDAY.setVoice('Google UK English Female') */
   setVoice(name){
@@ -1585,6 +1657,7 @@ const BOOT_LINES = [
   'ALL SYSTEMS NOMINAL'
 ];
 function boot(){
+  applyStoredConnection();      // before anything reads DATA.sources / voice / brain
   renderHeader();
   renderVitals();
   renderContacts();
