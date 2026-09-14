@@ -21,29 +21,57 @@ put your dashboard on the public web.
 
 ## Step 1 — merge the branch
 
-`friday/` needs to be on `main` for Cloudflare to build from it. After merging,
-check `https://unibridgenl.com/friday/` returns a **404**. If it doesn't, stop
-and say so — the Jekyll exclusion isn't working and the dashboard is public.
+Only needed if you connect Cloudflare to GitHub (the optional route below).
+Deploying from your terminal works straight from the branch, unmerged.
 
-## Step 2 — Cloudflare Pages
+Either way, once `friday/` does land on `main`, check that
+`https://unibridgenl.com/friday/` returns a **404**. If it doesn't, stop and
+say so — the Jekyll exclusion isn't working and your dashboard is public.
 
-1. Sign up at dash.cloudflare.com if you haven't (free, no card).
-2. **Workers & Pages → Create → Pages → Connect to Git**, authorise GitHub,
-   pick `unibridgenl-cloud/unibridgenl-website`.
-3. Build settings:
-   - Framework preset: **None**
-   - Build command: **leave empty**
-   - Build output directory: **`friday`**
-   - Production branch: **main**
-4. **Save and Deploy.** You get `https://<project>.pages.dev`.
+## Step 2 — create the site from your terminal
 
-At this point it works but is public. Do not stop here.
+Cloudflare keeps rearranging the dashboard, and the Pages "Connect to Git"
+flow has moved more than once. The command line does not move, so use it:
+
+```bash
+# from the repo root, on your own machine (not in a Claude session)
+npx wrangler login                    # opens a browser, sign in, approve
+npx wrangler pages deploy friday --project-name=unibridgenl-friday
+```
+
+The first command authorises wrangler against your Cloudflare account. The
+second creates the project and uploads the folder, printing a URL like
+`https://unibridgenl-friday.pages.dev` when it finishes.
+
+That is the whole deploy. No build step, no Git connection, no dashboard
+navigation. To push a change later, run the same `pages deploy` line again.
+
+Requirements: Node installed locally (`node --version`), and a Cloudflare
+account (free, no card needed for Pages).
+
+### If you would rather connect it to GitHub
+
+Auto-deploy on every push is nice but optional, and it is the part of the
+dashboard that keeps being redesigned. In the sidebar look for **Workers &
+Pages**, **Compute**, or just **Workers** — the label has changed between
+versions — then the option to import or connect an existing repository.
+Settings, whatever the screen calls them:
+
+- Framework preset: **None**
+- Build command: **leave empty**
+- Build output directory: **`friday`**
+- Production branch: **main**
+
+If you cannot find it, do not fight it. The `wrangler pages deploy` line above
+produces exactly the same result.
 
 ## Step 3 — Cloudflare Access (the actual lock)
 
 1. In the same dashboard: **Zero Trust**. It asks you to pick a team name and a
    plan — choose the **Free** plan (50 users, card may be requested, not charged).
 2. **Access → Applications → Add an application → Self-hosted.**
+   (Zero Trust lives at `one.dash.cloudflare.com`, a separate dashboard from
+   the main one — if the menu looks unfamiliar, check you are on that domain.)
    - Application name: `FRIDAY`
    - Session duration: **1 month** (so you're not logging in daily)
    - Public hostname: your `<project>.pages.dev`
@@ -61,8 +89,9 @@ after signing in as that address, the dashboard. Any other address gets refused.
 ## Step 4 — point her at the backend
 
 Once she's online, fill in the three config blocks at the top of `index.html`
-with your Apps Script `/exec` URL and token — see `backend/README.md`. Commit,
-and Cloudflare redeploys automatically on every push to `main`.
+with your Apps Script `/exec` URL and token — see `backend/README.md`. Then
+re-run `npx wrangler pages deploy friday` (or push to `main`, if you connected
+Git) to publish the change.
 
 ---
 
