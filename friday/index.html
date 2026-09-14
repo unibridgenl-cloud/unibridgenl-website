@@ -423,6 +423,31 @@ const DATA = {
     clips: {}                           // engine 'clip': { 'exact reply text': 'assets/x.mp3' }
   },
 
+  /* ---- 1.1c LIVE DATA SOURCE ----------------------------------
+     Where the real numbers come from. While `enabled` is false the
+     dashboard runs entirely on the mock values below and says MOCK
+     in the header, so it is always safe to open.
+
+     `endpoint` should return the JSON contract documented in
+     friday/backend/README.md — keys match the `id` of each metric:
+
+       { "objective": { "current": 34, "target": 50 },
+         "stats":     { "appsLive": 61, "calls7d": 12, ... },
+         "vitals":    { "housingCapacity": 48, ... },
+         "proximity": { "hotLeads": 9, ... },
+         "telemetry": [ { "kind": "okln", "text": "..." } ] }
+
+     Anything the payload omits keeps its mock value, so you can wire
+     one field today and the rest whenever you like. A field that
+     arrives live stops its random jitter automatically.             */
+  sources: {
+    enabled: false,
+    endpoint: '',              // Apps Script /exec URL, or your own /api/metrics
+    token: '',                 // sent as ?token= — see backend/Code.gs
+    refreshSeconds: 180,       // how often to re-poll
+    timeoutMs: 8000
+  },
+
   /* ---- 1.2 STATUS PILLS ---------------------------------------
      Header chips. state: 'ok' | 'warn' | 'cy' (drives the dot).   */
   pills: [
@@ -448,34 +473,34 @@ const DATA = {
      The row under the progress bar. Add/remove freely — the card
      re-renders from this array. format: 'int' | 'eur' | 'pct'.    */
   stats: [
-    { key: 'APPS LIVE',   value: 61,   format: 'int' },  // <- Studielink pipeline
-    { key: 'HOUSING SET', value: 18,   format: 'int' },  // <- placements confirmed
-    { key: 'CALLS / 7D',  value: 12,   format: 'int' },  // <- booking calendar
-    { key: 'CONVERSION',  value: 27,   format: 'pct' },  // <- call → signed
-    { key: 'AVG DEAL',    value: 612,  format: 'eur' },  // <- billing average
-    { key: 'PIPELINE',    value: 21800,format: 'eur', accent: true } // <- open value
+    { id:'appsLive',   key:'APPS LIVE',   value:61,    format:'int' },  // <- sheet / Studielink tracker
+    { id:'housingSet', key:'HOUSING SET', value:18,    format:'int' },  // <- sheet
+    { id:'calls7d',    key:'CALLS / 7D',  value:12,    format:'int' },  // <- Google Calendar, auto
+    { id:'conversion', key:'CONVERSION',  value:27,    format:'pct' },  // <- computed: signed / calls
+    { id:'avgDeal',    key:'AVG DEAL',    value:612,   format:'eur' },  // <- Stripe, auto
+    { id:'pipeline',   key:'PIPELINE',    value:21800, format:'eur', accent:true } // <- sheet
   ],
 
   /* ---- 1.5 SYSTEM VITALS --------------------------------------
      Six animated bars. value 0-100. drift = live jitter amplitude
      (set drift:0 once a field is wired to a real metric).         */
   vitals: [
-    { key: 'ENROLMENT PIPELINE', value: 74, drift: 4,  unit: '%' },
-    { key: 'HOUSING CAPACITY',   value: 48, drift: 6,  unit: '%', warn: true },
-    { key: 'VISA / BSN QUEUE',   value: 66, drift: 5,  unit: '%' },
-    { key: 'RESPONSE SLA',       value: 91, drift: 3,  unit: '%' },
-    { key: 'CASH RUNWAY',        value: 82, drift: 2,  unit: '%' },
-    { key: 'AD SPEND EFFICIENCY',value: 57, drift: 7,  unit: '%', warn: true }
+    { id:'enrolmentPipeline', key:'ENROLMENT PIPELINE', value:74, drift:4, unit:'%' },
+    { id:'housingCapacity',   key:'HOUSING CAPACITY',   value:48, drift:6, unit:'%', warn:true },
+    { id:'visaQueue',         key:'VISA / BSN QUEUE',   value:66, drift:5, unit:'%' },
+    { id:'responseSla',       key:'RESPONSE SLA',       value:91, drift:3, unit:'%' },
+    { id:'cashRunway',        key:'CASH RUNWAY',        value:82, drift:2, unit:'%' },
+    { id:'adEfficiency',      key:'AD SPEND EFFICIENCY',value:57, drift:7, unit:'%', warn:true }
   ],
 
   /* ---- 1.6 PROXIMITY CONTACTS ---------------------------------
      Radar blips. angle 0-360°, dist 0-1 (1 = outer ring).
      Wire to: leads by stage, partner universities, open tickets.  */
   proximity: [
-    { label: 'HOT LEADS',     count: 9,  angle: 42,  dist: .38 },
-    { label: 'AWAITING DOCS', count: 14, angle: 128, dist: .62 },
-    { label: 'UNI PARTNERS',  count: 6,  angle: 214, dist: .80 },
-    { label: 'OPEN TICKETS',  count: 3,  angle: 305, dist: .50 }
+    { id:'hotLeads',     label:'HOT LEADS',     count:9,  angle:42,  dist:.38 },
+    { id:'awaitingDocs', label:'AWAITING DOCS', count:14, angle:128, dist:.62 },
+    { id:'uniPartners',  label:'UNI PARTNERS',  count:6,  angle:214, dist:.80 },
+    { id:'openTickets',  label:'OPEN TICKETS',  count:3,  angle:305, dist:.50 }
   ],
 
   /* ---- 1.7 TELEMETRY FEED -------------------------------------
@@ -584,7 +609,10 @@ function renderHeader(){
   $('#pills').innerHTML = DATA.pills.map(p =>
     `<div class="pill ${p.state === 'warn' ? 'warn' : p.state === 'cy' ? 'cy' : ''}">
        <i class="dot"></i>${p.label}
-     </div>`).join('');
+     </div>`).join('')
+    + `<div class="pill ${dataMode === 'LIVE' ? '' : 'warn'}" id="pillData" title="">
+         <i class="dot"></i>DATA ${dataMode}
+       </div>`;
 }
 
 /* ---- 3.2 clock (hours : minutes : seconds . hundredths) -------- */
@@ -734,10 +762,103 @@ function animateCounterTo(v){
   counterAnim = requestAnimationFrame(step);
 }
 
-/* ---- 3.7 public refresh hook ----------------------------------- */
+/* ---- 3.7 LIVE DATA — fetch, merge, and say so ------------------
+   applyLive() is deliberately forgiving: it takes whatever fields the
+   payload happens to contain, keyed by each metric's `id`, and leaves
+   everything else on its mock value. So you can wire one number today
+   and the rest next month without touching this file again.        */
+let dataMode = 'MOCK';          // MOCK | LIVE | STALE
+let lastSync = null;
+
+function setDataMode(mode, note){
+  dataMode = mode;
+  const pill = $('#pillData');
+  if (pill){
+    pill.className = 'pill ' + (mode === 'LIVE' ? '' : mode === 'STALE' ? 'warn' : 'warn');
+    pill.innerHTML = `<i class="dot"></i>DATA ${mode}`;
+    pill.title = note || '';
+  }
+}
+
+function applyLive(payload){
+  if (!payload || typeof payload !== 'object') return 0;
+  let n = 0;
+  const num = (v) => (typeof v === 'number' && isFinite(v)) ? v : null;
+
+  /* objective */
+  if (payload.objective){
+    const c = num(payload.objective.current), t = num(payload.objective.target);
+    if (c !== null){ DATA.objective.current = c; n++; }
+    if (t !== null){ DATA.objective.target  = t; n++; }
+    if (payload.objective.name)     { DATA.objective.name = payload.objective.name; n++; }
+    if (payload.objective.deadline) { DATA.objective.deadline = payload.objective.deadline; n++; }
+  }
+  /* collections keyed by id */
+  const merge = (list, obj, field) => {
+    if (!obj) return;
+    list.forEach(item => {
+      const v = num(obj[item.id]);
+      if (v === null) return;
+      item[field] = v;
+      if (field === 'value') item.drift = 0;      // real number: stop the jitter
+      item.live = true; n++;
+    });
+  };
+  merge(DATA.stats,     payload.stats,     'value');
+  merge(DATA.vitals,    payload.vitals,    'value');
+  merge(DATA.proximity, payload.proximity, 'count');
+
+  /* objective line + feed lines the backend wants to push */
+  if (payload.objectiveLine) { DATA.meta.objectiveLine = payload.objectiveLine; n++; }
+  if (Array.isArray(payload.telemetry))
+    payload.telemetry.slice(0,12).forEach(l => telemetry(String(l.text||l), l.kind || 'sys'));
+  if (Array.isArray(payload.recommendations) && payload.recommendations.length)
+    DATA.recommendations = payload.recommendations.map(String);
+
+  lastSync = new Date();
+  return n;
+}
+
+async function fetchLive(){
+  const src = DATA.sources || {};
+  if (!src.enabled || !src.endpoint) return;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), src.timeoutMs || 8000);
+  try {
+    const url = src.endpoint
+      + (src.endpoint.includes('?') ? '&' : '?')
+      + 'action=metrics' + (src.token ? '&token=' + encodeURIComponent(src.token) : '');
+    const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const payload = await res.json();
+    if (payload && payload.error) throw new Error(payload.error);
+    const n = applyLive(payload);
+    FRIDAY.refresh();
+    setDataMode('LIVE', 'Last sync ' + stamp(lastSync));
+    diagnostic(`Live sync OK — ${n} fields from source`, 'okln');
+  } catch (err) {
+    setDataMode(lastSync ? 'STALE' : 'MOCK', 'Last sync ' + (lastSync ? stamp(lastSync) : 'never'));
+    diagnostic('Live sync failed — ' + err.message + ' (holding last known values)', 'warnln');
+  } finally { clearTimeout(timer); }
+}
+
+function startSync(){
+  const src = DATA.sources || {};
+  if (!src.enabled || !src.endpoint){
+    diagnostic('Running on mock data — set DATA.sources.enabled to go live', 'warnln');
+    return;
+  }
+  fetchLive();
+  setInterval(fetchLive, Math.max(30, src.refreshSeconds || 180) * 1000);
+}
+
+/* ---- 3.8 public refresh hook ----------------------------------- */
 const FRIDAY = {
   data: DATA,
   refresh(){ renderHeader(); paintVitals(); renderContacts(); renderObjective(true); },
+  /* Push numbers in from anywhere: FRIDAY.applyLive({stats:{appsLive:70}}) */
+  applyLive(payload){ const n = applyLive(payload); this.refresh(); setDataMode('LIVE'); return n; },
+  sync: fetchLive,
   say: (t) => respondWith(t),
   log: telemetry
 };
@@ -1214,6 +1335,15 @@ function answer(qRaw){
     return `${DATA.proximity.find(c=>/ticket/i.test(c.label))?.count || 0} open tickets. Response SLA is holding at ` +
            `${Math.round((DATA.vitals.find(v=>/sla/i.test(v.key))||{value:0}).value)} percent.`;
 
+  if (has('live data','data live','real data','data source','last sync','sync','up to date','fresh','mock','stale'))
+    return dataMode === 'LIVE'
+      ? `Running on live data. Last sync at ${stamp(lastSync)}, refreshing every ${Math.round((DATA.sources.refreshSeconds||180)/60)} minutes.`
+      : dataMode === 'STALE'
+        ? `The live source is not answering. I am holding the last known values from ${stamp(lastSync)}.`
+        : (DATA.sources.enabled && DATA.sources.endpoint)
+          ? 'A live source is configured but has not answered yet. I am showing mock figures until it does.'
+          : 'I am running on mock figures. No live source is configured yet.';
+
   if (has('thank','cheers','nice work','well done')) return `Always a pleasure, ${op}.`;
   if (has('help','what can you do','commands'))
     return 'Ask me about the objective, vitals, housing, applications, revenue, leads, tickets or the deadline. Say morning brief for the full picture.';
@@ -1321,6 +1451,7 @@ function revealPanels(){
   const after = panels.length * 115 + 400;
   setTimeout(() => {
     startFeeds();
+    startSync();
     diagnostic('Boot complete — ' + SESSION_ID, 'okln');
     telemetry('Interface online. Awaiting instruction.', 'okln');
     renderObjective(true);                       // counter counts up on arrival
