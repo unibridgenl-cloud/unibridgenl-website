@@ -1,0 +1,11 @@
+# Cloudflare Pages reads this file and applies these headers to the response.
+# The access control itself is Cloudflare Access, in front of this; these are
+# the belt-and-braces that matter once someone is already through the door.
+/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  # Speech recognition needs the microphone explicitly permitted on this origin.
+  Permissions-Policy: microphone=(self), camera=(), geolocation=()
+  Cache-Control: no-store

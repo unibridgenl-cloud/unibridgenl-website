@@ -1,0 +1,84 @@
+# Putting FRIDAY online, for your eyes only
+
+The goal: a real URL you can open from any device, that asks for your Google
+login and refuses everybody else. Free, and no change to the DNS that serves
+unibridgenl.com.
+
+The short version: **Cloudflare Pages hosts the folder, Cloudflare Access puts
+a login in front of it.** About fifteen minutes, once.
+
+---
+
+## Why not just put it on unibridgenl.com
+
+GitHub Pages cannot put a login in front of a page. Anything it serves is
+public to anyone who knows the URL, and "nobody will guess `/friday/`" is not
+access control — it is a hope. `_config.yml` in the repo root therefore
+excludes `friday/` from the published site, so merging this branch does **not**
+put your dashboard on the public web.
+
+---
+
+## Step 1 — merge the branch
+
+`friday/` needs to be on `main` for Cloudflare to build from it. After merging,
+check `https://unibridgenl.com/friday/` returns a **404**. If it doesn't, stop
+and say so — the Jekyll exclusion isn't working and the dashboard is public.
+
+## Step 2 — Cloudflare Pages
+
+1. Sign up at dash.cloudflare.com if you haven't (free, no card).
+2. **Workers & Pages → Create → Pages → Connect to Git**, authorise GitHub,
+   pick `unibridgenl-cloud/unibridgenl-website`.
+3. Build settings:
+   - Framework preset: **None**
+   - Build command: **leave empty**
+   - Build output directory: **`friday`**
+   - Production branch: **main**
+4. **Save and Deploy.** You get `https://<project>.pages.dev`.
+
+At this point it works but is public. Do not stop here.
+
+## Step 3 — Cloudflare Access (the actual lock)
+
+1. In the same dashboard: **Zero Trust**. It asks you to pick a team name and a
+   plan — choose the **Free** plan (50 users, card may be requested, not charged).
+2. **Access → Applications → Add an application → Self-hosted.**
+   - Application name: `FRIDAY`
+   - Session duration: **1 month** (so you're not logging in daily)
+   - Public hostname: your `<project>.pages.dev`
+3. **Add a policy:**
+   - Policy name: `Only me`
+   - Action: **Allow**
+   - Include → **Emails** → `unibridgenl@gmail.com`
+4. Under **Login methods**, make sure **Google** is on (or use the one-time PIN
+   method, which emails you a code — no Google app setup needed).
+5. Save.
+
+Open the URL in a private window. You should get a Cloudflare login screen, and
+after signing in as that address, the dashboard. Any other address gets refused.
+
+## Step 4 — point her at the backend
+
+Once she's online, fill in the three config blocks at the top of `index.html`
+with your Apps Script `/exec` URL and token — see `backend/README.md`. Commit,
+and Cloudflare redeploys automatically on every push to `main`.
+
+---
+
+## Adding a second device or a co-founder
+
+Add the address to the same Access policy. Don't share the login itself —
+each person signs in as themselves, and you can revoke one without touching
+the other.
+
+## If you'd rather not use Cloudflare
+
+| Option | Verdict |
+|---|---|
+| **Netlify / Vercel password protection** | Works, but it's a paid plan on both now. |
+| **Apps Script web app, access "Only myself"** | Free and no new account — but Apps Script serves pages in a sandboxed frame that doesn't grant microphone permission, so voice input breaks. Fine as a read-only screen, not as FRIDAY. |
+| **Keep it local** — `npx http-server friday` | Free, zero exposure, full microphone. But only on that machine, and not on your phone. |
+
+The microphone needs HTTPS or localhost either way. Opening `index.html`
+straight from disk with `file://` disables speech recognition.
