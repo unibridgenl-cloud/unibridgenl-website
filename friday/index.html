@@ -348,6 +348,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
       <div class="controls boot" data-boot="5">
         <button class="hud" id="btnTalk">▲ Engage voice</button>
         <button class="hud" id="btnBrief">◆ Morning brief</button>
+        <button class="hud" id="btnAudio" title="Report exactly what is blocking the sound">◼ Audio check</button>
         <input id="ask" autocomplete="off" spellcheck="false" placeholder="Type a command…">
         <button class="hud" id="btnSend">Send ▸</button>
       </div>
@@ -1038,6 +1039,61 @@ const FRIDAY = {
     console.log('Currently speaking as:', voice ? voice.name : '(none yet)');
     return list.map(v => v.name);
   },
+  /* A full report, rendered on screen rather than the console, so it is
+     readable on a phone and can be read back to me verbatim. */
+  async audioCheck(){
+    const lines = [];
+    /* Pass/fail is decided explicitly — a truthy string like
+       "error: synthesis-failed" must never render as a tick. */
+    const ok = (label, val, passed) => {
+      const good = (passed === undefined)
+        ? (typeof val === 'boolean' ? val
+           : typeof val === 'number' ? val > 0
+           : !/^(no|none|never|blocked|error|unknown|not )/i.test(String(val)))
+        : passed;
+      lines.push((good ? '✓ ' : '✗ ') + label +
+        (typeof val === 'boolean' ? '' : ': ' + val));
+    };
+
+    ok('speechSynthesis exists', 'speechSynthesis' in window);
+    const voices = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
+    ok('voices installed', voices.length);
+    ok('chosen voice', voice ? voice.name : 'none yet');
+    ok('page has been interacted with', navigator.userActivation ? navigator.userActivation.hasBeenActive : 'unknown');
+    ok('in a frame', window.self !== window.top ? 'yes' : 'no', true);   // neutral fact, not a failure
+
+    /* Does an audio element play at all? Separate question from speech. */
+    let clipOk = 'not tested';
+    try {
+      const a = new Audio(DATA.voice.sampleClip);
+      a.volume = 0.01;
+      await a.play();
+      clipOk = 'yes';
+      a.pause();
+    } catch (e) { clipOk = 'blocked (' + (e.name || e.message) + ')'; }
+    ok('audio clip can play', clipOk);
+
+    /* Does speech actually start? */
+    const spoke = await new Promise((resolve) => {
+      if (!('speechSynthesis' in window)) return resolve(false);
+      let started = false;
+      const u = new SpeechSynthesisUtterance('Audio check.');
+      if (voice) u.voice = voice;
+      u.onstart = () => { started = true; resolve(true); };
+      u.onerror = (e) => resolve('error: ' + e.error);
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+      setTimeout(() => { if (!started) resolve('never started'); }, 2500);
+    });
+    ok('speech actually starts', spoke);
+
+    const report = lines.join('  |  ');
+    lines.forEach(l => diagnostic('AUDIO — ' + l, l.startsWith('✓') ? 'okln' : 'warnln'));
+    showSay(report, false);
+    console.log(report);
+    return report;
+  },
+
   /* Say a line on demand — the quickest way to tell a blocked browser
      from a muted tab or a device with no voices installed. */
   testVoice(){
@@ -1585,14 +1641,23 @@ function releaseHeldSpeech(){
 }
 ['pointerdown','keydown','touchstart'].forEach(e =>
   window.addEventListener(e, releaseHeldSpeech, { capture: true }));
-/* Browsers block audio until the user interacts — unlock on first gesture. */
+/* Safari and iOS only allow speech that begins inside a real gesture, and
+   they forget again between turns. Our replies arrive asynchronously —
+   after a fetch, after Claude thinks — so by then the gesture is long
+   gone and the speak() call is silently dropped. Priming a silent
+   utterance synchronously on EVERY gesture keeps the engine awake for
+   the answer that follows. */
 function unlockAudio(){
-  if (audioUnlocked || !('speechSynthesis' in window)) return;
-  audioUnlocked = true;
-  const u = new SpeechSynthesisUtterance(' ');
-  u.volume = 0; window.speechSynthesis.speak(u);
+  if (!('speechSynthesis' in window)) return;
+  try {
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+    audioUnlocked = true;
+  } catch(_){}
 }
-['pointerdown','keydown'].forEach(e => window.addEventListener(e, unlockAudio, { once:true }));
+['pointerdown','keydown','touchstart'].forEach(e =>
+  window.addEventListener(e, unlockAudio, { capture: true, passive: true }));
 
 /* ================================================================
    ▓▓ 8. THE REPLY LINE UNDER THE ORB ▓▓
@@ -1827,6 +1892,7 @@ function runBrief(){
 $('#orbstage').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
 $('#btnTalk').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
 $('#btnBrief').addEventListener('click', runBrief);
+$('#btnAudio').addEventListener('click', () => FRIDAY.audioCheck());
 $('#audioWarn').addEventListener('click', () => {
   if (pendingSpeech) releaseHeldSpeech();
   else FRIDAY.testVoice();
