@@ -1465,6 +1465,18 @@ function handleUtterance(text){
     return setTimeout(runBrief, 300);
   }
 
+  /* Claude through the artifact runtime is free to you and needs no
+     deployment, so it wins when present. */
+  if (bridge.sample){
+    remember('user', text);
+    return askViaSample(text)
+      .then(a => { remember('assistant', a); respondWith(a); relayToClaude(text, a); })
+      .catch(err => {
+        diagnostic('Claude unavailable (' + (err.code || err.message) + ') — answering locally', 'warnln');
+        const a = answer(text); remember('assistant', a); respondWith(a);
+      });
+  }
+
   const b = DATA.brain || {};
   if (b.enabled && b.proxyUrl) return askClaude(text);
   setTimeout(() => { remember('user', text); const a = answer(text); remember('assistant', a); respondWith(a); }, 420);
@@ -1646,6 +1658,121 @@ window.addEventListener('keyup', (e) => {
 });
 
 /* ================================================================
+   ▓▓ 11b. THE CLAUDE BRIDGE ▓▓
+   ----------------------------------------------------------------
+   Only alive when this page is opened as a published Artifact on
+   claude.ai, where the runtime grants two capabilities:
+
+     sample — ask Claude directly, billed to the viewer's own Claude
+              account. No API key, no Apps Script, nothing to deploy.
+     db     — a shared store Claude can read and write from a coding
+              session, which is how work reports reach this page.
+
+   The bridge is the two-way channel:
+
+     Claude → you   I write a row into `updates`. She announces it
+                    out loud and logs it in telemetry.
+     you → Claude   Anything you say goes into `messages`, which I
+                    read back in the session.
+
+   Served anywhere else (Cloudflare, localhost, a file) `claude.use`
+   does not exist, every branch below is skipped, and the dashboard
+   behaves exactly as before. Nothing here is required.
+   ================================================================ */
+const bridge = { db: null, sample: null, seen: new Set(), ready: false };
+
+async function initBridge(){
+  if (!window.claude || typeof claude.use !== 'function') return;   // not in the viewer
+  try {
+    const [db, sample] = await Promise.all([
+      claude.use('db').catch(() => null),
+      claude.use('sample').catch(() => null)
+    ]);
+    bridge.db = db; bridge.sample = sample; bridge.ready = !!(db || sample);
+
+    if (sample){
+      diagnostic('Claude bridge online — answering through your Claude account', 'okln');
+      $('#pillData').title = 'Brain: Claude (via artifact runtime)';
+    }
+    if (db){
+      watchUpdates(db);
+      diagnostic('Work log connected — I will announce anything Claude finishes', 'okln');
+    }
+  } catch (err) {
+    diagnostic('Claude bridge unavailable — ' + (err.message || err), 'warnln');
+  }
+}
+
+/* Claude → you. Newest twenty work reports; anything unseen is spoken. */
+function watchUpdates(db){
+  let firstDelivery = true;          // the opening snapshot is the backlog
+  db.collection('updates').orderBy('at', 'desc').limit(20).onSnapshot(
+    (snap) => {
+      const fresh = [];
+      snap.docs.forEach(d => {
+        if (bridge.seen.has(d.id)) return;
+        bridge.seen.add(d.id);
+        const u = d.data() || {};
+        if (u.text) fresh.push(u);
+      });
+      if (!fresh.length) return;
+
+      /* The opening snapshot is the whole backlog — log it, but do not
+         read twenty old reports aloud at someone. */
+      fresh.reverse().forEach(u => telemetry('CLAUDE ▸ ' + u.text, u.kind || 'okln'));
+
+      if (!firstDelivery){
+        const latest = fresh[fresh.length - 1];
+        respondWith(latest.spoken || latest.text);
+      }
+      firstDelivery = false;
+    },
+    (e) => diagnostic('Work log listener died — ' + e.code, 'warnln')
+  );
+}
+
+/* you → Claude. Every utterance is filed for the session to read. */
+async function relayToClaude(text, reply){
+  if (!bridge.db) return false;
+  try {
+    await bridge.db.collection('messages').add({
+      text, reply: reply || null, at: Date.now(), from: DATA.meta.operator, handled: false
+    });
+    return true;
+  } catch (err) {
+    diagnostic('Could not file that for Claude — ' + (err.code || err.message), 'warnln');
+    return false;
+  }
+}
+
+/* Ask Claude through the artifact runtime, grounded in the same data. */
+async function askViaSample(text){
+  const o = DATA.objective, m = objectiveMaths();
+  const context = JSON.stringify({
+    objective: { name:o.name, current:o.current, target:o.target, percent:Math.round(m.pct), daysLeft:m.daysLeft },
+    stats: DATA.stats.map(x => ({ key:x.key, value:x.value })),
+    vitals: DATA.vitals.map(v => ({ key:v.key, value:Math.round(v.value) })),
+    proximity: DATA.proximity.map(c => ({ label:c.label, count:c.count })),
+    dataMode
+  });
+
+  const system =
+    'You are F.R.I.D.A.Y., mission control for UniBridge NL, which helps international students ' +
+    'get into Dutch universities and settle in the Netherlands. You are speaking aloud through a ' +
+    'voice synthesiser: at most three short sentences, plain spoken prose, no markdown, no lists, ' +
+    'no emoji. Calm, dry, precise. Ground every figure in the dashboard data and never invent one; ' +
+    'if it is not there, say you do not have that reading.\n\nDashboard data: ' + context;
+
+  const turns = convo.slice(-6).map(t => ({ role: t.role === 'assistant' ? 'assistant' : 'user', content: t.text }));
+  turns.push({ role: 'user', content: system + '\n\nQuestion: ' + text });
+
+  setState('thinking');
+  showSay('Thinking…', false);
+  const { text: answerText } = await bridge.sample(turns, { modelTier: 'quick' });
+  return answerText;
+}
+
+/* ================================================================
    ▓▓ 12. BOOT SEQUENCE ▓▓
    ================================================================ */
 const BOOT_LINES = [
@@ -1691,6 +1818,7 @@ function revealPanels(){
   setTimeout(() => {
     startFeeds();
     startSync();
+    initBridge();
     diagnostic('Boot complete — ' + SESSION_ID, 'okln');
     telemetry('Interface online. Awaiting instruction.', 'okln');
     renderObjective(true);                       // counter counts up on arrival
