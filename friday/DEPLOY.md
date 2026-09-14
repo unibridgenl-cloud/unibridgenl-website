@@ -28,7 +28,24 @@ Either way, once `friday/` does land on `main`, check that
 `https://unibridgenl.com/friday/` returns a **404**. If it doesn't, stop and
 say so — the Jekyll exclusion isn't working and your dashboard is public.
 
-## Step 2 — create the site from your terminal
+## Step 2a — the drag-and-drop route (no Git, no CLI)
+
+Cloudflare's uploader takes HTML, CSS and JS only, so the mp3 and `_headers`
+would be dropped. Build the standalone file instead — it inlines the voice
+clip, leaving one file with no external references:
+
+```bash
+./friday/build-single-file.sh        # writes dist/index.html
+```
+
+Then drag `dist/index.html` into **Upload your static files**. Rebuild and
+re-upload whenever index.html changes.
+
+The trade-off versus the Git route: no auto-deploy, and `_headers` is gone,
+so you lose the noindex and no-store headers. Access is still the thing doing
+the actual protecting, so this is a cosmetic loss, not a security one.
+
+## Step 2b — create the site from your terminal
 
 Cloudflare keeps rearranging the dashboard, and the Pages "Connect to Git"
 flow has moved more than once. The command line does not move, so use it:
