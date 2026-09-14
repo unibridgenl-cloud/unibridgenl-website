@@ -421,6 +421,7 @@ const DATA = {
   meta: {
     operator: 'Harsh',                  // how FRIDAY addresses you in speech
     company: 'UniBridge NL',            // spoken in the morning brief
+    email: 'unibridgenl@gmail.com',     // used to tell your own replies apart
     // Header objective line. Replace the placeholder with your real
     // goal, or point it at a CRM field (e.g. crm.currentQuarterGoal).
     objectiveLine: '[YOUR CURRENT GOAL]',
@@ -533,6 +534,31 @@ const DATA = {
     commitSeconds: 180,        // how often to look for new commits
     pullSeconds: 600,          // how often to refresh open pull requests
     announce: true             // say new commits out loud as they land
+  },
+
+  /* ---- 1.1f THE MAILBOX (via your Gmail connector) -------------
+     Opened as an artifact on claude.ai, the page can call your own
+     claude.ai connectors — so she reads the real inbox with no Apps
+     Script, no keys and no setup.
+
+     The raw inbox is mostly machinery: Google security notices, GitHub
+     notifications, Stripe receipts. Counting those as "enquiries" would
+     be a lie dressed as a metric, so `noise` filters them out and only
+     what is left counts as a person writing to you.
+
+     A thread counts as answered when any message in it carries the SENT
+     label. Gmail's search preview returns the oldest few messages of a
+     thread, so a reply buried very deep in a long thread can be missed —
+     at your volume that is not a real risk, but it is why the number is
+     "owe a reply" rather than a promise.                            */
+  gmail: {
+    enabled: true,
+    server: 'Gmail',                   // connector display name in claude.ai
+    query: 'in:inbox newer_than:30d -category:promotions -category:social -category:forums',
+    refetchMinutes: 10,
+    noise: ['noreply', 'no-reply', 'no_reply', 'donotreply', 'do-not-reply',
+            'notifications@', 'notification@', 'mailer-daemon', 'postmaster',
+            'accounts.google.com', 'github.com', 'stripe.com', 'cloudflare.com']
   },
 
   /* ---- 1.2 STATUS PILLS ---------------------------------------
@@ -1790,16 +1816,23 @@ window.addEventListener('keyup', (e) => {
    does not exist, every branch below is skipped, and the dashboard
    behaves exactly as before. Nothing here is required.
    ================================================================ */
-const bridge = { db: null, sample: null, seen: new Set(), ready: false, projectsFromDb: false };
+const bridge = { db: null, sample: null, mcp: null, seen: new Set(), ready: false, projectsFromDb: false };
 
 async function initBridge(){
   if (!window.claude || typeof claude.use !== 'function') return;   // not in the viewer
   try {
-    const [db, sample] = await Promise.all([
+    const [db, sample, mcp] = await Promise.all([
       claude.use('db').catch(() => null),
-      claude.use('sample').catch(() => null)
+      claude.use('sample').catch(() => null),
+      claude.use('mcp').catch(() => null)
     ]);
-    bridge.db = db; bridge.sample = sample; bridge.ready = !!(db || sample);
+    bridge.db = db; bridge.sample = sample; bridge.mcp = mcp;
+    bridge.ready = !!(db || sample || mcp);
+
+    if (mcp && DATA.gmail && DATA.gmail.enabled){
+      try { readMailbox(mcp); }
+      catch (e){ diagnostic('Could not open the mailbox — ' + (e.code || e.message), 'warnln'); }
+    }
 
     if (sample){
       diagnostic('Claude bridge online — answering through your Claude account', 'okln');
@@ -2043,6 +2076,80 @@ async function askViaSample(text){
     onText: ({ text }) => showSay(text, false)      // show the answer as it forms
   });
   return answerText;
+}
+
+/* ================================================================
+   ▓▓ 11d. THE MAILBOX ▓▓
+   ================================================================ */
+const mailbox = { announced: new Set(), first: true };
+
+function isNoise(sender, noise){
+  const from = String(sender || '').toLowerCase();
+  return noise.some(n => from.includes(n));
+}
+
+function readMailbox(mcp){
+  const g = DATA.gmail;
+  return mcp.watchTool(
+    g.server, 'search_threads',
+    { query: g.query, pageSize: 50, view: 'THREAD_VIEW_METADATA_ONLY' },
+    (ev) => {
+      if (ev.type === 'error'){
+        diagnostic('Mailbox unavailable — ' + (ev.error && ev.error.code), 'warnln');
+        return;
+      }
+      const payload = ev.result && (ev.result.payload || ev.result);
+      const threads = (payload && payload.threads) || [];
+      const me = (DATA.meta.email || 'unibridgenl@gmail.com').toLowerCase();
+      const now = Date.now(), weekAgo = now - 7 * 86400000;
+
+      let people = 0, answered = 0, awaiting = 0, newThisWeek = 0, oldestWait = 0;
+
+      threads.forEach(t => {
+        const msgs = t.messages || [];
+        if (!msgs.length) return;
+
+        const fromOthers = msgs.filter(m => !isNoise(m.sender, g.noise) &&
+                                            !String(m.sender || '').toLowerCase().includes(me));
+        if (!fromOthers.length) return;         // machinery, or only my own writing
+
+        people++;
+        const replied = msgs.some(m => (m.labelIds || []).includes('SENT'));
+        if (replied) answered++; else awaiting++;
+
+        const last = msgs[msgs.length - 1];
+        const lastAt = Number(last.internalDate) || Date.parse(last.date) || now;
+        if (lastAt > weekAgo) newThisWeek++;
+        if (!replied){
+          const waited = (now - lastAt) / 3600000;
+          if (waited > oldestWait) oldestWait = waited;
+        }
+      });
+
+      applyLive({
+        stats: {
+          emailsIn: people,
+          awaitingReply: awaiting,
+          replyRate: people ? Math.round((answered / people) * 100) : 0
+        },
+        proximity: { awaitingReply: awaiting, newEnquiries: newThisWeek, openThreads: people },
+        vitals: {
+          inboxClear: people ? Math.round(((people - awaiting) / people) * 100) : 100,
+          replySpeed: awaiting === 0 ? 100 : Math.max(0, Math.round(100 - ((oldestWait - 2) / 46) * 100)),
+          leadFlow: Math.min(100, Math.round((newThisWeek / 10) * 100))
+        }
+      });
+      FRIDAY.refresh();
+      setDataMode('LIVE', 'Mailbox read ' + stamp(new Date()));
+
+      if (mailbox.first){
+        telemetry(`Mailbox connected — ${people} ${people === 1 ? 'person has' : 'people have'} written in the last thirty days`, 'okln');
+        if (!people) telemetry('Nothing but notifications in there so far — no enquiries yet', 'sys');
+        mailbox.first = false;
+      }
+    },
+    { refetchInterval: Math.max(1, DATA.gmail.refetchMinutes) * 60 * 1000 }
+  );
 }
 
 /* ================================================================
