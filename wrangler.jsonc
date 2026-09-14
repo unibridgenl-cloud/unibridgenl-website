@@ -9,11 +9,11 @@
   // The dashboard's build command `npx wrangler deploy` reads this file.
   //
   // The deployed URL comes from "name" below, so it lands at
-  //   https://unibridgenl-friday.<your-subdomain>.workers.dev
+  //   https://friday.<your-subdomain>.workers.dev
   // That URL is PUBLIC until a Cloudflare Access policy is put in front of
   // it — see friday/DEPLOY.md step 3. Do not fill in the Apps Script token
   // in friday/index.html until that login wall is live.
-  "name": "unibridgenl-friday",
+  "name": "friday",
   "compatibility_date": "2026-09-01",
   "assets": {
     "directory": "./friday"
