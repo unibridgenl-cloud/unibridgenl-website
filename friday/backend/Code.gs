@@ -92,7 +92,7 @@ function doPost(e) {
   if (expected && body.token !== expected) return json({ error: 'bad token' });
 
   if (body.action === 'tts')  return json(speakElevenLabs(props, body.text));
-  if (body.action === 'chat') return json(askClaude(props, body.text, body.history));
+  if (body.action === 'chat') return json(askClaude(props, body.text, body.history, body.operator));
   return json({ error: 'unknown action' });
 }
 
@@ -372,7 +372,8 @@ function derive(out) {
  *
  * Apps Script has no npm, so this is the documented raw HTTP shape.
  */
-function askClaude(props, text, history) {
+function askClaude(props, text, history, operator) {
+  operator = String(operator || 'Commander').slice(0, 40);
   var key = props.getProperty('ANTHROPIC_API_KEY');
   if (!key) return { error: 'brain not configured' };
 
@@ -395,7 +396,7 @@ function askClaude(props, text, history) {
     'sentences, plain spoken prose only. No markdown, no bullet points, no lists, no emoji, no ' +
     'headings, no asterisks. Write numbers the way you would say them.\n\n' +
     'Your manner is calm, dry and precise, like a trusted chief of staff. Address the operator as ' +
-    'Commander only when it lands naturally, not every sentence.\n\n' +
+    operator + ' only when it lands naturally, not every sentence.\n\n' +
     'Ground every figure in the dashboard data below. Never invent a number, a name or a date. If ' +
     'the answer is not in the data, say plainly that you do not have that reading, and say what you ' +
     'do have. If asked for judgement, give it briefly and say what it rests on.\n\n' +
@@ -433,7 +434,7 @@ function askClaude(props, text, history) {
 
     // Safety classifiers can decline with HTTP 200 — check before reading content.
     if (data.stop_reason === 'refusal')
-      return { reply: 'I cannot answer that one, Commander.' };
+      return { reply: 'I cannot answer that one, ' + operator + '.' };
 
     var out = '';
     for (var j = 0; j < (data.content || []).length; j++) {

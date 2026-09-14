@@ -163,6 +163,30 @@ header{
 .log .ln.okln .tx{color:var(--green)}
 @keyframes linein{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
 
+/* --- claude project strip + approval banner ----------------- */
+.projects{flex:0 0 auto;margin-bottom:8px;display:none}
+.projects.on{display:block}
+.projects .ph{font-size:8px;color:rgba(111,233,255,.45);letter-spacing:.13em;margin-bottom:5px}
+.projects .pr{display:flex;align-items:center;gap:6px;font-size:9px;padding:2px 0;color:var(--cyan-dim)}
+.projects .pr .st{width:5px;height:5px;border-radius:50%;flex:0 0 auto;background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.projects .pr.active .st{animation:blip 1.6s ease-in-out infinite}
+.projects .pr.blocked .st{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.projects .pr.done .st{background:var(--green);box-shadow:0 0 6px var(--green);animation:none}
+.projects .pr .nm{flex:1 1 auto;color:var(--cyan-hot);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.projects .pr.done .nm{color:var(--cyan-dim);text-decoration:line-through;text-decoration-color:rgba(111,233,255,.35)}
+.projects .pr .tg{font-size:7.5px;color:rgba(111,233,255,.4);letter-spacing:.1em}
+
+#approval{
+  display:none;border:1px solid rgba(255,180,87,.55);background:rgba(255,180,87,.07);
+  padding:8px 12px;box-shadow:inset 0 0 22px rgba(255,180,87,.07),0 0 14px rgba(255,180,87,.16);
+  animation:approvalpulse 2.2s ease-in-out infinite;
+}
+#approval.on{display:block}
+@keyframes approvalpulse{0%,100%{box-shadow:inset 0 0 22px rgba(255,180,87,.07),0 0 10px rgba(255,180,87,.12)}50%{box-shadow:inset 0 0 26px rgba(255,180,87,.12),0 0 22px rgba(255,180,87,.3)}}
+#approval .hd{font-size:8px;letter-spacing:.16em;color:var(--amber);margin-bottom:4px}
+#approval .qs{font-size:10px;line-height:1.5;color:var(--cyan-hot)}
+#approval .hint2{margin-top:5px;font-size:8px;color:rgba(255,180,87,.75);letter-spacing:.1em}
+
 /* --- center column ----------------------------------------- */
 .col-center{display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:8px;min-height:0}
 .orbstage{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -295,8 +319,11 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
         <div class="panel-body" id="vitals"></div>
       </section>
       <section class="panel boot" data-boot="2">
-        <div class="panel-title"><span>Telemetry</span><span class="tag">FEED 01</span></div>
-        <div class="panel-body"><div class="log" id="telemetry"></div></div>
+        <div class="panel-title"><span>Telemetry</span><span class="tag" id="panelTelemetryTag">FEED 01</span></div>
+        <div class="panel-body">
+          <div class="projects" id="projects"></div>
+          <div class="log" id="telemetry"></div>
+        </div>
       </section>
     </div>
 
@@ -305,6 +332,11 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
       <div class="orbstage boot" data-boot="3" id="orbstage" title="Click to talk — or hold SPACE">
         <canvas id="orb"></canvas>
         <div class="hint" id="orbhint">Tap to talk &nbsp;//&nbsp; hold SPACE</div>
+      </div>
+      <div id="approval">
+        <div class="hd">◆ Claude is asking permission</div>
+        <div class="qs" id="approvalText">—</div>
+        <div class="hint2">Say “approve” or “deny” — or type it below</div>
       </div>
       <div class="saystage boot" data-boot="4"><div id="say">Standby.<span class="caret"></span></div></div>
       <div class="controls boot" data-boot="5">
@@ -387,7 +419,7 @@ const DATA = {
   /* ---- 1.1 IDENTITY -------------------------------------------
      Who the system is talking to and what it calls itself.        */
   meta: {
-    operator: 'Commander',              // how FRIDAY addresses you in speech
+    operator: 'Harsh',                  // how FRIDAY addresses you in speech
     company: 'UniBridge NL',            // spoken in the morning brief
     // Header objective line. Replace the placeholder with your real
     // goal, or point it at a CRM field (e.g. crm.currentQuarterGoal).
@@ -1454,6 +1486,16 @@ function remember(role, text){
 }
 
 function handleUtterance(text){
+  /* A pending permission request takes precedence: while one is on the
+     banner, yes or no is an answer to it, not a question for Claude. */
+  if (pendingApproval){
+    const decision = approvalIntent(text);
+    if (decision){
+      showSay('… ' + text, false);
+      return resolveApproval(decision, text);
+    }
+  }
+
   telemetry('YOU ▸ ' + text, 'usr');
   showSay('… ' + text, false);
   setState('thinking');
@@ -1492,7 +1534,7 @@ async function askClaude(text){
     const res = await fetch(b.proxyUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'chat', token: b.token || '', text, history })
+      body: JSON.stringify({ action: 'chat', token: b.token || '', text, history, operator: DATA.meta.operator })
     });
     if (!res.ok) throw new Error('proxy ' + res.status);
     const data = await res.json();
@@ -1696,6 +1738,8 @@ async function initBridge(){
     }
     if (db){
       watchUpdates(db);
+      watchProjects(db);
+      watchApprovals(db);
       diagnostic('Work log connected — I will announce anything Claude finishes', 'okln');
     }
   } catch (err) {
@@ -1729,6 +1773,99 @@ function watchUpdates(db){
     },
     (e) => diagnostic('Work log listener died — ' + e.code, 'warnln')
   );
+}
+
+/* What Claude is working on. Rows in `projects`, newest first:
+     { name, status: 'active' | 'blocked' | 'done', note, at }
+   The telemetry panel carries them above its feed, so the left column
+   answers "what is being built right now" at a glance.            */
+function watchProjects(db){
+  db.collection('projects').orderBy('at', 'desc').limit(8).onSnapshot(
+    (snap) => {
+      const box = $('#projects');
+      if (snap.empty){ box.classList.remove('on'); box.innerHTML = ''; return; }
+
+      const rows = snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
+      const live = rows.filter(r => r.status !== 'done').length;
+      box.classList.add('on');
+      box.innerHTML = '<div class="ph">CLAUDE — ' + live + ' IN FLIGHT</div>' +
+        rows.map(r => {
+          const st = r.status === 'done' ? 'done' : r.status === 'blocked' ? 'blocked' : 'active';
+          const tag = st === 'done' ? 'DONE' : st === 'blocked' ? 'BLOCKED' : 'ACTIVE';
+          const el = document.createElement('div');
+          el.textContent = r.name || '(unnamed)';
+          return `<div class="pr ${st}"><i class="st"></i><span class="nm">${el.innerHTML}</span><span class="tg">${tag}</span></div>`;
+        }).join('');
+      $('#panelTelemetryTag').textContent = live ? live + ' ACTIVE' : 'FEED 01';
+    },
+    (e) => diagnostic('Project listener died — ' + e.code, 'warnln')
+  );
+}
+
+/* Permission requests. Rows in `approvals`:
+     { question, spoken, detail, status: 'pending' | 'approved' | 'denied', at }
+   The newest pending one owns the banner, is spoken once, and is what
+   "approve" or "deny" resolves.                                     */
+let pendingApproval = null;
+const announcedApprovals = new Set();
+
+function watchApprovals(db){
+  db.collection('approvals').orderBy('at', 'desc').limit(10).onSnapshot(
+    (snap) => {
+      const pending = snap.docs
+        .map(d => ({ id: d.id, ...(d.data() || {}) }))
+        .filter(r => (r.status || 'pending') === 'pending');
+
+      pendingApproval = pending[0] || null;
+      const box = $('#approval');
+
+      if (!pendingApproval){ box.classList.remove('on'); return; }
+
+      $('#approvalText').textContent = pendingApproval.question || '(no detail given)';
+      box.classList.add('on');
+
+      if (!announcedApprovals.has(pendingApproval.id)){
+        announcedApprovals.add(pendingApproval.id);
+        telemetry('CLAUDE ▸ PERMISSION NEEDED — ' + (pendingApproval.question || ''), 'warnln');
+        respondWith(pendingApproval.spoken || ('Claude needs your permission. ' + pendingApproval.question));
+      }
+    },
+    (e) => diagnostic('Approval listener died — ' + e.code, 'warnln')
+  );
+}
+
+/* Spoken approvals. Only consulted while something is actually pending,
+   so a stray "yes" in conversation cannot approve anything. */
+function approvalIntent(text){
+  const q = text.toLowerCase().trim();
+  if (/\b(approve[d]?|approved|go ahead|do it|ship it|permission granted|granted|allow(ed)?|yes please|yes|yep|yeah|sure|ok|okay|fine)\b/.test(q)) return 'approved';
+  if (/\b(deny|denied|reject|no thanks|do not|don't|dont|stop|hold off|wait|not now|no)\b/.test(q)) return 'denied';
+  return null;
+}
+
+async function resolveApproval(decision, spokenText){
+  const item = pendingApproval;
+  if (!item || !bridge.db) return false;
+  try {
+    await bridge.db.doc('approvals/' + item.id).update({
+      status: decision,
+      decidedAt: Date.now(),
+      decidedBy: DATA.meta.operator,
+      decidedWith: spokenText || ''
+    });
+    pendingApproval = null;
+    $('#approval').classList.remove('on');
+    telemetry('YOU ▸ ' + decision.toUpperCase() + ' — ' + (item.question || ''), decision === 'approved' ? 'okln' : 'warnln');
+    respondWith(decision === 'approved'
+      ? 'Approved. I will tell Claude to proceed.'
+      : 'Denied. I will tell Claude to hold off.');
+    relayToClaude((spokenText || decision) + ' [decision on: ' + (item.question || '') + ']', decision);
+    return true;
+  } catch (err) {
+    diagnostic('Could not record the decision — ' + (err.code || err.message), 'warnln');
+    respondWith('I could not record that decision. Try again.');
+    return false;
+  }
 }
 
 /* you → Claude. Every utterance is filed for the session to read. */
