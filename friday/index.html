@@ -512,6 +512,29 @@ const DATA = {
     historyTurns: 6            // how much of the conversation she remembers
   },
 
+  /* ---- 1.1e THE WORK FEED (GitHub) ----------------------------
+     Where "what has Claude actually done" comes from. Every change I
+     make lands as a commit, so the repository is the honest record —
+     better than anything I could report about myself.
+
+     Public repositories answer the GitHub API without a key and allow
+     browser requests, so this needs no backend, no token and no
+     account, and it works on any domain: workers.dev, your own, or a
+     file on your laptop.
+
+     Unauthenticated callers get 60 requests an hour per address. The
+     intervals below use about 26 of them; if you ever hit the limit she
+     backs off for ten minutes rather than hammering it.             */
+  github: {
+    enabled: true,
+    owner: 'unibridgenl-cloud',
+    repo: 'unibridgenl-website',
+    branch: 'main',
+    commitSeconds: 180,        // how often to look for new commits
+    pullSeconds: 600,          // how often to refresh open pull requests
+    announce: true             // say new commits out loud as they land
+  },
+
   /* ---- 1.2 STATUS PILLS ---------------------------------------
      Header chips. state: 'ok' | 'warn' | 'cy' (drives the dot).   */
   pills: [
@@ -1315,12 +1338,23 @@ voicesReady.then((voices) => {
 
   /* 1. an explicit choice in the config, 2. the one she settled on before,
      3. a fresh pick — Irish, then a female English voice, then any English. */
+  /* Modern engines ship "Natural"/"Neural"/"Online" voices that sound
+     far smoother than the old built-ins. Prefer those first, in English,
+     female where the name tells us, before falling back. */
+  const en     = voices.filter(v => /^en/i.test(v.lang));
+  const smooth = (list) => list.find(v => /(natural|neural|online|premium|enhanced|siri|google)/i.test(v.name));
+  const female = (list) => list.filter(v => /(female|moira|siobhan|karen|serena|fiona|samantha|martha|libby|zira|aria|sonia|emma|ava)/i.test(v.name));
+
   voice = byName(DATA.voice && DATA.voice.browserVoice)
        || byName(safeGet(VOICE_KEY))
-       || voices.find(v => /en-IE/i.test(v.lang))
-       || voices.find(v => /^en/i.test(v.lang) && /(female|moira|siobhan|karen|serena|fiona|samantha|martha|libby|zira|aria)/i.test(v.name))
-       || voices.find(v => /en-GB/i.test(v.lang))
-       || voices.find(v => /^en/i.test(v.lang))
+       || smooth(female(en.filter(v => /en-IE/i.test(v.lang))))
+       || smooth(female(en.filter(v => /en-(GB|IE)/i.test(v.lang))))
+       || smooth(female(en))
+       || female(en.filter(v => /en-(GB|IE)/i.test(v.lang)))[0]
+       || smooth(en)
+       || female(en)[0]
+       || en.find(v => /en-(GB|IE)/i.test(v.lang))
+       || en[0]
        || voices[0];
 
   if (voice) safeSet(VOICE_KEY, voice.name);
@@ -1424,20 +1458,50 @@ function speak(text, onDone){
     return playAudioUrl(v.clips[text], onDone);
   return speakBrowser(text, onDone);
 }
+/* Split on sentence ends, keeping clauses whole. One long utterance is
+   what makes browser speech sound flat and rushed — and Chrome cuts off
+   around fifteen seconds of it — so she speaks a sentence at a time and
+   the engine gets to breathe between them. */
+function sentences(text, max = 170){
+  const parts = String(text).match(/[^.!?…]+[.!?…]*\s*/g) || [String(text)];
+  const out = [];
+  parts.forEach(raw => {
+    let s = raw.trim();
+    if (!s) return;
+    while (s.length > max){                       // a very long sentence: break at a comma
+      let cut = s.lastIndexOf(',', max);
+      if (cut < max * 0.5) cut = s.lastIndexOf(' ', max);
+      if (cut < 1) cut = max;
+      out.push(s.slice(0, cut + 1).trim());
+      s = s.slice(cut + 1).trim();
+    }
+    if (s) out.push(s);
+  });
+  return out.length ? out : [String(text)];
+}
+
 async function speakBrowser(text, onDone){
   if (!('speechSynthesis' in window)){ setState('idle'); onDone && onDone(); return; }
   await voicesReady;                    // so the first sentence is not the system default
-  const u = new SpeechSynthesisUtterance(text);
-  if (voice) u.voice = voice;
-  u.lang = DATA.meta.voiceLang;
-  u.rate = 1.03; u.pitch = 1.06; u.volume = 1;
-  speakQueue++;
-  u.onstart = () => setState('speaking');
-  u.onend = u.onerror = () => {
-    speakQueue = Math.max(0, speakQueue - 1);
-    if (speakQueue === 0){ setState('idle'); onDone && onDone(); }
+  window.speechSynthesis.cancel();      // never let two answers overlap
+
+  const parts = sentences(text);
+  let i = 0, started = false;
+
+  const next = () => {
+    if (i >= parts.length){ setState('idle'); onDone && onDone(); return; }
+    const u = new SpeechSynthesisUtterance(parts[i++]);
+    if (voice) u.voice = voice;
+    u.lang = DATA.meta.voiceLang;
+    u.rate = 0.98;            // a shade under default reads as composed, not rushed
+    u.pitch = 1.04;
+    u.volume = 1;
+    u.onstart = () => { if (!started){ started = true; setState('speaking'); } };
+    u.onerror = () => next();
+    u.onend = () => setTimeout(next, 90);   // a beat between sentences
+    window.speechSynthesis.speak(u);
   };
-  window.speechSynthesis.speak(u);
+  next();
 }
 /* Browsers block audio until the user interacts — unlock on first gesture. */
 function unlockAudio(){
@@ -1605,6 +1669,11 @@ function answer(qRaw){
     return `${statTxt('calls','0')} ${plural((stat('calls')||{value:0}).value,'call','calls')} booked in the last seven days, ` +
            `${prox('callsAhead')} on the calendar ahead, and ${prox('newEnquiries')} new enquiries this week.`;
 
+  if (has('claude','commit','pushed','shipped','what got done','what did you do','code','repo','build'))
+    return gh.lastSha
+      ? `Last change Claude shipped was ${gh.lastSha}. The recent ones are in telemetry on the left.`
+      : 'I have not seen anything land in the repository yet this session.';
+
   if (has('recommend','advice','what should i','priority','focus','next'))
     return 'Top priority: ' + DATA.recommendations[0];
 
@@ -1721,7 +1790,7 @@ window.addEventListener('keyup', (e) => {
    does not exist, every branch below is skipped, and the dashboard
    behaves exactly as before. Nothing here is required.
    ================================================================ */
-const bridge = { db: null, sample: null, seen: new Set(), ready: false };
+const bridge = { db: null, sample: null, seen: new Set(), ready: false, projectsFromDb: false };
 
 async function initBridge(){
   if (!window.claude || typeof claude.use !== 'function') return;   // not in the viewer
@@ -1783,10 +1852,11 @@ function watchProjects(db){
   db.collection('projects').orderBy('at', 'desc').limit(8).onSnapshot(
     (snap) => {
       const box = $('#projects');
-      if (snap.empty){ box.classList.remove('on'); box.innerHTML = ''; return; }
+      if (snap.empty){ bridge.projectsFromDb = false; box.classList.remove('on'); box.innerHTML = ''; return; }
 
       const rows = snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
       const live = rows.filter(r => r.status !== 'done').length;
+      bridge.projectsFromDb = true;
       box.classList.add('on');
       box.innerHTML = '<div class="ph">CLAUDE — ' + live + ' IN FLIGHT</div>' +
         rows.map(r => {
@@ -1882,6 +1952,63 @@ async function relayToClaude(text, reply){
   }
 }
 
+/* The tools Claude may call while answering. Each returns small plain
+   data, so she can look something up mid-sentence instead of being
+   handed one static blob and guessing from it. */
+function sampleTools(){
+  return [
+    {
+      name: 'get_dashboard',
+      description: 'Current numbers on the dashboard: the objective and its pace, every stat, every vital, and the proximity counts. Call this for any question about how the business is doing.',
+      execute: async () => {
+        const o = DATA.objective, m = objectiveMaths();
+        return {
+          objective: { name:o.name, current:o.current, target:o.target, percent:Math.round(m.pct),
+                       daysLeft:m.daysLeft, deadline:o.deadline, status: o.current === 0 ? 'not started' : (m.onTrack ? 'on track' : 'behind pace') },
+          stats: DATA.stats.map(x => ({ name:x.key, value:x.value, format:x.format })),
+          vitals: DATA.vitals.map(v => ({ name:v.key, percent:Math.round(v.value) })),
+          proximity: DATA.proximity.map(c => ({ name:c.label, count:c.count })),
+          dataSource: dataMode === 'LIVE' ? 'live' : 'mock figures, nothing connected yet'
+        };
+      }
+    },
+    {
+      name: 'get_recent_work',
+      description: 'What Claude has actually shipped recently, read from the git repository: commit subjects and when they landed. Call this when asked what was done, built, fixed or changed.',
+      execute: async () => {
+        const g = DATA.github;
+        try {
+          const list = await ghFetch(`/repos/${g.owner}/${g.repo}/commits?sha=${encodeURIComponent(g.branch)}&per_page=10`);
+          if (!list || !Array.isArray(list)) return { note: 'repository unreachable or rate limited' };
+          return list.map(c => ({
+            change: commitSubject(c.commit && c.commit.message),
+            when: c.commit && c.commit.author && c.commit.author.date
+          }));
+        } catch (e) { return { note: 'could not read the repository: ' + e.message }; }
+      }
+    },
+    {
+      name: 'get_in_flight',
+      description: 'Work currently in progress or blocked, and any permission request waiting on the operator.',
+      execute: async () => ({
+        projects: Array.from(document.querySelectorAll('#projects .pr')).map(el => ({
+          name: el.querySelector('.nm') ? el.querySelector('.nm').textContent : '',
+          state: el.classList.contains('done') ? 'done' : el.classList.contains('blocked') ? 'blocked' : 'active'
+        })),
+        pendingApproval: pendingApproval ? pendingApproval.question : null
+      })
+    },
+    {
+      name: 'get_recent_activity',
+      description: 'The last lines of the telemetry and diagnostics feeds — recent events on the dashboard itself.',
+      execute: async () => ({
+        telemetry: Array.from(document.querySelectorAll('#telemetry .tx')).slice(-12).map(e => e.textContent),
+        diagnostics: Array.from(document.querySelectorAll('#diagnostics .tx')).slice(-6).map(e => e.textContent)
+      })
+    }
+  ];
+}
+
 /* Ask Claude through the artifact runtime, grounded in the same data. */
 async function askViaSample(text){
   const o = DATA.objective, m = objectiveMaths();
@@ -1898,15 +2025,133 @@ async function askViaSample(text){
     'get into Dutch universities and settle in the Netherlands. You are speaking aloud through a ' +
     'voice synthesiser: at most three short sentences, plain spoken prose, no markdown, no lists, ' +
     'no emoji. Calm, dry, precise. Ground every figure in the dashboard data and never invent one; ' +
-    'if it is not there, say you do not have that reading.\n\nDashboard data: ' + context;
+    'if it is not there, say you do not have that reading.\n\n' +
+    'You have tools: get_dashboard for the live numbers, get_recent_work for what Claude has actually ' +
+    'shipped from the git history, get_in_flight for work in progress and pending permissions, and ' +
+    'get_recent_activity for the feeds. Call them rather than guessing — the snapshot below can be stale. ' +
+    'You have no web access, so if something needs looking up outside this data, say so plainly.\n\n' +
+    'Dashboard snapshot: ' + context;
 
   const turns = convo.slice(-6).map(t => ({ role: t.role === 'assistant' ? 'assistant' : 'user', content: t.text }));
   turns.push({ role: 'user', content: system + '\n\nQuestion: ' + text });
 
   setState('thinking');
   showSay('Thinking…', false);
-  const { text: answerText } = await bridge.sample(turns, { modelTier: 'quick' });
+  const { text: answerText } = await bridge.sample(turns, {
+    modelTier: 'quick',              // she is speaking aloud; a fast round-trip matters
+    tools: sampleTools(),
+    onText: ({ text }) => showSay(text, false)      // show the answer as it forms
+  });
   return answerText;
+}
+
+/* ================================================================
+   ▓▓ 11c. THE WORK FEED — reading the repository directly ▓▓
+   ----------------------------------------------------------------
+   No bridge, no backend: she reads the commit log herself. What lands
+   in telemetry is what actually shipped, with the repository's own
+   timestamps, which is a harder thing to be wrong about than a report
+   written by the same party that did the work.
+   ================================================================ */
+const gh = { seenCommits: new Set(), firstPass: true, backoffUntil: 0, lastSha: null };
+
+async function ghFetch(path){
+  if (Date.now() < gh.backoffUntil) return null;
+  const res = await fetch('https://api.github.com' + path, {
+    headers: { 'Accept': 'application/vnd.github+json' }, cache: 'no-store'
+  });
+  if (res.status === 403 || res.status === 429){
+    gh.backoffUntil = Date.now() + 10 * 60 * 1000;       // rate limited: stand down
+    diagnostic('GitHub rate limit reached — backing off for ten minutes', 'warnln');
+    return null;
+  }
+  if (!res.ok) throw new Error('GitHub ' + res.status);
+  return res.json();
+}
+
+/* A commit subject, without the trailer lines or the merge noise. */
+function commitSubject(message){
+  const first = String(message || '').split('\n')[0].trim();
+  return first.replace(/^Merge (branch|pull request|remote-tracking branch) .*/i, (m) => m).slice(0, 90);
+}
+
+async function pollCommits(){
+  const g = DATA.github;
+  try {
+    const list = await ghFetch(`/repos/${g.owner}/${g.repo}/commits?sha=${encodeURIComponent(g.branch)}&per_page=10`);
+    if (!list || !Array.isArray(list)) return;
+
+    const fresh = [];
+    list.forEach(c => {
+      if (!c || !c.sha || gh.seenCommits.has(c.sha)) return;
+      gh.seenCommits.add(c.sha);
+      fresh.push({
+        sha: c.sha.slice(0, 7),
+        subject: commitSubject(c.commit && c.commit.message),
+        when: c.commit && c.commit.author && c.commit.author.date,
+        who: (c.commit && c.commit.author && c.commit.author.name) || 'someone'
+      });
+    });
+    if (!fresh.length) return;
+
+    fresh.reverse().forEach(c => telemetry('CLAUDE ▸ ' + c.subject, 'okln'));
+    gh.lastSha = fresh[fresh.length - 1].sha;
+
+    /* The opening pass is history — log it, do not recite ten commits. */
+    if (!gh.firstPass && DATA.github.announce){
+      const latest = fresh[fresh.length - 1];
+      respondWith(fresh.length === 1
+        ? 'Claude just pushed: ' + latest.subject
+        : `Claude pushed ${fresh.length} changes. The latest: ${latest.subject}`);
+    }
+    gh.firstPass = false;
+  } catch (err) {
+    diagnostic('Could not read the repository — ' + err.message, 'warnln');
+    gh.firstPass = false;
+  }
+}
+
+/* Open pull requests are the work still in flight. */
+async function pollPulls(){
+  const g = DATA.github;
+  try {
+    const list = await ghFetch(`/repos/${g.owner}/${g.repo}/pulls?state=open&per_page=8`);
+    if (!list || !Array.isArray(list)) return;
+    if (bridge.projectsFromDb) return;        // a live project board outranks this
+
+    const box = $('#projects');
+    if (!list.length){
+      /* Nothing open: show the last thing that shipped instead. */
+      box.classList.add('on');
+      box.innerHTML = '<div class="ph">CLAUDE — NOTHING IN FLIGHT</div>' +
+        '<div class="pr done"><i class="st"></i><span class="nm">' +
+        (gh.lastSha ? 'Last push ' + gh.lastSha : 'Repository quiet') +
+        '</span><span class="tg">CLEAN</span></div>';
+      $('#panelTelemetryTag').textContent = 'FEED 01';
+      return;
+    }
+    box.classList.add('on');
+    box.innerHTML = '<div class="ph">CLAUDE — ' + list.length + ' IN FLIGHT</div>' +
+      list.map(pr => {
+        const el = document.createElement('div');
+        el.textContent = pr.title || ('#' + pr.number);
+        const st = pr.draft ? 'blocked' : 'active';
+        return `<div class="pr ${st}"><i class="st"></i><span class="nm">${el.innerHTML}</span>` +
+               `<span class="tg">${pr.draft ? 'DRAFT' : '#' + pr.number}</span></div>`;
+      }).join('');
+    $('#panelTelemetryTag').textContent = list.length + ' OPEN';
+  } catch (err) {
+    diagnostic('Could not read pull requests — ' + err.message, 'warnln');
+  }
+}
+
+function startWorkFeed(){
+  const g = DATA.github;
+  if (!g || !g.enabled || !g.owner || !g.repo) return;
+  diagnostic('Watching ' + g.owner + '/' + g.repo + ' — ' + g.branch, 'sys');
+  pollCommits(); pollPulls();
+  setInterval(pollCommits, Math.max(60, g.commitSeconds) * 1000);
+  setInterval(pollPulls,   Math.max(120, g.pullSeconds) * 1000);
 }
 
 /* ================================================================
@@ -1956,6 +2201,7 @@ function revealPanels(){
     startFeeds();
     startSync();
     initBridge();
+    startWorkFeed();
     diagnostic('Boot complete — ' + SESSION_ID, 'okln');
     telemetry('Interface online. Awaiting instruction.', 'okln');
     renderObjective(true);                       // counter counts up on arrival
