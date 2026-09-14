@@ -25,7 +25,7 @@ function ThanksScreen({ go }) {
 
           <Reveal y={24} style={{order:2,flex:'1 1 min(100%,260px)',minWidth:0}}>
             <HandbookCover width={260}/>
-            <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:12}}>61 pages, A4, made to read on a phone or printed</div>
+            <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:12}}>62 pages, A4, made to read on a phone or printed</div>
           </Reveal>
 
           <Reveal delay={120} y={24} style={{order:1,flex:'1.4 1 min(100%,360px)',minWidth:0}}>
@@ -71,7 +71,7 @@ function ThanksScreen({ go }) {
                 <span className="ub-overline">The file</span>
                 <Badge tone="accent">2026/27</Badge>
               </div>
-              <h3 style={{margin:'10px 0 6px',fontSize:'var(--text-h4)'}}>61 pages, one PDF</h3>
+              <h3 style={{margin:'10px 0 6px',fontSize:'var(--text-h4)'}}>62 pages, one PDF</h3>
               <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>Sixteen chapters and five appendices: residence permit, BSN, DigiD, housing and rent law, banking, insurance, the huisarts, SIM, transport, working and money. Nineteen euro including VAT, paid once.</p>
             </Card>
           </Reveal>
