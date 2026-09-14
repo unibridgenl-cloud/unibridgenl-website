@@ -6,9 +6,10 @@
  * so there is no new server, no new bill and no new password.
  *
  * It pulls from three places, each optional:
- *   1. A Google Sheet you type into        — the numbers only you know
- *   2. Google Calendar                     — calls booked, counted automatically
- *   3. Stripe                              — revenue, counted automatically
+ *   1. Gmail                               — enquiries and replies, automatically
+ *   2. A Google Sheet you type into        — the numbers only you know
+ *   3. Google Calendar                     — calls booked, counted automatically
+ *   4. Stripe                              — revenue, counted automatically
  *
  * Anything it cannot reach is simply left out of the response, and the
  * dashboard keeps showing its own value for that field. Nothing breaks.
@@ -18,24 +19,18 @@
  * 1. Make a Google Sheet. Add a tab named exactly:  FRIDAY
  *    Two columns, header row `field` | `value`, then one row per number:
  *
- *        field                     value
- *        objective.name            SIGNED STUDENTS — INTAKE FEB 2027
- *        objective.current         34
- *        objective.target          50
- *        objective.deadline        2026-12-15
- *        stats.appsLive            61
- *        stats.housingSet          18
- *        stats.pipeline            21800
- *        vitals.enrolmentPipeline  74
- *        vitals.housingCapacity    48
- *        vitals.visaQueue          66
- *        vitals.responseSla        91
- *        vitals.cashRunway         82
- *        vitals.adEfficiency       57
- *        proximity.hotLeads        9
- *        proximity.awaitingDocs    14
- *        proximity.uniPartners     6
- *        proximity.openTickets     3
+ *        field                   value
+ *        objective.name          FIRST SIGNED STUDENT
+ *        objective.current       0
+ *        objective.target        1
+ *        objective.deadline      2027-01-15
+ *        stats.signed            0
+ *        vitals.siteReadiness    60
+ *        vitals.cashRunway       80
+ *
+ *    That is the whole sheet. Enquiries, replies, reply rate, calls and
+ *    revenue are read from Gmail, Calendar and Stripe automatically — do not
+ *    type those in, a sheet row would override the real number.
  *
  *    Leave out any row you do not track yet. Vitals are percentages, 0-100.
  *
@@ -44,6 +39,15 @@
  * 3. Project Settings → Script Properties, add:
  *        FRIDAY_TOKEN       a long random string you invent
  *        SPREADSHEET_ID     the id in the sheet's URL (between /d/ and /edit)
+ *        GMAIL_QUERY        (optional) which mail counts as an enquiry, e.g.
+ *                           "in:inbox -in:chats -category:promotions". Unset
+ *                           to skip Gmail entirely.
+ *        GMAIL_WEEKLY_GOAL  (optional) enquiries per week you are aiming for,
+ *                           used for the LEAD FLOW vital. Defaults to 10.
+ *        CALLS_WEEKLY_GOAL  (optional) calls per week you are aiming for,
+ *                           used for the CALL PIPELINE vital. Defaults to 5.
+ *        GMAIL_SUBJECTS     (optional) "no" to keep subject lines out of the
+ *                           telemetry feed and show counts only.
  *        CALENDAR_MATCH     (optional) text that appears in your call events,
  *                           e.g. "UniBridge" — leave unset to skip Calendar
  *        STRIPE_SECRET_KEY  (optional) sk_live_... — leave unset to skip Stripe
@@ -151,11 +155,104 @@ function doGet(e) {
 
 function buildMetrics(props) {
   var out = { generatedAt: new Date().toISOString(), telemetry: [] };
+  readGmail(props, out);
   readSheet(props, out);
   readCalendar(props, out);
   readStripe(props, out);
   derive(out);
   return out;
+}
+
+/* --- 0. the inbox -------------------------------------------------------
+ * Right now the mailbox IS the business: no students, no applications, no
+ * placements — just conversations that have or have not been answered. So
+ * this runs first and feeds the stats, two vitals and the radar.
+ *
+ * "Awaiting reply" means the last message in the thread is not from you.
+ * That is the only definition that survives contact with a real inbox:
+ * unread is useless (you read things and forget them) and starred depends
+ * on you remembering to star.
+ */
+function readGmail(props, out) {
+  var query = props.getProperty('GMAIL_QUERY');
+  if (!query) return;
+
+  try {
+    var me = (Session.getActiveUser().getEmail() || '').toLowerCase();
+    var weekGoal = Number(props.getProperty('GMAIL_WEEKLY_GOAL') || 10);
+    var showSubjects = String(props.getProperty('GMAIL_SUBJECTS') || 'yes').toLowerCase() !== 'no';
+
+    var threads = GmailApp.search(query + ' newer_than:30d', 0, 200);
+    var now = Date.now();
+    var weekAgo = now - 7 * 86400000;
+
+    var received = 0, replied = 0, awaiting = 0, newThisWeek = 0;
+    var oldestWaitHours = 0, waitingList = [];
+
+    for (var i = 0; i < threads.length; i++) {
+      var msgs = threads[i].getMessages();
+      if (!msgs.length) continue;
+
+      var inboundFromOthers = false, iReplied = false;
+      for (var j = 0; j < msgs.length; j++) {
+        var from = (msgs[j].getFrom() || '').toLowerCase();
+        if (me && from.indexOf(me) !== -1) iReplied = true;
+        else inboundFromOthers = true;
+      }
+      if (!inboundFromOthers) continue;        // a thread only I wrote in
+
+      received++;
+      if (iReplied) replied++;
+
+      var last = msgs[msgs.length - 1];
+      var lastFrom = (last.getFrom() || '').toLowerCase();
+      var lastAt = last.getDate().getTime();
+      if (lastAt > weekAgo) newThisWeek++;
+
+      if (!me || lastFrom.indexOf(me) === -1) {   // they spoke last: my move
+        awaiting++;
+        var waitHours = (now - lastAt) / 3600000;
+        if (waitHours > oldestWaitHours) oldestWaitHours = waitHours;
+        waitingList.push({ subject: threads[i].getFirstMessageSubject(), hours: waitHours });
+      }
+    }
+
+    out.stats = out.stats || {};
+    out.stats.emailsIn = received;
+    out.stats.awaitingReply = awaiting;
+    out.stats.replyRate = received ? Math.round((replied / received) * 100) : 0;
+
+    out.proximity = out.proximity || {};
+    out.proximity.awaitingReply = awaiting;
+    out.proximity.newEnquiries = newThisWeek;
+    out.proximity.openThreads = received;
+
+    out.vitals = out.vitals || {};
+    // Cleared = the share of threads where the ball is not in your court.
+    out.vitals.inboxClear = received ? Math.round(((received - awaiting) / received) * 100) : 100;
+    // Reply speed: 100 under two hours, sliding to 0 at two days.
+    out.vitals.replySpeed = awaiting === 0 ? 100
+      : Math.max(0, Math.round(100 - ((oldestWaitHours - 2) / 46) * 100));
+    out.vitals.leadFlow = Math.min(100, Math.round((newThisWeek / Math.max(1, weekGoal)) * 100));
+
+    // Oldest unanswered first — that is the one that costs you a customer.
+    waitingList.sort(function (a, b) { return b.hours - a.hours; });
+    for (var k = 0; k < Math.min(4, waitingList.length); k++) {
+      var w = waitingList[k];
+      var age = w.hours < 24 ? Math.round(w.hours) + 'h' : Math.round(w.hours / 24) + 'd';
+      out.telemetry.push({
+        kind: w.hours > 48 ? 'warnln' : 'sys',
+        text: showSubjects
+          ? 'Waiting ' + age + ' — ' + String(w.subject || '(no subject)').slice(0, 60)
+          : 'A thread has been waiting ' + age + ' for your reply'
+      });
+    }
+    if (!waitingList.length && received)
+      out.telemetry.push({ kind: 'okln', text: 'Inbox clear — nothing waiting on a reply' });
+
+  } catch (err) {
+    out.telemetry.push({ kind: 'warnln', text: 'Mailbox unreadable: ' + err.message });
+  }
 }
 
 /* --- 1. the sheet ------------------------------------------------------- */
@@ -202,6 +299,9 @@ function readCalendar(props, out) {
     }
     out.stats = out.stats || {};
     out.stats.calls7d = count;
+    out.vitals = out.vitals || {};
+    out.vitals.callPipeline = Math.min(100, Math.round(
+      (count / Math.max(1, Number(props.getProperty('CALLS_WEEKLY_GOAL') || 5))) * 100));
 
     var ahead = CalendarApp.getDefaultCalendar()
       .getEvents(now, new Date(now.getTime() + 7 * 86400000));
@@ -209,6 +309,8 @@ function readCalendar(props, out) {
     for (var j = 0; j < ahead.length; j++) {
       if (ahead[j].getTitle().toLowerCase().indexOf(match.toLowerCase()) !== -1) upcoming++;
     }
+    out.proximity = out.proximity || {};
+    out.proximity.callsAhead = upcoming;
     if (upcoming) out.telemetry.push({ kind: 'sys', text: upcoming + ' calls scheduled in the next seven days' });
   } catch (err) {
     out.telemetry.push({ kind: 'warnln', text: 'Calendar unreadable: ' + err.message });
@@ -234,21 +336,28 @@ function readStripe(props, out) {
       if (c.paid && !c.refunded && c.status === 'succeeded') { total += c.amount; n++; }
     }
     out.stats = out.stats || {};
-    if (n) out.stats.avgDeal = Math.round(total / n / 100);
     out.stats.revenue30d = Math.round(total / 100);
-    out.telemetry.push({ kind: 'okln', text: n + ' payments cleared in the last 30 days, €' + Math.round(total / 100) });
+    if (n) out.stats.avgDeal = Math.round(total / n / 100);
+    out.telemetry.push({
+      kind: n ? 'okln' : 'sys',
+      text: n ? n + ' payments cleared in the last 30 days, €' + Math.round(total / 100)
+              : 'No payments in the last 30 days'
+    });
   } catch (err) {
     out.telemetry.push({ kind: 'warnln', text: 'Stripe unreachable: ' + err.message });
   }
 }
 
-/* --- 4. numbers worked out from the others ------------------------------ */
+/* --- 4. numbers worked out from the others ------------------------------
+ * Deliberately thin. A conversion rate with no signings is not a small
+ * number, it is a meaningless one, so it is not computed until there is
+ * something to divide.
+ */
 function derive(out) {
   var s = out.stats || {};
   var o = out.objective || {};
-  // conversion = signed students / calls booked, when both are known
-  if (s.conversion === undefined && o.current && s.calls7d) {
-    s.conversion = Math.round((o.current / (s.calls7d * 4)) * 100);   // calls7d ≈ weekly rate
+  if (s.conversion === undefined && o.current > 0 && s.calls7d > 0) {
+    s.conversion = Math.round((o.current / (s.calls7d * 4)) * 100);
   }
   out.stats = s;
 }
@@ -346,6 +455,6 @@ function json(obj) {
 function testMetrics() {
   var props = PropertiesService.getScriptProperties();
   var out = { telemetry: [] };
-  readSheet(props, out); readCalendar(props, out); readStripe(props, out); derive(out);
+  readGmail(props, out); readSheet(props, out); readCalendar(props, out); readStripe(props, out); derive(out);
   Logger.log(JSON.stringify(out, null, 2));
 }

@@ -6,7 +6,8 @@ works without the others. Turn on only what you want.
 
 | You want | Set up | She gains |
 |---|---|---|
-| Real numbers | Sheet + Apps Script | The dashboard shows your actual figures instead of mock ones |
+| Your inbox tracked | Apps Script + `GMAIL_QUERY` | Enquiries, who is waiting on a reply, how fast you answer |
+| The few manual numbers | Sheet + Apps Script | Signed students and the two judgement-call vitals |
 | Her real voice | ElevenLabs key | Every reply spoken in your designed voice, not the robotic system one |
 | Real conversation | Anthropic key | She answers anything, grounded in the live numbers, instead of matching keywords |
 
@@ -18,24 +19,43 @@ already handles the quiz and the booking form. No new server, no new bill.
 ## 1. Deploy the script
 
 1. Create a Google Sheet. Add a tab named exactly `FRIDAY`, with header row
-   `field` | `value`, then one row per number you track. The full list of field
-   names is in the comment at the top of `Code.gs`. Start with three rows if you
-   like — anything you leave out keeps its mock value.
+   `field` | `value`. It only needs the handful of numbers no API can know:
+
+   | field | value |
+   |---|---|
+   | `objective.name` | FIRST SIGNED STUDENT |
+   | `objective.current` | 0 |
+   | `objective.target` | 1 |
+   | `objective.deadline` | 2027-01-15 |
+   | `stats.signed` | 0 |
+   | `vitals.siteReadiness` | 60 |
+   | `vitals.cashRunway` | 80 |
+
+   Enquiries, replies, reply rate, calls and revenue come from Gmail, Calendar
+   and Stripe automatically. Don't type those into the sheet — a row would
+   override the real number.
 2. In that sheet: **Extensions → Apps Script**, paste in `Code.gs`.
 3. **Project Settings → Script Properties**, add what applies:
 
    | Property | Needed for | Value |
    |---|---|---|
    | `FRIDAY_TOKEN` | everything | a long random string you invent |
-   | `SPREADSHEET_ID` | real numbers | the id in the sheet URL, between `/d/` and `/edit` |
+   | `GMAIL_QUERY` | inbox tracking | `in:inbox -in:chats -category:promotions -category:social` |
+   | `GMAIL_WEEKLY_GOAL` | the LEAD FLOW vital | enquiries per week you want, e.g. `10` |
+   | `CALLS_WEEKLY_GOAL` | the CALL PIPELINE vital | calls per week you want, e.g. `5` |
+   | `GMAIL_SUBJECTS` | privacy | `no` to show counts only, never subject lines |
+   | `SPREADSHEET_ID` | the manual numbers | the id in the sheet URL, between `/d/` and `/edit` |
    | `CALENDAR_MATCH` | calls counted automatically | text in your call events, e.g. `UniBridge` |
    | `STRIPE_SECRET_KEY` | revenue counted automatically | `sk_live_…` |
    | `ELEVEN_API_KEY` | her voice | your ElevenLabs key |
    | `ELEVEN_VOICE_ID` | her voice | the voice id to speak with |
    | `ANTHROPIC_API_KEY` | conversation | `sk-ant-…` |
 
-4. Run `testMetrics` once from the editor. It prints what it can read, so you
-   find a wrong sheet id now rather than from a silent dashboard later.
+4. Run `testMetrics` once from the editor. Google will ask you to authorise
+   Gmail, Calendar and Sheets access — that prompt is the script asking for
+   permission to read *your own* mailbox, and it is the only time you'll see
+   it. It then prints everything it can read, so you find a wrong sheet id or
+   an empty Gmail query now rather than from a silent dashboard later.
 5. **Deploy → New deployment → Web app**, execute as **Me**, access **Anyone**.
    Copy the `/exec` URL.
 
@@ -79,10 +99,33 @@ open the file from disk or run `npx http-server friday` and use her at
 `localhost`. Note that the microphone needs HTTPS or localhost — opening the
 file directly with `file://` disables speech recognition.
 
-## 4. What it costs
+## 4. What she tracks, and what she doesn't
 
-- Apps Script, Google Sheets, Calendar, Cloudflare Pages and Access: free at
-  this scale.
+There are no students, no applications and no housing placements yet, so the
+dashboard doesn't pretend otherwise: the objective reads FIRST SIGNED STUDENT
+at 0 of 1, and the status says NOT STARTED rather than scoring you against a
+pace built from no data.
+
+What it tracks instead is the part of the business that does exist:
+
+- **Enquiries in the last 30 days**, from Gmail.
+- **Who is waiting on a reply** — threads where the last message isn't yours.
+  Not unread (you read things and forget), not starred (you forget to star).
+  The oldest ones surface in the telemetry feed, worst first, and turn amber
+  past 48 hours.
+- **Reply rate and reply speed** — 100% under two hours, sliding to 0 at two days.
+- **Lead flow and call pipeline**, against the weekly goals you set.
+- **Revenue**, from Stripe, which is the only money flowing.
+
+Subject lines appear in the feed so the waiting threads are recognisable. Set
+`GMAIL_SUBJECTS` to `no` if you'd rather see counts only — worth doing if you
+ever screen-share this.
+
+## 5. What it costs
+
+- Apps Script, Gmail, Sheets, Calendar, Cloudflare Pages and Access: free at
+  this scale. Gmail reads are capped at 200 threads per sync to stay well
+  inside Apps Script's quotas.
 - ElevenLabs: per character spoken. Identical phrases are cached server-side for
   six hours, so the boot greeting and repeated answers are only paid for once.
 - Anthropic: per token. Replies are capped at 400 tokens and run at low effort,

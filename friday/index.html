@@ -480,65 +480,73 @@ const DATA = {
   /* ---- 1.3 PRIMARY OBJECTIVE ----------------------------------
      The one number that matters. Bottom card + progress maths.    */
   objective: {
-    name: 'SIGNED STUDENTS — INTAKE FEB 2027',
-    unit: '',                  // e.g. '€' or 'k' — rendered after the number
-    target: 50,                // <- goal from your plan
-    current: 34,               // <- live count from CRM
-    startedAt: '2026-07-01',   // campaign start — pace = current / days elapsed
-    deadline: '2026-12-15',    // hard deadline — drives ETA + ON TRACK / BEHIND PACE
+    /* Pre-revenue, so the objective is the first real milestone rather than
+       a revenue figure. Nothing here is invented: it is 0 because it is 0.
+       When the first student signs, change `current` to 1 and raise the
+       target — or swap the whole thing for a leading indicator you can move
+       every day, e.g. name: 'QUALIFIED CONVERSATIONS', target: 20.        */
+    name: 'FIRST SIGNED STUDENT',
+    unit: '',
+    target: 1,                 // <- the milestone that changes everything
+    current: 0,                // <- sheet: objective.current
+    startedAt: '2026-09-01',   // when you started counting
+    deadline: '2027-01-15',    // Studielink deadline for the Sept 2027 intake
     decimals: 0
   },
 
   /* ---- 1.4 KEY STATS ------------------------------------------
      The row under the progress bar. Add/remove freely — the card
      re-renders from this array. format: 'int' | 'eur' | 'pct'.    */
+  /* Everything here is measurable from day one: the inbox, the calendar and
+     Stripe. No student counts, because there are no students yet — the point
+     of the dashboard is to make the first one arrive, not to flatter you.  */
   stats: [
-    { id:'appsLive',   key:'APPS LIVE',   value:61,    format:'int' },  // <- sheet / Studielink tracker
-    { id:'housingSet', key:'HOUSING SET', value:18,    format:'int' },  // <- sheet
-    { id:'calls7d',    key:'CALLS / 7D',  value:12,    format:'int' },  // <- Google Calendar, auto
-    { id:'conversion', key:'CONVERSION',  value:27,    format:'pct' },  // <- computed: signed / calls
-    { id:'avgDeal',    key:'AVG DEAL',    value:612,   format:'eur' },  // <- Stripe, auto
-    { id:'pipeline',   key:'PIPELINE',    value:21800, format:'eur', accent:true } // <- sheet
+    { id:'emailsIn',      key:'ENQUIRIES 30D', value:0, format:'int' },  // <- Gmail, auto
+    { id:'awaitingReply', key:'OWE A REPLY',   value:0, format:'int' },  // <- Gmail, auto
+    { id:'replyRate',     key:'REPLY RATE',    value:0, format:'pct' },  // <- Gmail, auto
+    { id:'calls7d',       key:'CALLS / 7D',    value:0, format:'int' },  // <- Calendar, auto
+    { id:'revenue30d',    key:'REVENUE 30D',   value:0, format:'eur' },  // <- Stripe, auto
+    { id:'signed',        key:'SIGNED',        value:0, format:'int', accent:true } // <- sheet
   ],
 
   /* ---- 1.5 SYSTEM VITALS --------------------------------------
      Six animated bars. value 0-100. drift = live jitter amplitude
      (set drift:0 once a field is wired to a real metric).         */
+  /* The first four are computed from Gmail and Calendar. The last two are
+     yours to type into the sheet — there is no API for how ready you feel.
+     `drift` is cosmetic jitter for the mock state and switches itself off
+     the moment a real number arrives.                                      */
   vitals: [
-    { id:'enrolmentPipeline', key:'ENROLMENT PIPELINE', value:74, drift:4, unit:'%' },
-    { id:'housingCapacity',   key:'HOUSING CAPACITY',   value:48, drift:6, unit:'%', warn:true },
-    { id:'visaQueue',         key:'VISA / BSN QUEUE',   value:66, drift:5, unit:'%' },
-    { id:'responseSla',       key:'RESPONSE SLA',       value:91, drift:3, unit:'%' },
-    { id:'cashRunway',        key:'CASH RUNWAY',        value:82, drift:2, unit:'%' },
-    { id:'adEfficiency',      key:'AD SPEND EFFICIENCY',value:57, drift:7, unit:'%', warn:true }
+    { id:'inboxClear',    key:'INBOX CLEARED',    value:0, drift:0, unit:'%' },  // <- Gmail: replied / received
+    { id:'replySpeed',    key:'REPLY SPEED',      value:0, drift:0, unit:'%' },  // <- Gmail: 100 at under 2h, 0 at 48h+
+    { id:'leadFlow',      key:'LEAD FLOW',        value:0, drift:0, unit:'%' },  // <- Gmail: enquiries vs weekly goal
+    { id:'callPipeline',  key:'CALL PIPELINE',    value:0, drift:0, unit:'%' },  // <- Calendar: booked vs weekly goal
+    { id:'siteReadiness', key:'SITE READINESS',   value:0, drift:0, unit:'%' },  // <- sheet, your call
+    { id:'cashRunway',    key:'CASH RUNWAY',      value:0, drift:0, unit:'%' }   // <- sheet, your call
   ],
 
   /* ---- 1.6 PROXIMITY CONTACTS ---------------------------------
      Radar blips. angle 0-360°, dist 0-1 (1 = outer ring).
      Wire to: leads by stage, partner universities, open tickets.  */
   proximity: [
-    { id:'hotLeads',     label:'HOT LEADS',     count:9,  angle:42,  dist:.38 },
-    { id:'awaitingDocs', label:'AWAITING DOCS', count:14, angle:128, dist:.62 },
-    { id:'uniPartners',  label:'UNI PARTNERS',  count:6,  angle:214, dist:.80 },
-    { id:'openTickets',  label:'OPEN TICKETS',  count:3,  angle:305, dist:.50 }
+    { id:'awaitingReply', label:'OWE A REPLY',   count:0, angle:42,  dist:.38 },  // <- Gmail
+    { id:'newEnquiries',  label:'NEW / 7D',      count:0, angle:128, dist:.62 },  // <- Gmail
+    { id:'callsAhead',    label:'CALLS AHEAD',   count:0, angle:214, dist:.80 },  // <- Calendar
+    { id:'openThreads',   label:'OPEN THREADS',  count:0, angle:305, dist:.50 }   // <- Gmail
   ],
 
   /* ---- 1.7 TELEMETRY FEED -------------------------------------
      Left-hand rolling log. Swap for a real event stream / webhook.
      kind: 'sys' | 'okln' | 'warnln'.                              */
+  /* Placeholders only, shown until Gmail is wired — at which point real
+     inbox events replace them. Deliberately not fake wins.                */
   telemetry: [
-    { kind:'okln',  text:'Application submitted — TU Delft, MSc Computer Science' },
-    { kind:'sys',   text:'Studielink sync complete — 61 records reconciled' },
-    { kind:'okln',  text:'Housing contract signed — Rotterdam, Kralingen' },
-    { kind:'sys',   text:'Discovery call booked — 14:30 CET' },
-    { kind:'warnln',text:'Document expiring — apostille, 9 days remaining' },
-    { kind:'sys',   text:'Payment cleared — Bridge Full, €900' },
-    { kind:'okln',  text:'BSN appointment confirmed — Gemeente Amsterdam' },
-    { kind:'sys',   text:'Lead captured — organic search, Find My Field quiz' },
-    { kind:'warnln',text:'Nuffic credential check queued — 2 files pending' },
-    { kind:'sys',   text:'Nurture sequence dispatched — 118 recipients' },
-    { kind:'okln',  text:'Enrolment confirmed — Erasmus University Rotterdam' },
-    { kind:'sys',   text:'Arrival week roster updated — 22 seats held' }
+    { kind:'sys',   text:'No mailbox connected — showing standby feed' },
+    { kind:'sys',   text:'Awaiting first enquiry' },
+    { kind:'sys',   text:'Quiz funnel armed — Find My Field' },
+    { kind:'sys',   text:'Booking calendar armed' },
+    { kind:'sys',   text:'Stripe checkout live — handbook' },
+    { kind:'sys',   text:'Standing by for inbound' }
   ],
 
   /* ---- 1.8 DIAGNOSTICS FEED -----------------------------------
@@ -547,11 +555,11 @@ const DATA = {
     { kind:'sys',   text:'Heartbeat OK — edge node AMS-3' },
     { kind:'okln',  text:'Backup verified — 04:00 snapshot, 0 errors' },
     { kind:'sys',   text:'Cache warm — 98.2% hit rate' },
-    { kind:'warnln',text:'Latency spike — housing API, 840ms' },
+    { kind:'sys',   text:'Mail poller idle — no source configured' },
     { kind:'sys',   text:'Cert valid — 71 days to renewal' },
     { kind:'okln',  text:'Deploy green — site build 1.4.2' },
-    { kind:'sys',   text:'Crawl complete — 14 pages indexed' },
-    { kind:'warnln',text:'Rate limit 62% — mail provider' },
+    { kind:'sys',   text:'Crawl complete — site indexed' },
+    { kind:'sys',   text:'Stripe webhook reachable' },
     { kind:'sys',   text:'Queue depth 0 — worker pool idle' },
     { kind:'okln',  text:'Integrity scan clean — no anomalies' }
   ],
@@ -559,10 +567,13 @@ const DATA = {
   /* ---- 1.9 RECOMMENDATIONS ------------------------------------
      Top 3 spoken at the end of the MORNING BRIEF. Wire to whatever
      scoring engine you like — order matters, highest first.       */
+  /* At zero, the only honest advice is about getting the first conversation,
+     not optimising a funnel that does not exist yet. Replace these as the
+     picture changes — or let the brain generate them from the live numbers. */
   recommendations: [
-    'Close the four proposals sitting past seven days. They are the fastest route to target.',
-    'Housing capacity is the binding constraint. Secure two more agency rooms before applications land.',
-    'Ad spend efficiency is the weakest vital. Pause the lowest performing campaign and move budget to the quiz funnel.'
+    'Answer everyone who wrote to you before writing anything new. An unanswered enquiry is the only lead you can lose today.',
+    'The first signed student will come from a conversation, not from the website. Pick ten people who fit and write to them by hand.',
+    'You have a booking page and a Stripe checkout already live. Send both to every enquiry rather than explaining the service twice.'
   ],
 
   /* ---- 1.10 BRIEF COPY ----------------------------------------
@@ -752,11 +763,14 @@ function renderObjective(animateCounter){
   /* readouts */
   $('#objPct').textContent = m.pct.toFixed(0) + '%';
   const st = $('#objStatus');
-  st.textContent = m.onTrack ? 'ON TRACK' : 'BEHIND PACE';
-  st.className = 'v ' + (m.onTrack ? 'ok' : 'am');
+  /* At zero there is no pace to be behind, so say so rather than scoring
+     the operator against a projection built from no data at all. */
+  const notStarted = o.current === 0;
+  st.textContent = m.needed === 0 ? 'COMPLETE' : notStarted ? 'NOT STARTED' : m.onTrack ? 'ON TRACK' : 'BEHIND PACE';
+  st.className = 'v ' + (m.needed === 0 ? 'ok' : notStarted ? 'am' : m.onTrack ? 'ok' : 'am');
   $('#objEta').textContent = m.needed === 0 ? 'COMPLETE'
-    : (isFinite(m.daysToTarget) ? m.daysToTarget + 'D' : '∞')
-      + ' / ' + m.daysLeft + 'D LEFT';
+    : notStarted ? m.daysLeft + 'D LEFT'
+    : (isFinite(m.daysToTarget) ? m.daysToTarget + 'D' : '∞') + ' / ' + m.daysLeft + 'D LEFT';
 
   /* counter — counts up when the value changes */
   if (animateCounter === false){ displayedCurrent = o.current; paintCounter(); }
@@ -1364,38 +1378,53 @@ function answer(qRaw){
   const has = (...w) => w.some(k => q.includes(k));
   const stat = (k) => DATA.stats.find(s => s.key.toLowerCase().includes(k));
   const statTxt = (k, fallback) => { const s = stat(k); return s ? fmtNum(s.value, s.format) : fallback; };
+  const prox = (id) => (DATA.proximity.find(c => c.id === id) || {count:0}).count;
+  const vital = (id) => Math.round((DATA.vitals.find(v => v.id === id) || {value:0}).value);
+  const plural = (n, one, many) => n === 1 ? one : many;
 
   if (has('morning brief','brief me','briefing','daily brief')) { runBrief(); return 'Compiling the morning brief.'; }
 
   if (has('hello','hi ','hey','good morning','good evening','you there','are you there'))
-    return `${DATA.brief.greeting.replace('{operator}', op)} All systems nominal. ${o.current} of ${o.target} on the primary objective.`;
+    return `${DATA.brief.greeting.replace('{operator}', op)} ` +
+      (o.current === 0
+        ? `Nothing signed yet. ${statTxt('owe','0')} people are waiting on a reply from you.`
+        : `${o.current} of ${o.target} on the primary objective.`);
 
   if (has('objective','goal','target','how are we doing','progress','on track'))
-    return `Primary objective: ${o.name.toLowerCase()}. ${o.current} of ${o.target}, ${m.pct.toFixed(0)} percent complete. ` +
-           (m.onTrack ? `At the current pace of ${m.rate.toFixed(2)} per day you reach target in about ${m.daysToTarget} days, with ${m.daysLeft} days to spare.`
-                      : `Current pace is ${m.rate.toFixed(2)} per day, which projects to ${Math.round(m.projected)} by the deadline. You are behind pace and need ${m.needed} more.`);
+    return o.current === 0
+      ? `Primary objective: ${o.name.toLowerCase()}. Still at zero, with ${m.daysLeft} days until the deadline. ` +
+        `There is no pace to measure yet, so the only number that matters is how many conversations you start this week.`
+      : `Primary objective: ${o.name.toLowerCase()}. ${o.current} of ${o.target}, ${m.pct.toFixed(0)} percent complete. ` +
+        (m.onTrack ? `At the current pace of ${m.rate.toFixed(2)} per day you reach target in about ${m.daysToTarget} days, with ${m.daysLeft} days to spare.`
+                   : `Current pace is ${m.rate.toFixed(2)} per day, which projects to ${Math.round(m.projected)} by the deadline. You are behind pace and need ${m.needed} more.`);
 
   if (has('vital','system','health','status of the system','diagnostic'))
     return 'Vitals: ' + DATA.vitals.map(v => `${v.key.toLowerCase()} ${Math.round(v.value)} percent`).join(', ') +
            `. Weakest link is ${DATA.vitals.slice().sort((a,b)=>a.value-b.value)[0].key.toLowerCase()}.`;
 
-  if (has('housing','room','accommodation'))
-    return `Housing placements confirmed: ${statTxt('housing','unknown')}. Housing capacity is running at ` +
-           `${Math.round((DATA.vitals.find(v=>/housing/i.test(v.key))||{value:0}).value)} percent. ` +
-           `${DATA.proximity.find(c=>/docs/i.test(c.label))?.count || 0} students are still awaiting documents.`;
+  if (has('email','inbox','mail','enquir','inquir','reply','replies','unanswered','owe'))
+    return `${statTxt('enquiries','0')} enquiries in the last thirty days, ` +
+           `${statTxt('owe','0')} still waiting on you, reply rate ${statTxt('reply rate','unknown')}. ` +
+           (prox('awaitingReply') > 0
+             ? `The oldest one is the one to answer first.`
+             : `Inbox is clear. Nothing is waiting on a reply.`);
 
-  if (has('application','apply','studielink','enrol','enrolment'))
-    return `${statTxt('apps','0')} applications are live in the pipeline, with enrolment pipeline health at ` +
-           `${Math.round((DATA.vitals.find(v=>/enrol/i.test(v.key))||{value:0}).value)} percent.`;
+  if (has('housing','room','accommodation','application','apply','studielink','enrol','enrolment','student'))
+    return `No students signed, no applications in flight and no housing placed yet — that is the honest picture. ` +
+           `What exists today is ${statTxt('enquiries','0')} ${plural((stat('enquiries')||{value:0}).value,'enquiry','enquiries')} ` +
+           `and ${statTxt('calls','0')} ${plural((stat('calls')||{value:0}).value,'call','calls')} booked this week.`;
 
-  if (has('revenue','money','cash','pipeline','deal','euro','€','income'))
-    return `Open pipeline value is ${statTxt('pipeline','unknown')}, average deal ${statTxt('avg','unknown')}, ` +
-           `conversion ${statTxt('conversion','unknown')}. Cash runway sits at ` +
-           `${Math.round((DATA.vitals.find(v=>/cash/i.test(v.key))||{value:0}).value)} percent.`;
+  if (has('revenue','money','cash','stripe','deal','euro','€','income','paid','sales')){
+    const rev = (stat('revenue') || {value:0}).value;
+    return `Stripe has taken ${statTxt('revenue','€0')} in the last thirty days. ` +
+           (rev > 0
+             ? 'That is the whole picture — Stripe is the only money flowing.'
+             : 'Nothing yet. Stripe is the only money flowing, so that is the whole picture.');
+  }
 
-  if (has('lead','call','booking','funnel','conversion'))
-    return `${DATA.proximity.find(c=>/hot/i.test(c.label))?.count || 0} hot leads on proximity, ` +
-           `${statTxt('calls','0')} calls booked in the last seven days, converting at ${statTxt('conversion','unknown')}.`;
+  if (has('lead','call','booking','funnel','conversation'))
+    return `${statTxt('calls','0')} ${plural((stat('calls')||{value:0}).value,'call','calls')} booked in the last seven days, ` +
+           `${prox('callsAhead')} on the calendar ahead, and ${prox('newEnquiries')} new enquiries this week.`;
 
   if (has('recommend','advice','what should i','priority','focus','next'))
     return 'Top priority: ' + DATA.recommendations[0];
@@ -1408,9 +1437,9 @@ function answer(qRaw){
     return `It is ${new Date().toLocaleTimeString('en-GB')} ${DATA.meta.timezoneLabel}, ` +
            `${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}.`;
 
-  if (has('ticket','support','issue','problem'))
-    return `${DATA.proximity.find(c=>/ticket/i.test(c.label))?.count || 0} open tickets. Response SLA is holding at ` +
-           `${Math.round((DATA.vitals.find(v=>/sla/i.test(v.key))||{value:0}).value)} percent.`;
+  if (has('how fast','response time','reply speed','slow','behind'))
+    return `Reply speed is at ${vital('replySpeed')} percent and the inbox is ${vital('inboxClear')} percent cleared. ` +
+           `${prox('openThreads')} threads are open in total.`;
 
   if (has('live data','data live','real data','data source','last sync','sync','up to date','fresh','mock','stale'))
     return dataMode === 'LIVE'
@@ -1423,9 +1452,9 @@ function answer(qRaw){
 
   if (has('thank','cheers','nice work','well done')) return `Always a pleasure, ${op}.`;
   if (has('help','what can you do','commands'))
-    return 'Ask me about the objective, vitals, housing, applications, revenue, leads, tickets or the deadline. Say morning brief for the full picture.';
+    return 'Ask me about the inbox, who is waiting on a reply, calls booked, revenue, the objective, vitals or the deadline. Say morning brief for the full picture.';
 
-  return `I have no reading on that, ${op}. Try objective, vitals, housing, applications, revenue, leads or morning brief.`;
+  return `I have no reading on that, ${op}. Try inbox, replies, calls, revenue, objective, vitals or morning brief.`;
 }
 
 /* ================================================================
@@ -1436,9 +1465,16 @@ function runBrief(){
   const lines = [];
   lines.push(DATA.brief.greeting.replace('{operator}', op));
   lines.push(`It is ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}. Here is the ${DATA.meta.company} picture.`);
-  lines.push(`Primary objective, ${o.name.toLowerCase()}: ${o.current} of ${o.target}, ${m.pct.toFixed(0)} percent complete, ${m.daysLeft} days to deadline. ` +
-             (m.onTrack ? 'You are on pace.' : `You are behind pace and need ${m.needed} more at ${(m.needed/Math.max(1,m.daysLeft)*7).toFixed(1)} per week.`));
+  lines.push(o.current === 0
+    ? `Primary objective, ${o.name.toLowerCase()}: still at zero, ${m.daysLeft} days to the deadline.`
+    : `Primary objective, ${o.name.toLowerCase()}: ${o.current} of ${o.target}, ${m.pct.toFixed(0)} percent complete, ${m.daysLeft} days to deadline. ` +
+      (m.onTrack ? 'You are on pace.' : `You are behind pace and need ${m.needed} more at ${(m.needed/Math.max(1,m.daysLeft)*7).toFixed(1)} per week.`));
   lines.push('Key numbers: ' + DATA.stats.map(s => `${s.key.toLowerCase()} ${fmtNum(s.value, s.format)}`).join(', ') + '.');
+
+  /* The inbox is the whole business right now, so it leads the brief. */
+  const owed = (DATA.proximity.find(c => c.id === 'awaitingReply') || {count:0}).count;
+  if (owed > 0) lines.push(`${owed} ${owed === 1 ? 'person is' : 'people are'} waiting on a reply from you. That is the first job of the day.`);
+  else if (dataMode === 'LIVE') lines.push('Nobody is waiting on a reply. The inbox is clear.');
   const weak = DATA.vitals.slice().sort((a,b)=>a.value-b.value)[0];
   lines.push(`Vitals are ${$('#vitalsTag').textContent.toLowerCase()}. The weakest is ${weak.key.toLowerCase()} at ${Math.round(weak.value)} percent.`);
   lines.push('My three recommendations for today.');
@@ -1532,9 +1568,13 @@ function revealPanels(){
     diagnostic('Boot complete — ' + SESSION_ID, 'okln');
     telemetry('Interface online. Awaiting instruction.', 'okln');
     renderObjective(true);                       // counter counts up on arrival
+    const o = DATA.objective;
     const greeting = `${DATA.brief.greeting.replace('{operator}', DATA.meta.operator)} ` +
-      `${DATA.meta.company} systems are online. Primary objective stands at ${DATA.objective.current} of ${DATA.objective.target}, ` +
-      `${objectiveMaths().pct.toFixed(0)} percent. Say morning brief, or hold space and ask me anything.`;
+      `${DATA.meta.company} systems are online. ` +
+      (o.current === 0
+        ? `${o.name.toLowerCase()} is still the objective, and we are at zero. `
+        : `Primary objective stands at ${o.current} of ${o.target}, ${objectiveMaths().pct.toFixed(0)} percent. `) +
+      'Say morning brief, or hold space and ask me anything.';
     showSay(greeting);
     /* If a voice sample is configured, the greeting is spoken by that
        clip; otherwise the selected engine renders the text.          */
