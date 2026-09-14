@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>J.A.R.V.I.S. — UniBridge NL Mission Control</title>
+<title>F.R.I.D.A.Y. — UniBridge NL Mission Control</title>
 <style>
 /* ============================================================
-   J.A.R.V.I.S. MISSION CONTROL — all styles inline, no CDN.
+   F.R.I.D.A.Y. MISSION CONTROL — all styles inline, no CDN.
    Palette: deep navy ground, cyan-blue line work, amber accents.
    ============================================================ */
 :root{
@@ -266,7 +266,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
 <div class="bg-vignette"></div>
 
 <div id="bootveil">
-  <div class="bl" id="bootline">INITIALISING J.A.R.V.I.S.</div>
+  <div class="bl" id="bootline">INITIALISING F.R.I.D.A.Y.</div>
   <div class="bbar"><i id="bootbar"></i></div>
 </div>
 
@@ -275,8 +275,8 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
   <!-- ==================== HEADER ==================== -->
   <header class="boot" data-boot="0">
     <div class="brand">
-      <h1>J.A.R.V.I.S.</h1>
-      <div class="sub">Just a rather very intelligent system</div>
+      <h1>F.R.I.D.A.Y.</h1>
+      <div class="sub">Female replacement intelligent digital assistant youth</div>
       <div class="obj">Objective: <span id="hdrObjective">—</span></div>
     </div>
     <div class="pills" id="pills"></div>
@@ -374,31 +374,31 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
 
    To go live, replace the literal values with whatever your source
    returns (fetch / websocket / Supabase / Sheets / Stripe API...),
-   then call  JARVIS.refresh()  to repaint the dashboard.
+   then call  FRIDAY.refresh()  to repaint the dashboard.
 
    Example:
      const live = await (await fetch('/api/metrics')).json();
      DATA.objective.current = live.signedStudents;
      DATA.stats[0].value    = live.applicationsLive;
-     JARVIS.refresh();
+     FRIDAY.refresh();
    ================================================================ */
 const DATA = {
 
   /* ---- 1.1 IDENTITY -------------------------------------------
      Who the system is talking to and what it calls itself.        */
   meta: {
-    operator: 'Commander',              // how JARVIS addresses you in speech
+    operator: 'Commander',              // how FRIDAY addresses you in speech
     company: 'UniBridge NL',            // spoken in the morning brief
     // Header objective line. Replace the placeholder with your real
     // goal, or point it at a CRM field (e.g. crm.currentQuarterGoal).
     objectiveLine: '[YOUR CURRENT GOAL]',
     sessionId: null,                    // null => auto-generated per load
-    voiceLang: 'en-GB',                 // preferred speech-synthesis accent
+    voiceLang: 'en-IE',                 // preferred speech-synthesis accent (Irish, like FRIDAY)
     timezoneLabel: 'CET'
   },
 
   /* ---- 1.1b VOICE OUTPUT --------------------------------------
-     How JARVIS speaks. Three engines, in order of fidelity:
+     How FRIDAY speaks. Three engines, in order of fidelity:
 
        'browser'    — built-in speech synthesis. Zero setup, works
                       offline, robotic. This is the default.
@@ -522,7 +522,7 @@ const DATA = {
 
   /* ---- 1.10 BRIEF COPY ----------------------------------------
      Optional fixed lines for the morning brief. Leave empty to let
-     JARVIS generate everything from the numbers above.            */
+     FRIDAY generate everything from the numbers above.            */
   brief: {
     greeting: 'Good morning, {operator}.',
     closing:  'That is the picture. I will keep watch.'
@@ -735,13 +735,13 @@ function animateCounterTo(v){
 }
 
 /* ---- 3.7 public refresh hook ----------------------------------- */
-const JARVIS = {
+const FRIDAY = {
   data: DATA,
   refresh(){ renderHeader(); paintVitals(); renderContacts(); renderObjective(true); },
   say: (t) => respondWith(t),
   log: telemetry
 };
-window.JARVIS = JARVIS;
+window.FRIDAY = FRIDAY;
 
 /* ================================================================
    ▓▓ 4. THE ORB — particle sphere + concentric HUD rings ▓▓
@@ -956,7 +956,7 @@ let recog = null, recognising = false, wantsToListen = false, audioUnlocked = fa
 
 if (SR){
   recog = new SR();
-  recog.lang = 'en-GB';
+  recog.lang = 'en-GB';   // input locale — leave as your own accent
   recog.interimResults = true;
   recog.continuous = false;
   recog.maxAlternatives = 1;
@@ -1008,7 +1008,9 @@ let voice = null;
 function pickVoice(){
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return;
-  voice = voices.find(v => /en-GB/i.test(v.lang) && /(male|daniel|arthur|george|oliver)/i.test(v.name))
+  /* Prefer an Irish voice, then any female English voice, then anything. */
+  voice = voices.find(v => /en-IE/i.test(v.lang))
+       || voices.find(v => /^en/i.test(v.lang) && /(female|moira|siobhan|karen|serena|fiona|samantha|martha|libby)/i.test(v.name))
        || voices.find(v => /en-GB/i.test(v.lang))
        || voices.find(v => /^en/i.test(v.lang))
        || voices[0];
@@ -1103,7 +1105,7 @@ function speakBrowser(text, onDone){
   const u = new SpeechSynthesisUtterance(text);
   if (voice) u.voice = voice;
   u.lang = DATA.meta.voiceLang;
-  u.rate = 1.02; u.pitch = 0.92; u.volume = 1;
+  u.rate = 1.03; u.pitch = 1.06; u.volume = 1;
   speakQueue++;
   u.onstart = () => setState('speaking');
   u.onend = u.onerror = () => {
@@ -1141,7 +1143,7 @@ function showSay(text, typeIt){
 }
 function respondWith(text, alsoSpeak){
   showSay(text);
-  telemetry('JARVIS ▸ ' + text, 'sys');
+  telemetry('FRIDAY ▸ ' + text, 'sys');
   if (alsoSpeak === false){ setState('idle'); return; }
   setState('thinking');
   setTimeout(() => speak(text), 180);
@@ -1279,7 +1281,7 @@ window.addEventListener('keyup', (e) => {
    ▓▓ 12. BOOT SEQUENCE ▓▓
    ================================================================ */
 const BOOT_LINES = [
-  'INITIALISING J.A.R.V.I.S.',
+  'INITIALISING F.R.I.D.A.Y.',
   'MOUNTING DATA LAYER',
   'CALIBRATING PARTICLE CORE',
   'LINKING TELEMETRY BUS',
