@@ -72,7 +72,7 @@ function ThanksScreen({ go }) {
                 <Badge tone="accent">2026/27</Badge>
               </div>
               <h3 style={{margin:'10px 0 6px',fontSize:'var(--text-h4)'}}>62 pages, one PDF</h3>
-              <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>Sixteen chapters and five appendices: residence permit, BSN, DigiD, housing and rent law, banking, insurance, the huisarts, SIM, transport, working and money. Nineteen euro including VAT, paid once.</p>
+              <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--text-muted)'}}>Sixteen chapters and five appendices: residence permit, BSN, DigiD, housing and rent law, banking, insurance, the huisarts, SIM, transport, working and money. Nineteen euro, paid once, with any VAT that applies already in the price.</p>
             </Card>
           </Reveal>
           <Reveal delay={100} y={20}>

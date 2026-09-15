@@ -83,7 +83,9 @@ function ContactScreen({ go }) {
               <Field label="Your message" required style={{gridColumn:'1 / -1'}}><Textarea rows={4} placeholder="Where you are now, which intake you're aiming for, and what you'd like help with." value={message} onChange={e=>setMessage(e.target.value)}/></Field>
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-4)',alignItems:'center',justifyContent:'space-between',marginTop:'var(--space-6)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)'}}>
-              <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>Answered within one working day</span>
+              <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)',maxWidth:'56ch',lineHeight:1.6}}>
+                Answered within one working day. We use what you send here to answer you and for nothing else: no mailing list, no newsletter, and we never pass your address on. Ask us to delete it at any time and we will, the same day. <a href="/privacy/" onClick={e=>{e.preventDefault();go('privacy');}} style={{color:'var(--gold-700)'}}>How we handle your data</a>.
+              </span>
               <Magnetic strength={0.18}><Button disabled={!name || !email.includes('@') || !message || sending} onClick={submit} iconRight={<Icon name="arrow-right" size={16}/>}>{sending ? "Sending…" : "Send message"}</Button></Magnetic>
             </div>
             {error && <Alert tone="warning" title="Something went wrong" style={{marginTop:'var(--space-5)'}}>Your message didn't send. Please try again, or WhatsApp us directly at 06 25 29 40 80.</Alert>}

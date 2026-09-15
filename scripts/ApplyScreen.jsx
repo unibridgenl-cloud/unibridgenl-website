@@ -41,7 +41,7 @@ function ApplyScreen({ go }) {
     const services = [
       svcEnrolment && "University enrolment",
       svcHousing && "Housing via a licensed letting agency",
-      svcVisa && "Visa & BSN",
+      svcVisa && "Permit paperwork & arrival admin",
       svcArrival && "Arrival week"
     ].filter(Boolean).join(", ") || "None selected";
     const message = `New application via unibridgenl.com
@@ -119,9 +119,14 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
             <Alert tone="warning" title="September deadlines close 1 May">Nine weeks left. Applications filed after 15 April get a rush fee from the university, not from us.</Alert>
             <Checkbox checked={svcEnrolment} onChange={v=>setSvcEnrolment(v)} label="University enrolment" description="Up to five applications, documents certified and filed."/>
             <Checkbox checked={svcHousing} onChange={v=>setSvcHousing(v)} label="Housing via a licensed letting agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
-            <Checkbox checked={svcVisa} onChange={v=>setSvcVisa(v)} label="Visa & BSN" description="Residence permit paperwork and a booked municipality appointment."/>
+            <Checkbox checked={svcVisa} onChange={v=>setSvcVisa(v)} label="Permit paperwork & arrival admin" description="Your university files the residence permit itself. We prepare the documents, book the municipality appointment, and handle everything either side of it."/>
             <Checkbox checked={svcArrival} onChange={v=>setSvcArrival(v)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
             <Checkbox checked={underEighteen} onChange={v=>setUnderEighteen(v)} label="I will be under 18 when my course starts" description="We work with students who are 18 or over on their first day. Universities require a formal guardianship arrangement for minors and we are not set up to handle that, so we would not be the right fit."/>
+            {underEighteen && (
+              <Alert tone="warning" title="We are not the right fit yet" style={{marginTop:'var(--space-4)'}}>
+                Ticking this stops the form, on purpose. We would rather not hold your personal details for a service we cannot provide. Ask a parent or guardian to email unibridgenl@gmail.com and we will tell them honestly what your options are, at no charge. Come back to us once your start date is settled and you are 18.
+              </Alert>
+            )}
             <Checkbox checked={agreed} onChange={v=>setAgreed(v)} label="I agree to the privacy statement" description="We share documents only with the universities you pick."/>
             <a onClick={()=>go('privacy')} style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--text-link)',textDecoration:'underline',marginLeft:32}}>Read our privacy statement</a>
             </Stagger>
@@ -133,7 +138,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
           <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>Step {step+1} of 3 · nothing is charged today</span>
           {step < 2
             ? <Magnetic strength={0.18}><Button disabled={step===0 && (!firstName || !lastName || !email.includes('@'))} onClick={()=>setStep(s=>s+1)} iconRight={<Icon name="arrow-right" size={16}/>}>Continue</Button></Magnetic>
-            : <Magnetic strength={0.18}><Button disabled={!agreed || submitting} onClick={submit}>{submitting ? "Sending…" : "Send my application"}</Button></Magnetic>}
+            : <Magnetic strength={0.18}><Button disabled={!agreed || underEighteen || submitting} onClick={submit}>{submitting ? "Sending…" : "Send my application"}</Button></Magnetic>}
         </div>
         {error && <Alert tone="warning" title="Something went wrong" style={{marginTop:'var(--space-5)'}}>Your application didn't send. Please try again, or WhatsApp us directly at 06 25 29 40 80.</Alert>}
       </Card>
