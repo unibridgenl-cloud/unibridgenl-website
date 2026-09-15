@@ -199,6 +199,9 @@ Time: ${slot} Amsterdam time`;
             <Field label="Your name" required style={{marginBottom:'var(--space-4)'}}><Input placeholder="Your full name" value={name} onChange={e=>setName(e.target.value)}/></Field>
             <Field label="Email" required hint="The Google Meet invite goes here." style={{marginBottom:'var(--space-4)'}}><Input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
             <Field label="Language" style={{marginBottom:'var(--space-5)'}}><Select value={language} onChange={e=>setLanguage(e.target.value)} options={["English","Nederlands","Hindi","Tamil","Telugu"]}/></Field>
+            <p style={{margin:'0 0 var(--space-4)',fontSize:'var(--text-caption)',color:'var(--text-subtle)',lineHeight:1.6}}>
+              We use what you send here to answer you, and for nothing else. No mailing list, no newsletter, and we never pass your address on. Ask us to delete it at any time and we will, the same day. Booking a call puts you on no list of any kind.
+            </p>
             <Button full disabled={!slot || !name || !email.includes('@') || submitting} onClick={submitBooking} iconLeft={<Icon name="video" size={17}/>}>
               {submitting ? "Booking…" : (slot ? `Book ${active.d} ${slot}` : 'Pick a time first')}
             </Button>
