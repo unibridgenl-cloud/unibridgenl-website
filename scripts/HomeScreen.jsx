@@ -2,7 +2,7 @@ const { Button, Card, Icon, Badge, Tag, Stepper } = window.UnibridgeNLDesignSyst
 
 const SERVICES = [
   ["graduation-cap","University enrolment","We file your application at up to five Dutch universities and chase every decision."],
-  ["house","Housing support","A licensed letting agency we work with sources verified rooms. We read the contract before you sign."],
+  ["house","Housing check","We introduce you to a licensed platform and you find your own room there. Then we check the rent is legal and read the contract before you sign."],
   ["id-card","Permit & BSN","Your university files the permit itself. We prepare the documents and make sure your BSN appointment is booked in time."],
   ["wallet","Bank & insurance","A Dutch IBAN, student health insurance and your OV chip card, sorted."],
   ["plane-takeoff","Arrival week","We are on the phone through your first week: what to do in which order, what to sign, and what to walk away from."],
@@ -22,7 +22,7 @@ const CHAPTERS = [
     label:"Application file", stat:"5", statLabel:"universities filed",
     rows:[["check","Diploma certified & translated"],["check","Motivation letter reviewed"],["check","IELTS 6.5 verified"],["clock","UvA decision expected 12 Apr"]] },
   { k:"Live", t:"A room, checked before you sign", d:"A licensed letting agency we work with sources verified listings. We read the contract line by line.", icon:"house",
-    label:"Housing shortlist", stat:"3", statLabel:"verified rooms shortlisted",
+    label:"Housing check", stat:"3", statLabel:"listings screened before you commit",
     rows:[["check","Registration allowed at address"],["check","Deposit capped at two months"],["check","Contract read by your advisor"],["clock","Viewing booked 18 Apr, 14:00"]] },
   { k:"Stay", t:"Permit, BSN, and the paperwork nobody explains", d:"Residence permit filed, municipality appointment booked inside your arrival week.", icon:"id-card",
     label:"Permit & BSN", stat:"14", statLabel:"days to decision",

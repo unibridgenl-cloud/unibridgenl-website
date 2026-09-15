@@ -40,7 +40,7 @@ function ApplyScreen({ go }) {
     setError(false);
     const services = [
       svcEnrolment && "University enrolment",
-      svcHousing && "Housing via a licensed letting agency",
+      svcHousing && "Housing check",
       svcVisa && "Permit paperwork & arrival admin",
       svcArrival && "Arrival week guidance"
     ].filter(Boolean).join(", ") || "None selected";
@@ -118,7 +118,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
             <Stagger step={80} y={14}>
             <Alert tone="warning" title="September deadlines close 1 May">Nine weeks left. Applications filed after 15 April get a rush fee from the university, not from us.</Alert>
             <Checkbox checked={svcEnrolment} onChange={v=>setSvcEnrolment(v)} label="University enrolment" description="Up to five applications, documents certified and filed."/>
-            <Checkbox checked={svcHousing} onChange={v=>setSvcHousing(v)} label="Housing via a licensed letting agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
+            <Checkbox checked={svcHousing} onChange={v=>setSvcHousing(v)} label="Housing check" description="We introduce you to a licensed platform, then check the rent is legal and read the contract before you sign. We do not find the room and we do not own or guarantee any of them."/>
             <Checkbox checked={svcVisa} onChange={v=>setSvcVisa(v)} label="Permit paperwork & arrival admin" description="Your university files the residence permit itself. We prepare the documents, book the municipality appointment, and handle everything either side of it."/>
             <Checkbox checked={svcArrival} onChange={v=>setSvcArrival(v)} label="Arrival week guidance" description="We are on the phone through your first week: bank, SIM, transport card and the municipality, in the right order."/>
             <Checkbox checked={underEighteen} onChange={v=>setUnderEighteen(v)} label="I will be under 18 when my course starts" description="We work with students who are 18 or over on their first day. Universities require a formal guardianship arrangement for minors and we are not set up to handle that, so we would not be the right fit."/>

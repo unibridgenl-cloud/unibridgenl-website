@@ -8,17 +8,17 @@ const PLANS = [
     excl:[], cta:"secondary" },
   { name:"Bridge Full", tier:"Full", price:"€1,200", amount:1200, note:"one-off, VAT included",
     who:"The whole move handled, from shortlist to the keys in your hand.",
-    items:[["check","Up to five university applications"],["check","Everything in Bridge Admissions"],["check","Housing search where we act for you only, never for a landlord or agency"],["check","Contract review before you sign"],["check","Permit paperwork and your BSN appointment. Your university files the permit itself"],["check","Bank, insurance and OV chip card, walked through step by step"],["check","Arrival week guidance, on the phone in your language"],["check","WhatsApp line to your advisor"]],
+    items:[["check","Up to five university applications"],["check","Everything in Bridge Admissions"],["check","An introduction to a licensed housing platform, then we check whatever you find there"],["check","Rent points calculation and a full contract read before you sign anything"],["check","Permit paperwork and your BSN appointment. Your university files the permit itself"],["check","Bank, insurance and OV chip card, walked through step by step"],["check","Arrival week guidance, on the phone in your language"],["check","WhatsApp line to your advisor"]],
     excl:[], cta:"primary" },
   { name:"Bridge Settled", tier:"Settled", price:"€1,750", amount:1750, note:"one-off, VAT included",
     who:"You want somebody in your corner past arrival week, through the whole first year.",
-    items:[["check","Everything in Bridge Full"],["check","Allowance check on a call. Often the answer is that you do not qualify, and we would rather you heard that from us than found out in March"],["check","Huisarts and dentist registration, before you need one"],["check","Second-year housing search, started in January"],["check","Monthly check-in through your first two semesters"],["check","Parent briefing call in your language"],["check","Priority WhatsApp, answered same day"]],
+    items:[["check","Everything in Bridge Full"],["check","Allowance check on a call. Often the answer is that you do not qualify, and we would rather you heard that from us than found out in March"],["check","Huisarts and dentist registration, before you need one"],["check","Second-year housing started in January, same introduction and the same contract check"],["check","Monthly check-in through your first two semesters"],["check","Parent briefing call in your language"],["check","Priority WhatsApp, answered same day"]],
     excl:[], cta:"secondary" }
 ];
 
 const ADDONS = [
   ["file-check","Extra university application","€95","per application beyond your plan"],
-  ["house","Housing search, for you only","€450","we act for you, never the landlord, and take nothing from agencies"],
+  ["house","Housing check, before you sign","€175","we do not find your room. We check the one you found is legal, fairly priced and safe to sign"],
   ["id-card","Permit paperwork & arrival admin","€250","your university files the permit itself. This is everything either side of it"],
   ["plane-takeoff","Arrival week guidance","€350","we are on the phone through your first week, in the right order"],
   ["languages","Document translation","€60","per certified page, sworn translator"],
@@ -29,7 +29,7 @@ const COMPARE = [
   ["University applications","4","Up to 5","Up to 5"],
   ["Documents certified & filed","yes","yes","yes"],
   ["Deadline dashboard","yes","yes","yes"],
-  ["Housing search via agency","no","yes","yes"],
+  ["Housing intro and contract check","no","yes","yes"],
   ["Contract review","no","yes","yes"],
   ["Permit paperwork & BSN","no","yes","yes"],
   ["Bank, insurance, OV card","no","yes","yes"],
@@ -37,14 +37,14 @@ const COMPARE = [
   ["Parent briefing call","no","no","yes"],
   ["Allowance check, honestly answered","no","no","yes"],
   ["Huisarts registration","no","no","yes"],
-  ["Second-year housing search","no","no","yes"],
+  ["Second-year housing, from January","no","no","yes"],
   ["Check-ins through first year","no","no","yes"],
   ["Support channel","Email","WhatsApp","Priority WhatsApp"]
 ];
 
 const FAQ = [
   ["Do you guarantee admission?","No. Nobody honestly can. We only put universities on your list where your grades clear their bar, and we tell you the odds in plain numbers."],
-  ["Do you guarantee housing?","No. We work with a licensed housing intermediary who sources verified rooms, and we read every contract before you sign. Deposits go straight to the landlord or agency. One thing worth saying plainly: when we search for you, we act for you and only for you. We take no fee, commission or referral payment from any landlord or letting agency, which is what Dutch law requires of anyone charging a tenant for a search."],
+  ["Do you find my room?","No, and we would rather say so than let you find out later. We introduce you to a licensed housing platform, and you deal with landlords there yourself. What we do is the part students get wrong: we screen the listings you are looking at, run the official rent points calculation to see whether the price is even legal, and read the whole contract before you sign it. Deposits go straight to the landlord, never to us. And we take no fee, commission or referral payment from any landlord, letting agency or platform, which is what Dutch law requires of anyone who charges a tenant for housing help."],
   ["When do I pay?","After the free 15-minute call, once you accept the route in writing."],
   ["What if my visa is refused?","Your university files the application with the IND as your recognised sponsor, so a refiling has to come from them. It is not something we or you can do directly. What we do is find out exactly why it was refused, put the corrected documents together, and take it back to your university's admissions office with you."],
   ["Does the university not do the permit anyway?","Partly, and we will not pretend otherwise. Your university is an IND recognised sponsor and it files the application. What it does not do is build your proof of funds so it passes first time, chase your legalised documents, book your council appointment before the September queue, get you through biometrics and collection, and tell you what a delay does to your enrolment. That is what the Visa and BSN work is, and if your university handles all of it already, we will say so on the call and you will not pay for it."],
