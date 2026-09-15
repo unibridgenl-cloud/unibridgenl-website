@@ -1,5 +1,31 @@
 const { Button, Logo, Icon, Tag } = window.UnibridgeNLDesignSystem_3cb2d1;
 
+/* The VAT identification number. Article 3:15d lid 1 onderdeel f BW requires a VAT
+   registered trader to display it on the website. Paste it from Mijn Belastingdienst
+   Zakelijk between the quotes and it appears in the footer and on the terms page.
+   While it is empty, both fall back to the KvK number on its own. */
+const BTW_ID = "";
+
+/* Every route in one place, so a link can carry a real href. An anchor without one
+   is not reachable by keyboard and is invisible to a screen reader's link list. */
+const UB_URLS = {home:"/",universities:"/universities/",quiz:"/find-my-field/",services:"/services/",
+  apply:"/apply/",call:"/book-a-call/",privacy:"/privacy/",about:"/about/",contact:"/contact/",
+  mylist:"/my-list/",guide:"/guide/",terms:"/terms/",cancel:"/cancel/",confirm:"/guide/confirm/"};
+
+function SkipLink() {
+  /* WCAG 2.4.1. A keyboard user should not have to tab through the whole nav on
+     every page. Hidden until focused, then it appears in the top left. */
+  const [on, setOn] = React.useState(false);
+  return (
+    <a href="#main" onFocus={()=>setOn(true)} onBlur={()=>setOn(false)}
+      style={{position:'fixed',zIndex:80,left:on?12:-9999,top:12,padding:'10px 16px',
+        background:'var(--surface-inverse)',color:'var(--cream-200)',borderRadius:'var(--radius-pill)',
+        fontSize:'var(--text-body-sm)',fontWeight:700,textDecoration:'none'}}>
+      Skip to content
+    </a>
+  );
+}
+
 function SiteHeader({ route, go }) {
   const _list = (typeof useStudyList === 'function') ? useStudyList() : [];
   const listCount = _list.length;
@@ -23,7 +49,7 @@ function SiteHeader({ route, go }) {
           {nav.map(([k,l])=>{
             const on = route===k;
             return (
-            <a key={k} onClick={()=>go(k)} className="ub-navlink" style={{position:'relative',cursor:'pointer',fontSize:'var(--text-body-sm)',fontWeight:on?700:500,color:on?(overHero?'var(--cream-100)':'var(--text-heading)'):fg,textDecoration:'none',paddingBottom:4,transition:'color 400ms var(--ease-standard)'}}>
+            <a key={k} href={UB_URLS[k]||'/'} onClick={e=>{e.preventDefault();go(k);}} className="ub-navlink" style={{position:'relative',cursor:'pointer',fontSize:'var(--text-body-sm)',fontWeight:on?700:500,color:on?(overHero?'var(--cream-100)':'var(--text-heading)'):fg,textDecoration:'none',paddingBottom:4,transition:'color 400ms var(--ease-standard)'}}>
               {l}
               <span aria-hidden="true" style={{position:'absolute',left:0,right:0,bottom:0,height:2,borderRadius:2,background:'var(--gold-500)',transformOrigin:'left center',transform:`scaleX(${on?1:0})`,transition:'transform 460ms var(--ease-out)'}}/>
             </a>);
@@ -50,7 +76,8 @@ function SiteFooter({ go }) {
   const cols = [
     ["Programmes",[["Bachelor","universities"],["Master","universities"],["Find my field","quiz"],["My study list","mylist"]]],
     ["Services",[["Enrolment","services"],["Housing","services"],["Visa & BSN","services"],["Plans & pricing","services"],["Student handbook, €19","guide"]]],
-    ["Company",[["About us","about"],["Partner universities","universities"],["Contact","contact"],["Privacy statement","privacy"]]]
+    ["Company",[["About us","about"],["Partner universities","universities"],["Contact","contact"]]],
+    ["Legal",[["Privacy statement","privacy"],["Terms of sale","terms"],["Cancel an order","cancel"]]]
   ];
   return (
     <footer style={{background:'var(--surface-inverse)',color:'var(--text-on-inverse)',marginTop:'var(--section-y)'}}>
@@ -67,13 +94,13 @@ function SiteFooter({ go }) {
           <div key={t}>
             <div style={{font:'700 12px/1 var(--font-sans)',letterSpacing:'.14em',textTransform:'uppercase',color:'var(--gold-300)',marginBottom:'var(--space-4)'}}>{t}</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {items.map(([i,r])=><a key={i} onClick={()=>go(r)} className="ub-footlink" style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--cream-200)',textDecoration:'none',transition:'color 300ms var(--ease-standard), transform 300ms var(--ease-out)',display:'inline-block'}}>{i}</a>)}
+              {items.map(([i,r])=><a key={i} href={UB_URLS[r]||'/'} onClick={e=>{e.preventDefault();go(r);}} className="ub-footlink" style={{cursor:'pointer',fontSize:'var(--text-body-sm)',color:'var(--cream-200)',textDecoration:'none',transition:'color 300ms var(--ease-standard), transform 300ms var(--ease-out)',display:'inline-block'}}>{i}</a>)}
             </div>
           </div>
         ))}
       </div>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',borderTop:'1px solid rgba(251,244,236,.14)',display:'flex',justifyContent:'space-between',fontSize:'var(--text-caption)',color:'var(--ink-200)'}}>
-        <span>© 2026 UniBridge NL · Amsterdam, KvK 42087386</span><span>Made for students, not for paperwork.</span>
+        <span>© 2026 UniBridge NL · Amsterdam, KvK 42087386{BTW_ID ? ' · BTW ' + BTW_ID : ''}</span><span>Made for students, not for paperwork.</span>
       </div>
     </footer>
   );
@@ -154,14 +181,13 @@ function CookieBanner({ go }) {
   return (
     <div style={{position:'fixed',left:0,right:0,bottom:0,zIndex:60,background:'var(--surface-inverse)',color:'var(--text-on-inverse)',borderTop:'1px solid rgba(251,244,236,.14)'}}>
       <div style={{maxWidth:'var(--content-max)',margin:'0 auto',padding:'var(--space-5) var(--gutter-inline)',display:'flex',alignItems:'center',gap:'var(--space-6)',flexWrap:'wrap'}}>
-        <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--ink-100)',flex:'1 1 260px'}}>We use cookies for essential site functions. See our <a onClick={()=>go && go('privacy')} style={{color:'var(--gold-300)',cursor:'pointer',textDecoration:'underline'}}>privacy statement</a> for details. You can accept all cookies or continue with only the essential ones.</p>
+        <p style={{margin:0,fontSize:'var(--text-body-sm)',color:'var(--ink-100)',flex:'1 1 260px'}}>This site runs no advertising, analytics or tracking of any kind. The only thing we keep in your browser is the fact that you have read this, plus the study list you build yourself, which never leaves your device. Nothing to consent to, so there is no "accept all" button here. <a href="/privacy/" onClick={e=>{if(go){e.preventDefault();go('privacy');}}} style={{color:'var(--gold-300)',cursor:'pointer',textDecoration:'underline'}}>The privacy statement</a> says it in full.</p>
         <div style={{display:'flex',gap:'var(--space-3)',flex:'0 0 auto'}}>
-          <Button size="sm" variant="ghost" style={{color:'var(--cream-200)'}} onClick={()=>choose('essential')}>Essential only</Button>
-          <Button size="sm" onClick={()=>choose('all')}>Accept all</Button>
+          <Button size="sm" onClick={()=>choose('acknowledged')}>Got it</Button>
         </div>
       </div>
     </div>
   );
 }
 
-Object.assign(window, { SiteHeader, HeaderSpacer, SiteFooter, Section, Placeholder, CookieBanner, HandbookCover });
+Object.assign(window, { BTW_ID, UB_URLS, SkipLink, SiteHeader, HeaderSpacer, SiteFooter, Section, Placeholder, CookieBanner, HandbookCover });
