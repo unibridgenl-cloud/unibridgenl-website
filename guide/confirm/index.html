@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy statement — UniBridge NL</title>
-<meta name="description" content="How UniBridge NL collects, uses, and protects your personal information, and your rights under GDPR.">
-<link rel="canonical" href="https://unibridgenl.com/privacy/">
+<title>Confirm your handbook order — UniBridge NL</title>
+<meta name="description" content="Choose whether to receive The Netherlands Student Handbook immediately or after the 14 day cancellation period, then pay.">
+<link rel="canonical" href="https://unibridgenl.com/guide/confirm/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Privacy statement — UniBridge NL">
-<meta property="og:description" content="How UniBridge NL collects, uses, and protects your personal information, and your rights under GDPR.">
-<meta property="og:url" content="https://unibridgenl.com/privacy/">
+<meta property="og:title" content="Confirm your handbook order — UniBridge NL">
+<meta property="og:description" content="Choose whether to receive The Netherlands Student Handbook immediately or after the 14 day cancellation period, then pay.">
+<meta property="og:url" content="https://unibridgenl.com/guide/confirm/">
 <meta property="og:image" content="https://unibridgenl.com/assets/logo-badge.jpg">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/jpeg" href="/assets/logo-badge.jpg">
@@ -24,17 +24,16 @@
 <div id="root"></div>
 <script type="text/babel" src="/scripts/Motion.jsx"></script>
 <script type="text/babel" src="/scripts/Chrome.jsx"></script>
-<script type="text/babel" src="/scripts/CourseData.jsx"></script>
-<script type="text/babel" src="/scripts/PrivacyScreen.jsx"></script>
+<script type="text/babel" src="/scripts/ConfirmScreen.jsx"></script>
 <script type="text/babel">
-const ROUTE = "privacy";
+const ROUTE = "confirm";
 const URL_MAP = {home:"/",universities:"/universities/",quiz:"/find-my-field/",services:"/services/",apply:"/apply/",call:"/book-a-call/",privacy:"/privacy/",about:"/about/",contact:"/contact/",mylist:"/my-list/",guide:"/guide/",terms:"/terms/",cancel:"/cancel/",confirm:"/guide/confirm/"};
 function go(target){
   if (target === ROUTE) { window.scrollTo({top:0,behavior:'smooth'}); return; }
   window.location.href = URL_MAP[target] || "/";
 }
 function Page(){
-  return (<div><SkipLink/><ScrollBar/><SiteHeader route={ROUTE} go={go}/>{ROUTE!=='home' && <HeaderSpacer/>}<div className="ub-page" id="main"><PrivacyScreen go={go}/></div><SiteFooter go={go}/><CookieBanner go={go}/></div>);
+  return (<div><SkipLink/><ScrollBar/><SiteHeader route={ROUTE} go={go}/>{ROUTE!=='home' && <HeaderSpacer/>}<div className="ub-page" id="main"><ConfirmScreen go={go}/></div><SiteFooter go={go}/><CookieBanner go={go}/></div>);
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<Page/>);
 </script>
