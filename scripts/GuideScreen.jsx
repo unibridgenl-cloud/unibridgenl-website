@@ -3,11 +3,13 @@ const { PageHero, Reveal, Rise, Tilt, Stagger, Magnetic, MoneyCounter, HandbookC
 
 const WEB3FORMS_KEY = "a828545d-4f6f-4f85-8ddf-888a55281203";
 
-/* Stripe payment link for the handbook. Live since 13 September 2026.
-   Checkout redirects to /guide/thanks/ on success. To take payments offline
-   again, set this back to "" and the buy buttons fall through to the order
-   form further down this page. */
-const CHECKOUT_URL = "https://buy.stripe.com/3cI9ASgC7gGAcYMgcee3e00";
+/* The buy button no longer goes straight to Stripe. It goes to /guide/confirm/,
+   which captures the express consent and the waiver declaration that artikel
+   6:230p sub g BW requires, records them, and only then hands off to the Stripe
+   link (which lives in ConfirmScreen.jsx). Stripe still redirects to
+   /guide/thanks/ on success. To take payments offline again, set this to "" and
+   the buy buttons fall through to the order form further down this page. */
+const CHECKOUT_URL = "/guide/confirm/";
 
 const PRICE = 19;
 
@@ -63,7 +65,7 @@ const FAQ = [
   ["Will it go out of date?", "Most Dutch amounts are re-indexed on 1 January, so we put the promise in writing. Every buyer gets the next edition free at the address they bought it with, and anything that changes in the meantime is listed with its date on the updates section further down this page. Buying in November does not leave you with a file that expires in February."],
   ["Is this the same as your services?", "No. The handbook is everything we know, written down, so you can do it yourself. Our plans are for students who would rather somebody else did it. If you buy the handbook and later book a plan, tell us and we will take the €19 off."],
   ["Can I share it with a friend?", "Your copy carries your name and order number on every page, so please do not. If you want to send a friend something useful, send them the free sample above. That is what it is for."],
-  ["What if I am not happy with it?", "Reply to the email within 14 days and tell us why. We will refund you and you keep the file."]
+  ["What if I am not happy with it?", "Reply to the delivery email within 14 days and say you want your money back. You do not have to give a reason. We refund you by the same method you paid with, and you keep the file. If you would rather use a form, there is one on the cancellation page."]
 ];
 
 function GuideScreen({ go }) {
@@ -82,7 +84,7 @@ function GuideScreen({ go }) {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const buy = () => {
-    if (CHECKOUT_URL) { window.open(CHECKOUT_URL, "_blank"); return; }
+    if (CHECKOUT_URL) { window.location.href = CHECKOUT_URL; return; }
     if (orderRef.current) orderRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -98,7 +100,7 @@ function GuideScreen({ go }) {
           subject: `Handbook order (€${PRICE}): ${name || "Website visitor"}`,
           from_name: name || "UniBridge NL website",
           email: email,
-          message: `New order for The Netherlands Student Handbook 2026/27 via unibridgenl.com\n\nName: ${name}\nEmail: ${email}\nCity or university: ${city}\nPrice: €${PRICE} including VAT\nAgreed to immediate delivery: ${waiver ? "yes" : "no"}\n\nSend the payment link, then the personalised PDF once it clears.`
+          message: `New order for The Netherlands Student Handbook 2026/27 via unibridgenl.com\n\nName: ${name}\nEmail: ${email}\nCity or university: ${city}\nPrice: €${PRICE}, all in\nAgreed to immediate delivery: ${waiver ? "yes" : "no"}\n\nSend the payment link, then the personalised PDF once it clears.`
         })
       });
       const data = await res.json();
@@ -140,7 +142,7 @@ function GuideScreen({ go }) {
 
               <div style={{display:'flex',alignItems:'baseline',gap:10}}>
                 <span style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:52,lineHeight:1,color:'var(--text-heading)'}}><MoneyCounter to={PRICE}/></span>
-                <span style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>one-off, including VAT</span>
+                <span style={{fontSize:'var(--text-caption)',color:'var(--text-muted)'}}>one-off, all in</span>
               </div>
 
               <hr className="ub-rule" style={{margin:'var(--space-5) 0'}}/>
@@ -165,7 +167,7 @@ function GuideScreen({ go }) {
                 <Magnetic strength={0.16}><Button full size="lg" onClick={buy} iconRight={<Icon name="arrow-right" size={17}/>}>Get the handbook for €{PRICE}</Button></Magnetic>
                 <Button full variant="secondary" onClick={seeSample} iconLeft={<Icon name="file-text" size={16}/>}>Read a free sample first</Button>
               </div>
-              <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>Price includes VAT · PDF by email · next edition free · 14 day refund</div>
+              <div style={{textAlign:'center',fontSize:'var(--text-caption)',color:'var(--text-subtle)',marginTop:10}}>The price you see is the price you pay · PDF by email · next edition free · 14 day refund</div>
             </Card>
 
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:'var(--space-3)',marginTop:'var(--space-5)'}}>
@@ -341,12 +343,15 @@ function GuideScreen({ go }) {
             </div>
             <div style={{marginTop:'var(--space-5)'}}>
               <Checkbox checked={waiver} onChange={v=>setWaiver(v)}
-                label="Send the file straight away"
-                description="You agree that, once the PDF is sent, the 14 day statutory withdrawal right for digital downloads no longer applies. We will still refund you within 14 days if the handbook does not help."/>
+                label="Send it now, and I give up my 14 day cancellation right."
+                description="I am asking UniBridge NL to email me the handbook straight away, before the 14 day cancellation period has run out. I understand that once the file has been sent I can no longer cancel this order and ask for my money back under consumer law."/>
+              <p style={{margin:'10px 0 0',fontSize:'var(--text-body-sm)',color:'var(--text-muted)',maxWidth:'62ch'}}>
+                Separately, and on top of the law: if the handbook does not help you, reply within 14 days and we refund you anyway. No reason needed. If you would rather keep the statutory right instead, say so in a reply and we will hold the file for 14 days.
+              </p>
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-4)',alignItems:'center',justifyContent:'space-between',marginTop:'var(--space-6)',borderTop:'1px solid var(--border-hairline)',paddingTop:'var(--space-5)'}}>
-              <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)'}}>€{PRICE} including VAT, one-off. No account, no subscription.</span>
-              <Magnetic strength={0.18}><Button disabled={!canOrder} onClick={submit} iconRight={<Icon name="arrow-right" size={16}/>}>{sending ? "Sending…" : "Order the handbook"}</Button></Magnetic>
+              <span style={{fontSize:'var(--text-caption)',color:'var(--text-subtle)',maxWidth:'52ch',lineHeight:1.6}}>€{PRICE}, one-off, nothing added at checkout. Any VAT that applies is already in the price. No account, no subscription. We email you about this order and, once, about next year's edition. Nothing else, and reply STOP to end even that. <a href="/terms/" style={{color:'var(--gold-700)'}}>Terms of sale</a>.</span>
+              <Magnetic strength={0.18}><Button disabled={!canOrder} onClick={submit} iconRight={<Icon name="arrow-right" size={16}/>}>{sending ? "Sending…" : "Order with obligation to pay"}</Button></Magnetic>
             </div>
             {sent && <Alert tone="success" title="Order received" style={{marginTop:'var(--space-5)'}}>Check your inbox. The payment link is on its way, and your copy follows as soon as it clears. Your order is The Netherlands Student Handbook 2026/27 at €{PRICE}, delivered straight away. If nothing arrives within a few hours, WhatsApp us on 06 25 29 40 80.</Alert>}
             {error && <Alert tone="warning" title="That did not send" style={{marginTop:'var(--space-5)'}}>Please try again, or WhatsApp us on 06 25 29 40 80 and we will sort it out by hand.</Alert>}
