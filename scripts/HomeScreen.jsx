@@ -3,9 +3,9 @@ const { Button, Card, Icon, Badge, Tag, Stepper } = window.UnibridgeNLDesignSyst
 const SERVICES = [
   ["graduation-cap","University enrolment","We file your application at up to five Dutch universities and chase every decision."],
   ["house","Housing support","A licensed letting agency we work with sources verified rooms. We read the contract before you sign."],
-  ["id-card","Visa & BSN","Residence permit paperwork and a booked BSN appointment in your arrival week."],
+  ["id-card","Permit & BSN","Your university files the permit itself. We prepare the documents and make sure your BSN appointment is booked in time."],
   ["wallet","Bank & insurance","A Dutch IBAN, student health insurance and your OV chip card, sorted."],
-  ["plane-takeoff","Arrival week","A bike, a SIM card, your first shop and a walk through your new neighbourhood."],
+  ["plane-takeoff","Arrival week","We are on the phone through your first week: what to do in which order, what to sign, and what to walk away from."],
   ["calendar-check","Deadline tracking","One checklist with every date, so nothing expires in a mailbox."]
 ];
 
@@ -27,9 +27,9 @@ const CHAPTERS = [
   { k:"Stay", t:"Permit, BSN, and the paperwork nobody explains", d:"Residence permit filed, municipality appointment booked inside your arrival week.", icon:"id-card",
     label:"Permit & BSN", stat:"14", statLabel:"days to decision",
     rows:[["check","Proof of funds letter accepted"],["check","Residence permit filed by university"],["check","Health insurance arranged"],["clock","Municipality appointment 2 Sep"]] },
-  { k:"Arrive", t:"Keys, bank card, bike", d:"Met on your first morning, walked through your neighbourhood, and set up before the weekend.", icon:"plane-takeoff",
+  { k:"Arrive", t:"Your first week, in the right order", d:"We plan your first week hour by hour and stay on the phone while you work through it, in your language.", icon:"plane-takeoff",
     label:"Arrival week", stat:"7", statLabel:"days, fully set up",
-    rows:[["check","Arrival day planned hour by hour"],["check","Keys collected, meter read"],["check","Bank card & SIM active"],["clock","Bike handover Saturday 11:00"]] }
+    rows:[["check","Arrival day planned hour by hour"],["check","Told what to photograph before you sign anything"],["check","Bank, SIM and transport card in the right order"],["clock","We answer within the hour, all week"]] }
 ];
 
 /* Scroll-scrubbed chapters. The parent owns ONE scroll listener and hands each row its
@@ -401,7 +401,7 @@ function HomeScreen({ go }) {
         <Reveal><div className="ub-overline">How it works</div><hr className="ub-rule" style={{width:56,margin:'12px 0 20px'}}/></Reveal>
         <Reveal delay={80}><h2 style={{fontSize:'clamp(28px,3.4vw,46px)',letterSpacing:'-.025em',marginBottom:'var(--space-12)'}}>Three steps, twelve weeks</h2></Reveal>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:'clamp(32px,4vw,56px)'}}>
-          {[["01","Tell us your plan","Fifteen minutes. Study level, field, budget, cities you'd live in."],["02","We build your route","A shortlist you'll actually get into, with dates and costs written out."],["03","You arrive settled","Keys, bank card, BSN appointment and a bike in your arrival week."]].map(([n,t,d],i)=>(
+          {[["01","Tell us your plan","Fifteen minutes. Study level, field, budget, cities you'd live in."],["02","We build your route","A shortlist you'll actually get into, with dates and costs written out."],["03","You arrive settled","Your first week planned in order, with us on the phone while you work through it."]].map(([n,t,d],i)=>(
             <Reveal key={n} delay={i*120}>
               <div style={{fontFamily:'var(--font-display)',fontVariationSettings:'var(--display-variation)',fontWeight:600,fontSize:'clamp(44px,5vw,68px)',color:'var(--gold-300)',lineHeight:1,letterSpacing:'-.035em'}}>{n}</div>
               <hr className="ub-rule" style={{width:40,margin:'var(--space-5) 0'}}/>

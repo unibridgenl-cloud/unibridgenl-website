@@ -42,7 +42,7 @@ function ApplyScreen({ go }) {
       svcEnrolment && "University enrolment",
       svcHousing && "Housing via a licensed letting agency",
       svcVisa && "Permit paperwork & arrival admin",
-      svcArrival && "Arrival week"
+      svcArrival && "Arrival week guidance"
     ].filter(Boolean).join(", ") || "None selected";
     const message = `New application via unibridgenl.com
 
@@ -120,7 +120,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
             <Checkbox checked={svcEnrolment} onChange={v=>setSvcEnrolment(v)} label="University enrolment" description="Up to five applications, documents certified and filed."/>
             <Checkbox checked={svcHousing} onChange={v=>setSvcHousing(v)} label="Housing via a licensed letting agency" description="We refer you to a licensed intermediary and check the contract. We don't own or guarantee the rooms."/>
             <Checkbox checked={svcVisa} onChange={v=>setSvcVisa(v)} label="Permit paperwork & arrival admin" description="Your university files the residence permit itself. We prepare the documents, book the municipality appointment, and handle everything either side of it."/>
-            <Checkbox checked={svcArrival} onChange={v=>setSvcArrival(v)} label="Arrival week" description="Bike, SIM card, neighbourhood walk."/>
+            <Checkbox checked={svcArrival} onChange={v=>setSvcArrival(v)} label="Arrival week guidance" description="We are on the phone through your first week: bank, SIM, transport card and the municipality, in the right order."/>
             <Checkbox checked={underEighteen} onChange={v=>setUnderEighteen(v)} label="I will be under 18 when my course starts" description="We work with students who are 18 or over on their first day. Universities require a formal guardianship arrangement for minors and we are not set up to handle that, so we would not be the right fit."/>
             {underEighteen && (
               <Alert tone="warning" title="We are not the right fit yet" style={{marginTop:'var(--space-4)'}}>

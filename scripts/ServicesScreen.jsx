@@ -2,15 +2,15 @@ const { Card, Button, Icon, Badge, Alert, Tabs, Checkbox, Tag, Tooltip } = windo
 const { PageHero, Reveal, Rise, Tilt, Stagger, Magnetic, DrawRule, MoneyCounter, HandbookCover } = window;
 
 const PLANS = [
-  { name:"Bridge Admissions", tier:"Admissions", price:"€500", amount:500, note:"one-off",
+  { name:"Bridge Admissions", tier:"Admissions", price:"€500", amount:500, note:"one-off, VAT included",
     who:"You know where you want to apply and just need the paperwork done right.",
     items:[["check","Four university applications"],["check","Document check & certified copies"],["check","Credential evaluation guidance"],["check","Deadline tracking in your dashboard"],["check","Email support, answered in 1 working day"],["check","No offer, €250 back. Written into your quote."]],
     excl:[], cta:"secondary" },
-  { name:"Bridge Full", tier:"Full", price:"€1,200", amount:1200, note:"one-off",
+  { name:"Bridge Full", tier:"Full", price:"€1,200", amount:1200, note:"one-off, VAT included",
     who:"The whole move handled, from shortlist to the keys in your hand.",
-    items:[["check","Up to five university applications"],["check","Everything in Bridge Admissions"],["check","Housing search where we act for you only, never for a landlord or agency"],["check","Contract review before you sign"],["check","Permit paperwork and your BSN appointment. Your university files the permit itself"],["check","Bank, insurance and OV chip card"],["check","Arrival week support"],["check","WhatsApp line to your advisor"]],
+    items:[["check","Up to five university applications"],["check","Everything in Bridge Admissions"],["check","Housing search where we act for you only, never for a landlord or agency"],["check","Contract review before you sign"],["check","Permit paperwork and your BSN appointment. Your university files the permit itself"],["check","Bank, insurance and OV chip card, walked through step by step"],["check","Arrival week guidance, on the phone in your language"],["check","WhatsApp line to your advisor"]],
     excl:[], cta:"primary" },
-  { name:"Bridge Settled", tier:"Settled", price:"€1,750", amount:1750, note:"one-off",
+  { name:"Bridge Settled", tier:"Settled", price:"€1,750", amount:1750, note:"one-off, VAT included",
     who:"You want somebody in your corner past arrival week, through the whole first year.",
     items:[["check","Everything in Bridge Full"],["check","Allowance check on a call. Often the answer is that you do not qualify, and we would rather you heard that from us than found out in March"],["check","Huisarts and dentist registration, before you need one"],["check","Second-year housing search, started in January"],["check","Monthly check-in through your first two semesters"],["check","Parent briefing call in your language"],["check","Priority WhatsApp, answered same day"]],
     excl:[], cta:"secondary" }
@@ -20,7 +20,7 @@ const ADDONS = [
   ["file-check","Extra university application","€95","per application beyond your plan"],
   ["house","Housing search, for you only","€450","we act for you, never the landlord, and take nothing from agencies"],
   ["id-card","Permit paperwork & arrival admin","€250","your university files the permit itself. This is everything either side of it"],
-  ["plane-takeoff","Arrival week only","€350","keys, bank, insurance, bike"],
+  ["plane-takeoff","Arrival week guidance","€350","we are on the phone through your first week, in the right order"],
   ["languages","Document translation","€60","per certified page, sworn translator"],
   ["message-circle","Single advice call","€120","45 minutes. The first 15 are always free"]
 ];
@@ -33,7 +33,7 @@ const COMPARE = [
   ["Contract review","no","yes","yes"],
   ["Permit paperwork & BSN","no","yes","yes"],
   ["Bank, insurance, OV card","no","yes","yes"],
-  ["Arrival week support","no","yes","yes"],
+  ["Arrival week guidance","no","yes","yes"],
   ["Parent briefing call","no","no","yes"],
   ["Allowance check, honestly answered","no","no","yes"],
   ["Huisarts registration","no","no","yes"],
@@ -179,7 +179,7 @@ function ServicesScreen({ go }) {
 
         {tab === "addons" && (
           <div>
-            <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch',marginTop:0}}>Bolt these onto any plan, or take one on its own if you only need a single piece.</p>
+            <p style={{fontSize:'var(--text-body-lg)',color:'var(--text-muted)',maxWidth:'56ch',marginTop:0}}>Bolt these onto any plan, or take one on its own if you only need a single piece. Every price includes VAT where VAT applies.</p>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:'var(--space-4)',marginTop:'var(--space-6)'}}>
               {ADDONS.map(([i,t,price,note],ai)=>(
                 <Reveal key={t} delay={ai*80} y={22}>
@@ -197,7 +197,7 @@ function ServicesScreen({ go }) {
               ))}
             </div>
             <Alert tone="info" title="What you pay elsewhere" style={{marginTop:'var(--space-6)'}}>
-              University application fees (€50 to €100 each), the IND residence permit fee (€254 in 2026) and your housing deposit are paid directly to those parties, never to us.
+              University application fees (€50 to €100 each), the IND residence permit fee (€254 in 2026) and your housing deposit are paid directly to those parties, never to us. Our own prices are the total you pay: VAT is already inside the figure wherever VAT applies, and nothing is added at the end.
             </Alert>
           </div>
         )}
