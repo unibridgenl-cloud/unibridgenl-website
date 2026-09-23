@@ -1,12 +1,27 @@
-# Marketing analytics workspace
+# TTT SEO Analysis Project
 
-## Layout
+## Site
+- Domain: trafficthinktank.com
+- Type: SEO education community + blog
+- Goal: Grow organic blog traffic for top-of-funnel
+  SEO education queries
 
-- `fetchers/` — scripts that pull data from each source
-- `data/` — raw data pulled by the fetchers, one folder per source:
-  - `gsc/` — Google Search Console
-  - `ga4/` — Google Analytics 4
-  - `ads/` — Google Ads
-  - `semrush/` — Semrush
-- `dashboard/` — dashboard built on top of `data/`
-- `reports/` — generated reports
+## Competitors
+- moz.com (blog)
+- ahrefs.com (blog)
+- searchenginejournal.com
+- backlinko.com
+
+## Data sources
+- GSC: data/gsc/ (fetched via service account)
+- GA4: data/ga4/ (fetched via service account)
+- Google Ads: not applicable (TTT doesn’t run ads)
+- Semrush: live via MCP connection
+
+## Key context
+- TTT was acquired by Semrush in 2023
+- Blog covers: learning SEO, SEO books, SEO tools,
+  link building, technical SEO, SEO careers,
+  SEO conferences, SEO communities
+- Academy is gated (paid membership)
+- Blog content is ungated and drives top-of-funnel traffic
