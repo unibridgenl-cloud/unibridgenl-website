@@ -50,6 +50,30 @@ files.
 - `friday/` is an internal dashboard and must never be published on the public
   site.
 
+## Organisation (who reports to whom)
+
+```
+Owner (you)
+└── Chair of the Board — exec-chair (Jo Bennett)          ← Audit & QA reports here
+    └── CEO — exec-ceo (Robert California)                ← Legal reports here
+        ├── CFO — exec-cfo (David Wallace)
+        │   └── Accounting & Finance — Head of Accounting (Angela Martin)
+        ├── Director of Emerging Regions — exec-director-emerging-regions (Gabe Lewis)
+        └── Regional Manager — exec-regional-manager (Michael Scott)
+            ├── Sales & Customer Service — Head of Sales (Dwight Schrute)
+            ├── Marketing — Marketing Director (Ryan Howard)
+            ├── Student Services — Head of Student Operations (Darryl Philbin)
+            ├── Website & Technology — Tech Lead (Nick)
+            └── Human Resources — Head of HR (Toby Flenderson)
+```
+
+- Nine teams, 45 agents. Each agent has a real name and an "office cast" name
+  from The Office (the internal nickname used on the office page).
+- The Regional Manager is the front door: when it is unclear who should do
+  something, he routes it.
+- Audit reports to the Chair, not to management, so it stays independent.
+- The owner has the final word on everything.
+
 ## Brand voice
 
 Plain, specific, honest. State what we do *and what we don't*. No hype, no
