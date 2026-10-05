@@ -5,7 +5,7 @@ description: Convene one of the UniBridge NL AI department teams (exec, legal, h
 
 # Convene a UniBridge NL team
 
-Teams and their agents live in `.claude/agents/` (roster: `.claude/agents/README.md`).
+Teams and their agents live in `.claude/agents/` (roster: `.claude/AGENTS.md`).
 Agent names are `<team>-<role>`; each team has one lead and four specialists.
 
 | Team key  | Team                       | Lead agent (office cast)                     |

@@ -1,7 +1,7 @@
 # UniBridge NL — AI agent teams
 
 45 Claude Code subagents in 9 teams of 5, organised like the staff of The Office's Dunder Mifflin.
-Every agent reads `../company-brief.md` first; it holds the company facts and the org chart.
+Every agent reads `company-brief.md` first; it holds the company facts and the org chart.
 
 ## How to use
 
@@ -11,6 +11,20 @@ Every agent reads `../company-brief.md` first; it holds the company facts and th
 - **Several teams:** `/convene-team marketing legal Plan a TikTok campaign for Indian students`.
 - **From the office page:** assign to a person or team and it starts a Claude Code session for you.
 - Internal work is saved to `.company/<team>/` (not published). Agents only draft; you approve anything sent, published, signed or paid.
+
+## Use them everywhere (install the plugin once)
+
+This repository is also a plugin marketplace. Install it once and the agents
+work in every Claude Code session, in any folder, not only in this repository:
+
+```
+/plugin marketplace add unibridgenl-cloud/unibridgenl-website
+/plugin install unibridgenl-office@unibridgenl
+```
+
+Installed agents are named `unibridgenl-office:<agent>`, for example
+`unibridgenl-office:sales-head-of-sales` (Dwight). After pulling new changes,
+run `/plugin marketplace update unibridgenl` to get the latest agents.
 
 ## Roster
 
