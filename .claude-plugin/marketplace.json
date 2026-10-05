@@ -1,0 +1,16 @@
+{
+  "name": "unibridgenl",
+  "owner": {
+    "name": "UniBridge NL"
+  },
+  "metadata": {
+    "description": "UniBridge NL's internal Claude plugins."
+  },
+  "plugins": [
+    {
+      "name": "unibridgenl-office",
+      "source": "./",
+      "description": "UniBridge NL's 45 AI agents and the convene-team skill."
+    }
+  ]
+}
