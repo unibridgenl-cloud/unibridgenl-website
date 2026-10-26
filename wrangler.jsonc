@@ -1,8 +1,9 @@
 {
   // Cloudflare Workers deployment for the FRIDAY dashboard.
   //
-  // This is an assets-only Worker: there is no server code, Cloudflare just
-  // serves the contents of ./friday as a static site. The marketing site in
+  // The Worker serves ./friday as a static site AND answers /api/chat and
+  // /api/tts, which need secrets and so cannot run in the page. See
+  // worker/index.js. The marketing site in
   // the repo root is NOT included — only the directory named below is
   // uploaded, which is what keeps the dashboard separate from unibridgenl.com.
   //
@@ -14,8 +15,10 @@
   // it — see friday/DEPLOY.md step 3. Do not fill in the Apps Script token
   // in friday/index.html until that login wall is live.
   "name": "friday",
+  "main": "worker/index.js",
   "compatibility_date": "2026-09-01",
   "assets": {
-    "directory": "./friday"
+    "directory": "./friday",
+    "binding": "ASSETS"
   }
 }
