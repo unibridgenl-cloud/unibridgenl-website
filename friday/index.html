@@ -472,8 +472,16 @@ const DATA = {
     sampleClip: 'assets/voice-sample.mp3',
     elevenlabs: {
       proxyUrl: '',                     // same /exec URL as DATA.sources.endpoint
-      token: ''                         // same FRIDAY_TOKEN
-      /* voice id and model live in Script Properties, not here */
+      token: '',                        // same FRIDAY_TOKEN
+      /* Harsh picked Melania — Southern British, quietly confident. The id is
+         here for reference; the backend reads ELEVEN_VOICE_ID from Script
+         Properties, so change it there, not in this file.
+            Melania   tUxvnIoZrrcsUY1wdYot   (chosen)
+            Philippa  IbXTsH7MlHi5GQco8zZH   crisper, more formal
+            Ali       EKpKHSkyNegCyjBRc55p   least voiceover-ish
+            Carolina  c2ylF7ASjpIgP0pJz4RK   Latin American accent
+            Paola     CPEHCHnlRsWkpvhbDlfn   Latin American, calmer           */
+      voiceId: 'tUxvnIoZrrcsUY1wdYot'
     },
     clips: {}                           // engine 'clip': { 'exact reply text': 'assets/x.mp3' }
   },
