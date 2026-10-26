@@ -1231,32 +1231,80 @@ function drawOrb(now){
   const tilt = 0.42 + Math.sin(now/9000) * 0.12;
 
   /* --- soft core glow --- */
-  const g = octx.createRadialGradient(cx, cy, 0, cx, cy, R*1.9);
-  g.addColorStop(0,   `rgba(140,240,255,${0.16 + energy*0.20})`);
+  const bass = spectrum ? (spectrum[0] + spectrum[1] + spectrum[2]) / 3 : 0;
+  const g = octx.createRadialGradient(cx, cy, 0, cx, cy, R*(1.9 + bass*0.5));
+  g.addColorStop(0,   `rgba(140,240,255,${0.16 + energy*0.20 + bass*0.28})`);
   g.addColorStop(0.35,`rgba(90,200,255,${0.08 + energy*0.10})`);
   g.addColorStop(1,   'rgba(10,40,70,0)');
   octx.fillStyle = g;
   octx.beginPath(); octx.arc(cx, cy, R*1.9, 0, Math.PI*2); octx.fill();
 
-  /* --- particles --- */
+  /* --- particles ---
+     Each one belongs to a frequency band, chosen by its height on the
+     sphere: low bands at the equator, high bands at the poles. When she
+     speaks the sphere stops being a sphere — it swells where her voice
+     has energy, which is what makes it read as HER voice rather than a
+     generic pulse. Silence settles it back to a clean sphere. */
   const cosY = Math.cos(spin), sinY = Math.sin(spin);
   const cosX = Math.cos(tilt), sinX = Math.sin(tilt);
+  const live = !!spectrum;
+
   for (let i = 0; i < pts.length; i++){
     const p = pts[i];
+
+    /* band from latitude, so the deformation forms rings rather than noise */
+    let push = 0, hot = 0;
+    if (live){
+      const band = Math.min(BANDS - 1, Math.floor(Math.abs(p.y) * BANDS));
+      hot = spectrum[band];
+      push = hot * 0.34;   // enough to sing, not so much it stops being a sphere
+    } else if (energy > 0.2){
+      push = Math.sin(now/260 + p.y*5) * energy * 0.05;   // idle breathing
+    }
+    const rr = R * (1 + push);
+
     let x = p.x*cosY - p.z*sinY;
     let z = p.x*sinY + p.z*cosY;
     let y = p.y*cosX - z*sinX;
     z = p.y*sinX + z*cosX;
     const persp = 1 / (1.9 - z*0.55);
-    const sx = cx + x * R * persp * 1.6;
-    const sy = cy + y * R * persp * 1.6;
+    const sx = cx + x * rr * persp * 1.6;
+    const sy = cy + y * rr * persp * 1.6;
     const depth = (z + 1) / 2;                       // 0 back .. 1 front
-    const a = (0.16 + depth*0.80) * (0.62 + energy*0.50);
-    const size = p.s * (0.55 + depth*1.05) * (1 + energy*0.35);
-    octx.fillStyle = depth > 0.82
-      ? `rgba(190,250,255,${clamp(a,0,1)})`
+    const a = (0.16 + depth*0.80) * (0.62 + energy*0.50) * (1 + hot*0.9);
+    const size = p.s * (0.55 + depth*1.05) * (1 + energy*0.35 + hot*1.1);
+
+    /* loud bands burn white, quiet ones stay cyan */
+    octx.fillStyle = (hot > 0.55 || depth > 0.86)
+      ? `rgba(${200 + hot*55},250,255,${clamp(a,0,1)})`
       : `rgba(111,233,255,${clamp(a,0,1)})`;
     octx.fillRect(sx - size/2, sy - size/2, size, size);
+  }
+
+  /* --- a ring of spectrum bars around the sphere, like a vocoder --- */
+  if (live){
+    const rBar = Math.min(ow, oh) * 0.245;
+    octx.save();
+    octx.lineCap = 'round';
+    for (let bnd = 0; bnd < BANDS; bnd++){
+      const v = spectrum[bnd];
+      if (v < 0.03) continue;
+      const ang = (bnd / BANDS) * Math.PI * 2 - Math.PI/2 + spin * 0.35;
+      const len = 4 + v * Math.min(ow, oh) * 0.085;
+      octx.strokeStyle = `rgba(${150 + v*105},245,255,${0.25 + v*0.65})`;
+      octx.lineWidth = 1.6;
+      octx.beginPath();
+      octx.moveTo(cx + Math.cos(ang)*rBar, cy + Math.sin(ang)*rBar);
+      octx.lineTo(cx + Math.cos(ang)*(rBar + len), cy + Math.sin(ang)*(rBar + len));
+      octx.stroke();
+      /* mirrored, so it reads as one instrument rather than a sweep */
+      const ang2 = -ang - Math.PI;
+      octx.beginPath();
+      octx.moveTo(cx + Math.cos(ang2)*rBar, cy + Math.sin(ang2)*rBar);
+      octx.lineTo(cx + Math.cos(ang2)*(rBar + len*0.7), cy + Math.sin(ang2)*(rBar + len*0.7));
+      octx.stroke();
+    }
+    octx.restore();
   }
 
   /* --- two concentric HUD rings with tick marks --- */
@@ -1363,6 +1411,21 @@ function drawWave(){
   wctx.strokeStyle = 'rgba(111,233,255,.10)';
   wctx.lineWidth = 1;
   wctx.beginPath(); wctx.moveTo(0,mid); wctx.lineTo(w,mid); wctx.stroke();
+
+  /* Real bars when there is real audio; the drawn wave is only a stand-in
+     for the states where nothing is actually playing. */
+  if (spectrum){
+    const bw = w / BANDS;
+    for (let bnd = 0; bnd < BANDS; bnd++){
+      const v = spectrum[bnd];
+      const bh = Math.max(1, v * (h * 0.86));
+      wctx.fillStyle = `rgba(${140 + v*115},240,255,${0.3 + v*0.6})`;
+      wctx.fillRect(bnd * bw + 0.5, mid - bh/2, Math.max(1, bw - 1.5), bh);
+    }
+    $('#audioLvl').textContent = 'LVL ' + pad2(Math.round((liveLevel||0) * 99));
+    requestAnimationFrame(drawWave);
+    return;
+  }
 
   wctx.beginPath();
   for (let x = 0; x <= w; x += 2){
@@ -1499,6 +1562,11 @@ function safeSet(k, v){ try { localStorage.setItem(k, v); } catch(_){} }
    Drives `liveLevel` from an analyser so the orb and the waveform
    react to the actual audio instead of a simulation.               */
 let audioCtx = null, liveLevel = null, currentAudio = null;
+/* The spectrum drives the orb. 32 bands is enough to see speech shape —
+   vowels bloom the low bands, consonants flick the high ones — without
+   turning the sphere into noise. */
+let spectrum = null;
+const BANDS = 32;
 function playAudioUrl(url, onDone, revoke){
   try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch(_){}
   if (currentAudio){ currentAudio.pause(); currentAudio = null; }
@@ -1510,7 +1578,7 @@ function playAudioUrl(url, onDone, revoke){
 
   const finish = () => {
     cancelAnimationFrame(raf);
-    liveLevel = null;
+    liveLevel = null; spectrum = null;
     if (revoke) URL.revokeObjectURL(url);
     if (currentAudio === a) currentAudio = null;
     setState('idle');
@@ -1527,14 +1595,30 @@ function playAudioUrl(url, onDone, revoke){
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const src = audioCtx.createMediaElementSource(a);
       analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.72;      // musical, not jittery
       src.connect(analyser); analyser.connect(audioCtx.destination);
       buf = new Uint8Array(analyser.frequencyBinCount);
+      const freq = new Uint8Array(analyser.frequencyBinCount);
+      spectrum = new Float32Array(BANDS);
+
       const sample = () => {
         analyser.getByteTimeDomainData(buf);
         let sum = 0;
         for (let i = 0; i < buf.length; i++){ const v = (buf[i]-128)/128; sum += v*v; }
         liveLevel = clamp(Math.sqrt(sum/buf.length) * 3.2, 0, 1);
+
+        /* Speech energy sits low, so the bands are spaced logarithmically —
+           an even split would leave most of them permanently dark. */
+        analyser.getByteFrequencyData(freq);
+        const usable = Math.floor(freq.length * 0.55);
+        for (let bnd = 0; bnd < BANDS; bnd++){
+          const lo = Math.floor(Math.pow(bnd / BANDS, 1.8) * usable);
+          const hi = Math.max(lo + 1, Math.floor(Math.pow((bnd + 1) / BANDS, 1.8) * usable));
+          let peak = 0;
+          for (let i = lo; i < hi; i++) if (freq[i] > peak) peak = freq[i];
+          spectrum[bnd] += ((peak / 255) - spectrum[bnd]) * 0.45;   // ease toward the peak
+        }
         raf = requestAnimationFrame(sample);
       };
       sample();
@@ -1742,6 +1826,17 @@ function handleUtterance(text){
     }
   }
 
+  /* An instruction aimed at an office is an action, not a question. */
+  const cmd = parseCommand(text);
+  if (cmd){
+    showSay('… ' + text, false);
+    if (cmd.unknownOffice){
+      return respondWith(`I do not have an office called ${cmd.unknownOffice}. I have ` +
+        OFFICE_WORDS.map(o => o.office).join(', ') + '.');
+    }
+    return fileCommand(cmd, text);
+  }
+
   telemetry('YOU ▸ ' + text, 'usr');
   showSay('… ' + text, false);
   setState('thinking');
@@ -1866,6 +1961,11 @@ function answer(qRaw){
           ? `Nothing is blocked on you across ${desk.offices.join(', ')}.`
           : 'No offices are reporting in yet.');
 
+  if (has('queued','instruction','instructions','sent to','told'))
+    return DATA.meta.queuedCommands
+      ? `${DATA.meta.queuedCommands} ${DATA.meta.queuedCommands === 1 ? 'instruction is' : 'instructions are'} queued for the offices, not yet picked up.`
+      : 'Nothing is queued for the offices.';
+
   if (has('recommend','advice','what should i','priority','focus','next'))
     return 'Top priority: ' + DATA.recommendations[0];
 
@@ -1892,7 +1992,8 @@ function answer(qRaw){
 
   if (has('thank','cheers','nice work','well done')) return `Always a pleasure, ${op}.`;
   if (has('help','what can you do','commands'))
-    return 'Ask me about the inbox, who is waiting on a reply, calls booked, revenue, the objective, vitals or the deadline. Say morning brief for the full picture.';
+    return 'Ask me about the inbox, what is blocked on you, the offices, revenue or the objective. ' +
+           'To give an office work, say tell Noviq to, or tell UniBridge to. Say morning brief for the full picture.';
 
   return `I have no reading on that, ${op}. Try inbox, replies, calls, revenue, objective, vitals or morning brief.`;
 }
@@ -2022,6 +2123,7 @@ async function initBridge(){
       watchUpdates(db);
       watchProjects(db);
       watchApprovals(db);
+      watchCommands(db);
       diagnostic('Work log connected — I will announce anything Claude finishes', 'okln');
     }
   } catch (err) {
@@ -2160,6 +2262,27 @@ function watchApprovals(db){
   );
 }
 
+/* Instructions still waiting to be picked up by an office. */
+function watchCommands(db){
+  const seen = new Set();
+  let first = true;
+  db.collection('commands').orderBy('at', 'desc').limit(10).onSnapshot(
+    (snap) => {
+      const queued = [];
+      snap.docs.forEach(d => {
+        const c = d.data() || {};
+        if ((c.status || 'queued') !== 'queued') return;
+        queued.push(c);
+        if (!first && !seen.has(d.id)) telemetry(`QUEUED ▸ ${c.office}: ${c.instruction}`, 'sys');
+        seen.add(d.id);
+      });
+      first = false;
+      DATA.meta.queuedCommands = queued.length;
+    },
+    (e) => diagnostic('Command listener died — ' + e.code, 'warnln')
+  );
+}
+
 /* Spoken approvals. Only consulted while something is actually pending,
    so a stray "yes" in conversation cannot approve anything. */
 function approvalIntent(text){
@@ -2190,6 +2313,49 @@ async function resolveApproval(decision, spokenText){
   } catch (err) {
     diagnostic('Could not record the decision — ' + (err.code || err.message), 'warnln');
     respondWith('I could not record that decision. Try again.');
+    return false;
+  }
+}
+
+/* ---- CONTROL: giving an office an instruction ------------------
+   "Tell Noviq to re-render the promo in 4K" writes a row to `commands`,
+   which the session working that office reads and acts on. She confirms
+   what she filed and where, so a misheard office name is obvious
+   immediately rather than three days later.                         */
+const OFFICE_WORDS = [
+  { office: 'UniBridge NL',      words: ['unibridge','uni bridge','university','universities','students','uni'] },
+  { office: 'Noviq Studios',     words: ['noviq','novic','noviq studios','studios','studio'] },
+  { office: 'Resit Study Board', words: ['resit','resits','study board','faculty','exam','exams','assignment','assignments'] }
+];
+
+function parseCommand(text){
+  /* Match case-insensitively but slice the ORIGINAL string, so "4K" and
+     proper nouns survive into the instruction another session will act on. */
+  const m = text.match(/^\s*(?:tell|ask|get|have)\s+(.+?)\s+(?:to|that)\s+(.+)$/i);
+  if (!m) return null;
+  const who = m[1].toLowerCase();
+  const what = m[2].trim();
+  const hit = OFFICE_WORDS.find(o => o.words.some(w => who.includes(w)));
+  if (!hit) return { unknownOffice: m[1].trim(), instruction: what };
+  return { office: hit.office, instruction: what };
+}
+
+async function fileCommand(cmd, spoken){
+  if (!bridge.db){
+    respondWith('I can take that down, but I am not connected to the offices from here.');
+    return false;
+  }
+  try {
+    await bridge.db.collection('commands').add({
+      office: cmd.office, instruction: cmd.instruction,
+      said: spoken, at: Date.now(), from: DATA.meta.operator, status: 'queued'
+    });
+    telemetry(`YOU ▸ ${cmd.office}: ${cmd.instruction}`, 'usr');
+    respondWith(`Filed for ${cmd.office}: ${cmd.instruction}.`);
+    return true;
+  } catch (err) {
+    diagnostic('Could not file that instruction — ' + (err.code || err.message), 'warnln');
+    respondWith('I could not file that. Say it again?');
     return false;
   }
 }
