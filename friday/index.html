@@ -41,6 +41,25 @@
   --glow-soft:0 0 4px rgba(111,233,255,.35);
   --mono:'JetBrains Mono','IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace;
   --pad:10px;
+
+  /* Type scale. Every size on this page used to be a fixed pixel value
+     tuned on one laptop, which meant 8px labels stayed 8px on a 27-inch
+     4K display — technically legible, actually not. These track the
+     viewport between a floor that stays readable on a phone and a
+     ceiling that stops the HUD turning into a poster. At laptop width
+     they land on the same numbers as before. */
+  --fs-nano: clamp(7.5px, .46vw, 11px);
+  --fs-micro:clamp(8.2px, .53vw, 12.5px);
+  --fs-small:clamp(8.8px, .59vw, 13.5px);
+  --fs-body: clamp(9.6px, .67vw, 15px);
+  --fs-lead: clamp(12px,  .86vw, 19px);
+  --fs-stat: clamp(13px,  1.02vw, 22px);
+
+  /* One easing curve for everything that moves on a press or a hover,
+     so the whole interface decelerates the same way. */
+  --ease:cubic-bezier(.22,.78,.3,1);
+  --fast:.14s;
+  --med:.24s;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;overflow:hidden}
@@ -64,18 +83,37 @@ body{
   mask-image:radial-gradient(ellipse 90% 75% at 50% 45%, #000 20%, transparent 100%);
   -webkit-mask-image:radial-gradient(ellipse 90% 75% at 50% 45%, #000 20%, transparent 100%);
 }
-.bg-scan{
+/* The shimmer used to animate background-position and top. Neither can
+   be handed to the compositor, so every frame repainted the whole
+   viewport — measured at 43ms a frame on its own, which was the entire
+   reason this page felt heavy. Both now move on transform instead: the
+   layer is painted once and slid by the GPU. */
+.bg-scan{opacity:.55;overflow:hidden;contain:strict}
+.bg-scan::before,.bg-scan::after{content:'';position:absolute;left:0;right:0;will-change:transform}
+.bg-scan::before{
+  top:-4px;height:calc(100% + 8px);
   background:repeating-linear-gradient(180deg, rgba(111,233,255,.045) 0 1px, transparent 1px 3px);
-  opacity:.55;
   animation:scandrift 9s linear infinite;
 }
 .bg-scan::after{
-  content:'';position:absolute;left:0;right:0;height:26vh;
+  /* A viewport-relative height means a 4K screen pays four times over
+     for the same effect. Capped, so the band is the same band on every
+     display. */
+  top:0;height:clamp(120px,22vh,260px);
   background:linear-gradient(180deg, transparent, rgba(111,233,255,.055), transparent);
   animation:sweepdown 7.5s linear infinite;
 }
-@keyframes scandrift{from{background-position-y:0}to{background-position-y:3px}}
-@keyframes sweepdown{0%{top:-30vh}100%{top:110vh}}
+@keyframes scandrift{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,3px,0)}}
+@keyframes sweepdown{from{transform:translate3d(0,-260px,0)}to{transform:translate3d(0,100vh,0)}}
+
+/* Reduced motion: the HUD keeps its texture, it just stops moving. */
+.calm .bg-scan::before,.calm .bg-scan::after{animation:none}
+/* Set by the frame loop when it drops to its lowest quality tier. */
+.lean .bg-scan::after{display:none}
+.lean .bg-scan::before{animation:none}
+.lean .bg-vignette{display:none}
+.lean .panel{box-shadow:none}
+.calm .bg-scan::after{opacity:.35}
 .bg-vignette{box-shadow:inset 0 0 200px 40px rgba(0,0,0,.85)}
 
 /* --- shell ------------------------------------------------- */
@@ -100,11 +138,15 @@ main{
 
 /* --- panel chrome ------------------------------------------ */
 .panel{
-  position:relative;border:1px solid var(--line);background:rgba(6,18,32,.46);
+  position:relative;border:1px solid var(--line);background:rgba(6,18,32,.62);
   box-shadow:inset 0 0 22px rgba(111,233,255,.05), 0 0 10px rgba(111,233,255,.05);
   padding:var(--pad);min-height:0;display:flex;flex-direction:column;
-  backdrop-filter:blur(1px);
+  /* No backdrop-filter. A 1px blur behind a panel is invisible and cost
+     34ms a frame at 4K — the single most expensive rule on the page.
+     A slightly more opaque ground buys the same sense of depth free. */
+  transition:border-color .2s ease, box-shadow .2s ease;
 }
+.panel:hover{border-color:rgba(111,233,255,.4);box-shadow:inset 0 0 26px rgba(111,233,255,.07), 0 0 16px rgba(111,233,255,.1)}
 .panel::before,.panel::after{
   content:'';position:absolute;width:9px;height:9px;border:1px solid var(--cyan);opacity:.75;
 }
@@ -112,10 +154,10 @@ main{
 .panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
 .panel-title{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
-  font-size:9.5px;color:var(--cyan);text-shadow:var(--glow-soft);
+  font-size:var(--fs-small);color:var(--cyan);text-shadow:var(--glow-soft);
   padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid var(--line-soft);flex:0 0 auto;
 }
-.panel-title .tag{color:var(--cyan-dim);font-size:8.5px;letter-spacing:.12em}
+.panel-title .tag{color:var(--cyan-dim);font-size:var(--fs-micro);letter-spacing:.12em}
 .panel-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
 
 /* --- header ------------------------------------------------ */
@@ -128,12 +170,12 @@ header{
   margin:0;font-size:clamp(17px,2.1vw,26px);letter-spacing:.34em;font-weight:500;
   color:var(--cyan-hot);text-shadow:0 0 8px rgba(111,233,255,.75),0 0 26px rgba(111,233,255,.35);
 }
-.brand .sub{margin-top:3px;font-size:8.5px;color:var(--cyan-dim);letter-spacing:.19em}
-.brand .obj{margin-top:5px;font-size:9.5px;color:var(--amber);text-shadow:0 0 7px rgba(255,180,87,.4)}
+.brand .sub{margin-top:3px;font-size:var(--fs-micro);color:var(--cyan-dim);letter-spacing:.19em}
+.brand .obj{margin-top:5px;font-size:var(--fs-small);color:var(--amber);text-shadow:0 0 7px rgba(255,180,87,.4)}
 .pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .pill{
   display:flex;align-items:center;gap:6px;border:1px solid var(--line);
-  padding:4px 9px;font-size:8.5px;color:var(--cyan-dim);background:rgba(111,233,255,.04);
+  padding:4px 9px;font-size:var(--fs-micro);color:var(--cyan-dim);background:rgba(111,233,255,.04);
 }
 .pill .dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);animation:blip 2.4s ease-in-out infinite}
 .pill.warn .dot{background:var(--amber);box-shadow:0 0 7px var(--amber)}
@@ -148,26 +190,26 @@ header{
   text-shadow:0 0 9px rgba(111,233,255,.7);font-variant-numeric:tabular-nums;line-height:1
 }
 .clock .cs{font-size:.55em;color:var(--cyan-dim)}
-.clockwrap .meta{margin-top:5px;font-size:8.5px;color:var(--cyan-dim);letter-spacing:.14em}
+.clockwrap .meta{margin-top:5px;font-size:var(--fs-micro);color:var(--cyan-dim);letter-spacing:.14em}
 
 /* --- vitals ------------------------------------------------ */
 .vital{margin-bottom:9px}
 .vital:last-child{margin-bottom:0}
-.vital .row{display:flex;justify-content:space-between;font-size:8.5px;color:var(--cyan-dim);margin-bottom:4px}
+.vital .row{display:flex;justify-content:space-between;font-size:var(--fs-micro);color:var(--cyan-dim);margin-bottom:4px}
 .vital .row b{color:var(--cyan-hot);font-weight:500;text-shadow:var(--glow-soft)}
 .track{height:6px;border:1px solid var(--line-soft);background:rgba(111,233,255,.05);position:relative;overflow:hidden}
 .fill{
   position:absolute;inset:0 auto 0 0;width:0%;
   background:linear-gradient(90deg, rgba(111,233,255,.35), var(--cyan));
   box-shadow:0 0 9px rgba(111,233,255,.55);
-  transition:width .85s cubic-bezier(.22,.8,.3,1);
+  transition:width .85s var(--ease);
 }
 .fill.warn{background:linear-gradient(90deg, rgba(255,180,87,.3), var(--amber));box-shadow:0 0 9px rgba(255,180,87,.5)}
 .fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:2px;background:var(--cyan-hot);box-shadow:0 0 8px var(--cyan-hot)}
 
 /* --- log feeds --------------------------------------------- */
 .log{
-  flex:1 1 auto;min-height:0;overflow-y:auto;font-size:9px;line-height:1.55;
+  flex:1 1 auto;min-height:0;overflow-y:auto;font-size:var(--fs-small);line-height:1.55;
   color:var(--cyan-dim);scrollbar-width:thin;scrollbar-color:var(--line) transparent;
 }
 .log::-webkit-scrollbar{width:3px}
@@ -185,27 +227,30 @@ header{
 .doors{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;flex:0 0 auto}
 .doors a{
   flex:1 1 auto;text-align:center;text-decoration:none;
-  font-size:8px;letter-spacing:.1em;color:var(--cyan-dim);
+  font-size:var(--fs-nano);letter-spacing:.1em;color:var(--cyan-dim);
   border:1px solid var(--line);background:rgba(111,233,255,.04);
-  padding:6px 4px;transition:background .18s,color .18s,box-shadow .18s;
+  padding:6px 4px;
+  transition:background var(--fast) var(--ease),color var(--fast) var(--ease),
+             box-shadow var(--fast) var(--ease),transform var(--fast) var(--ease);
 }
-.doors a:hover{background:rgba(111,233,255,.14);color:var(--cyan-hot);box-shadow:0 0 10px rgba(111,233,255,.25)}
+.doors a:hover{background:rgba(111,233,255,.14);color:var(--cyan-hot);box-shadow:0 0 10px rgba(111,233,255,.25);transform:translateY(-1px)}
+.doors a:active{transform:translateY(0)}
 .doors a.needsyou{border-color:rgba(255,180,87,.55);color:var(--amber)}
-.doors a .n{display:block;font-size:7.5px;color:rgba(111,233,255,.4);margin-top:2px}
+.doors a .n{display:block;font-size:var(--fs-nano);color:rgba(111,233,255,.4);margin-top:2px}
 .doors a.needsyou .n{color:rgba(255,180,87,.8)}
 
 /* --- claude project strip + approval banner ----------------- */
 .projects{flex:0 0 auto;margin-bottom:8px;display:none}
 .projects.on{display:block}
-.projects .ph{font-size:8px;color:rgba(111,233,255,.45);letter-spacing:.13em;margin-bottom:5px}
-.projects .pr{display:flex;align-items:center;gap:6px;font-size:9px;padding:2px 0;color:var(--cyan-dim)}
+.projects .ph{font-size:var(--fs-nano);color:rgba(111,233,255,.45);letter-spacing:.13em;margin-bottom:5px}
+.projects .pr{display:flex;align-items:center;gap:6px;font-size:var(--fs-small);padding:2px 0;color:var(--cyan-dim)}
 .projects .pr .st{width:5px;height:5px;border-radius:50%;flex:0 0 auto;background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
 .projects .pr.active .st{animation:blip 1.6s ease-in-out infinite}
 .projects .pr.blocked .st{background:var(--amber);box-shadow:0 0 6px var(--amber)}
 .projects .pr.done .st{background:var(--green);box-shadow:0 0 6px var(--green);animation:none}
 .projects .pr .nm{flex:1 1 auto;color:var(--cyan-hot);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .projects .pr.done .nm{color:var(--cyan-dim);text-decoration:line-through;text-decoration-color:rgba(111,233,255,.35)}
-.projects .pr .tg{font-size:7.5px;color:rgba(111,233,255,.4);letter-spacing:.1em}
+.projects .pr .tg{font-size:var(--fs-nano);color:rgba(111,233,255,.4);letter-spacing:.1em}
 
 #approval{
   display:none;border:1px solid rgba(255,180,87,.55);background:rgba(255,180,87,.07);
@@ -214,9 +259,81 @@ header{
 }
 #approval.on{display:block}
 @keyframes approvalpulse{0%,100%{box-shadow:inset 0 0 22px rgba(255,180,87,.07),0 0 10px rgba(255,180,87,.12)}50%{box-shadow:inset 0 0 26px rgba(255,180,87,.12),0 0 22px rgba(255,180,87,.3)}}
-#approval .hd{font-size:8px;letter-spacing:.16em;color:var(--amber);margin-bottom:4px}
-#approval .qs{font-size:10px;line-height:1.5;color:var(--cyan-hot)}
-#approval .hint2{margin-top:5px;font-size:8px;color:rgba(255,180,87,.75);letter-spacing:.1em}
+#approval .hd{font-size:var(--fs-nano);letter-spacing:.16em;color:var(--amber);margin-bottom:4px}
+#approval .qs{font-size:var(--fs-body);line-height:1.5;color:var(--cyan-hot)}
+#approval .hint2{margin-top:5px;font-size:var(--fs-nano);color:rgba(255,180,87,.75);letter-spacing:.1em}
+
+/* --- the command palette -----------------------------------
+   Every action on this page reachable from the keyboard without
+   hunting for the button that does it.                         */
+#palette{
+  display:none;position:fixed;inset:0;z-index:80;
+  background:rgba(2,6,12,.72);
+  align-items:flex-start;justify-content:center;
+  padding:max(9vh,60px) 16px 16px;
+}
+#palette.on{display:flex;animation:palin .16s var(--ease) both}
+@keyframes palin{from{opacity:0}to{opacity:1}}
+#palette .box{
+  position:relative;                 /* the corner brackets anchor to this */
+  width:min(560px,100%);max-height:min(66vh,560px);display:flex;flex-direction:column;
+  border:1px solid var(--line);background:rgba(5,14,26,.99);
+  box-shadow:0 0 0 1px rgba(111,233,255,.07),0 24px 70px rgba(0,0,0,.72),inset 0 0 40px rgba(111,233,255,.05);
+  animation:palbox .2s var(--ease) both;
+}
+@keyframes palbox{from{opacity:0;transform:translate3d(0,-10px,0) scale(.99)}to{opacity:1;transform:none}}
+#palette .box::before,#palette .box::after{
+  content:'';position:absolute;width:11px;height:11px;border:1px solid var(--cyan);opacity:.7;pointer-events:none;
+}
+#palette .box::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+#palette .box::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+#palette .q{
+  font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;
+  font-size:var(--fs-body);color:var(--cyan-hot);background:transparent;
+  border:0;border-bottom:1px solid var(--line-soft);padding:14px 16px;outline:none;flex:0 0 auto;
+}
+#palette .q::placeholder{color:rgba(111,233,255,.3)}
+#palette .list{overflow-y:auto;padding:5px 0;flex:1 1 auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+#palette .list::-webkit-scrollbar{width:3px}
+#palette .list::-webkit-scrollbar-thumb{background:var(--line)}
+#palette .it{
+  display:flex;align-items:center;gap:11px;padding:9px 16px;cursor:pointer;
+  font-size:var(--fs-small);color:var(--cyan-dim);border-left:2px solid transparent;
+}
+#palette .it .ic{width:13px;text-align:center;color:rgba(111,233,255,.45);flex:0 0 auto}
+#palette .it .nm{flex:1 1 auto;color:var(--cyan-hot);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#palette .it .hint{font-size:var(--fs-nano);color:rgba(111,233,255,.38);letter-spacing:.1em;flex:0 0 auto}
+#palette .it.sel{background:rgba(111,233,255,.1);border-left-color:var(--cyan);color:var(--cyan-hot)}
+#palette .it.sel .ic{color:var(--cyan)}
+#palette .empty{padding:20px 16px;font-size:var(--fs-micro);color:rgba(111,233,255,.4);text-align:center}
+#palette .foot{
+  flex:0 0 auto;border-top:1px solid var(--line-soft);padding:7px 16px;
+  font-size:var(--fs-nano);letter-spacing:.14em;color:rgba(111,233,255,.35);
+  display:flex;gap:14px;flex-wrap:wrap;
+}
+
+/* --- transient notices -------------------------------------
+   The log is the record; this is for the one thing that just
+   happened and should not be missed while she is talking.    */
+#toasts{
+  /* Below the header, over the top of the orb: central enough to be
+     seen without covering the clock, the objective or the briefing. */
+  position:fixed;z-index:70;left:50%;transform:translateX(-50%);
+  top:calc(clamp(68px,9vh,116px) + env(safe-area-inset-top));
+  display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;
+  max-width:min(440px,calc(100vw - 24px));
+}
+.toast{
+  max-width:100%;border:1px solid var(--line);background:rgba(5,16,28,.97);
+  padding:8px 12px;font-size:var(--fs-micro);letter-spacing:.1em;color:var(--cyan-hot);
+  box-shadow:0 10px 30px rgba(0,0,0,.6),inset 0 0 20px rgba(111,233,255,.05);
+  animation:toastin .26s var(--ease) both;
+}
+.toast.out{animation:toastout .22s var(--ease) both}
+.toast.warn{border-color:rgba(255,180,87,.5);color:var(--amber)}
+.toast.ok{border-color:rgba(92,255,177,.45);color:var(--green)}
+@keyframes toastin{from{opacity:0;transform:translate3d(0,-12px,0)}to{opacity:1;transform:none}}
+@keyframes toastout{from{opacity:1}to{opacity:0;transform:translate3d(0,-8px,0)}}
 
 /* --- the briefing sheet ------------------------------------
    She says three sentences; the research behind them lands here.
@@ -228,32 +345,31 @@ header{
   bottom:calc(var(--pad) + 2px + env(safe-area-inset-bottom));
   width:min(420px,calc(100vw - var(--pad)*2 - 4px));max-height:min(62vh,520px);
   flex-direction:column;
-  border:1px solid var(--line);background:rgba(4,12,22,.96);
+  border:1px solid var(--line);background:rgba(4,12,22,.985);
   box-shadow:inset 0 0 30px rgba(111,233,255,.06),0 0 26px rgba(3,7,15,.8);
-  backdrop-filter:blur(2px);
 }
 #brief.on{display:flex}
 #brief .bhd{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:7px 10px;border-bottom:1px solid var(--line-soft);
-  font-size:8px;letter-spacing:.18em;color:var(--cyan);text-transform:uppercase;flex:0 0 auto;
+  font-size:var(--fs-nano);letter-spacing:.18em;color:var(--cyan);text-transform:uppercase;flex:0 0 auto;
 }
 #brief .bhd .x{
   cursor:pointer;border:1px solid var(--line);background:none;color:var(--cyan-dim);
-  font:inherit;font-size:8px;letter-spacing:.1em;padding:2px 7px;
+  font:inherit;font-size:var(--fs-nano);letter-spacing:.1em;padding:2px 7px;
 }
 #brief .bhd .x:hover{color:var(--cyan-hot);border-color:var(--cyan)}
 #brief .bbody{
-  padding:9px 11px;overflow-y:auto;font-size:10px;line-height:1.65;
+  padding:9px 11px;overflow-y:auto;font-size:var(--fs-body);line-height:1.65;
   color:rgba(185,246,255,.9);white-space:pre-wrap;word-break:break-word;flex:1 1 auto;
 }
 #brief .bsrc{
   padding:7px 11px 9px;border-top:1px solid var(--line-soft);flex:0 0 auto;
   max-height:112px;overflow-y:auto;
 }
-#brief .bsrc .lbl{font-size:7.5px;letter-spacing:.18em;color:rgba(111,233,255,.45);margin-bottom:4px}
+#brief .bsrc .lbl{font-size:var(--fs-nano);letter-spacing:.18em;color:rgba(111,233,255,.45);margin-bottom:4px}
 #brief .bsrc a{
-  display:block;font-size:8.5px;line-height:1.5;color:var(--cyan-dim);text-decoration:none;
+  display:block;font-size:var(--fs-micro);line-height:1.5;color:var(--cyan-dim);text-decoration:none;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 #brief .bsrc a:hover{color:var(--cyan-hot);text-decoration:underline}
@@ -261,11 +377,16 @@ header{
 
 /* --- center column ----------------------------------------- */
 .col-center{display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:8px;min-height:0}
-.orbstage{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.orbstage{
+  position:relative;min-height:0;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:filter var(--med) var(--ease);
+}
+.orbstage:hover{filter:brightness(1.1) saturate(1.06)}
+.orbstage:active{filter:brightness(1.22)}
 #orb{width:100%;height:100%;display:block}
 .orbstage .hint{
   position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
-  font-size:8.5px;color:var(--cyan-dim);letter-spacing:.2em;pointer-events:none;
+  font-size:var(--fs-micro);color:var(--cyan-dim);letter-spacing:.2em;pointer-events:none;
   animation:blip 3.4s ease-in-out infinite;
 }
 .saystage{
@@ -273,35 +394,61 @@ header{
   display:flex;align-items:center;justify-content:center;text-align:center;
   box-shadow:inset 0 0 22px rgba(111,233,255,.05);
 }
-#say{font-size:10px;line-height:1.6;color:var(--cyan-hot);text-shadow:var(--glow-soft);max-height:82px;overflow:hidden}
+#say{font-size:var(--fs-body);line-height:1.6;color:var(--cyan-hot);text-shadow:var(--glow-soft);max-height:82px;overflow:hidden}
 #say .caret{display:inline-block;width:6px;height:11px;background:var(--cyan);margin-left:3px;vertical-align:-1px;animation:blip 1s steps(1) infinite}
 .controls{display:flex;gap:8px;align-items:stretch}
 button.hud{
-  font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:9px;
+  position:relative;overflow:hidden;
+  font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:var(--fs-small);
   color:var(--cyan);background:rgba(111,233,255,.05);border:1px solid var(--line);
-  padding:8px 12px;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s;white-space:nowrap;
+  padding:8px 12px;cursor:pointer;white-space:nowrap;
+  transition:background var(--fast) var(--ease),color var(--fast) var(--ease),
+             box-shadow var(--fast) var(--ease),border-color var(--fast) var(--ease),
+             transform var(--fast) var(--ease);
 }
-button.hud:hover{background:rgba(111,233,255,.14);color:var(--cyan-hot);box-shadow:0 0 12px rgba(111,233,255,.28)}
+button.hud:hover{background:rgba(111,233,255,.14);color:var(--cyan-hot);border-color:var(--cyan-dim);box-shadow:0 0 12px rgba(111,233,255,.28)}
+/* A press should be felt, not only seen — the button gives, then
+   returns. Translate rather than scale, so the 1px borders stay crisp. */
+button.hud:active{transform:translateY(1px);background:rgba(111,233,255,.2)}
+/* A light sweeps across on hover: the one piece of pure decoration
+   here, and it runs on transform so it costs nothing. */
+button.hud::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(185,246,255,.17) 50%,transparent 62%);
+  transform:translate3d(-130%,0,0);
+}
+button.hud:hover::after{transition:transform .5s var(--ease);transform:translate3d(130%,0,0)}
+.calm button.hud::after{display:none}
 button.hud.live{background:rgba(255,180,87,.14);border-color:rgba(255,180,87,.5);color:var(--amber);box-shadow:0 0 14px rgba(255,180,87,.3)}
 button.hud:disabled{opacity:.35;cursor:not-allowed}
 #ask{
   flex:1 1 auto;min-width:0;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;
-  font-size:9px;color:var(--cyan-hot);background:rgba(111,233,255,.04);
+  font-size:var(--fs-small);color:var(--cyan-hot);background:rgba(111,233,255,.04);
   border:1px solid var(--line);padding:8px 10px;outline:none;
 }
 #ask::placeholder{color:rgba(111,233,255,.32)}
 #ask:focus{border-color:var(--cyan-dim);box-shadow:0 0 12px rgba(111,233,255,.2)}
 
+/* Keyboard users get a ring; mouse users never see one. */
+:focus{outline:none}
+:focus-visible{outline:1px solid var(--cyan);outline-offset:2px;box-shadow:0 0 14px rgba(111,233,255,.35)}
+
+/* Transitions off for anyone who asked their system for less motion. */
+.calm *,.calm *::before,.calm *::after{
+  animation-duration:.01ms !important;animation-iteration-count:1 !important;
+  transition-duration:.01ms !important;
+}
+
 /* --- radar / waveform -------------------------------------- */
 .canvasbox{position:relative;width:100%}
 #radar{width:100%;height:clamp(92px,13vh,128px);display:block}
 #wave{width:100%;height:clamp(44px,6.5vh,62px);display:block}
-.contacts{margin-top:7px;font-size:8.5px;color:var(--cyan-dim);line-height:1.6}
+.contacts{margin-top:7px;font-size:var(--fs-micro);color:var(--cyan-dim);line-height:1.6}
 .contacts .c{display:flex;justify-content:space-between;gap:8px}
 .contacts .c b{color:var(--cyan-hot);font-weight:500}
-.audiometa{display:flex;justify-content:space-between;font-size:8.5px;color:var(--cyan-dim);margin-top:5px}
+.audiometa{display:flex;justify-content:space-between;font-size:var(--fs-micro);color:var(--cyan-dim);margin-top:5px}
 .audiowarn{
-  display:none;margin-top:6px;padding:4px 6px;font-size:8px;letter-spacing:.08em;
+  display:none;margin-top:6px;padding:4px 6px;font-size:var(--fs-nano);letter-spacing:.08em;
   color:var(--amber);border:1px solid rgba(255,180,87,.45);background:rgba(255,180,87,.07);
   cursor:pointer;animation:blip 2s ease-in-out infinite;
 }
@@ -317,7 +464,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
 .objective::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
 .objective::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
 .objgrid{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:16px;align-items:center}
-.objlabel{font-size:8.5px;color:var(--cyan-dim);letter-spacing:.16em;margin-bottom:3px}
+.objlabel{font-size:var(--fs-micro);color:var(--cyan-dim);letter-spacing:.16em;margin-bottom:3px}
 .bignum{
   font-size:clamp(26px,4vw,46px);line-height:1;color:var(--cyan-hot);
   text-shadow:0 0 12px rgba(111,233,255,.6),0 0 34px rgba(111,233,255,.28);font-variant-numeric:tabular-nums;
@@ -325,17 +472,17 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
 .bignum.target{color:var(--amber);text-shadow:0 0 12px rgba(255,180,87,.5)}
 .bignum .u{font-size:.42em;color:var(--cyan-dim);margin-left:3px}
 .segbar{display:flex;gap:2px;height:11px;margin-top:8px}
-.seg{flex:1 1 0;border:1px solid var(--line-soft);background:rgba(111,233,255,.04);transition:background .3s,box-shadow .3s}
+.seg{flex:1 1 0;border:1px solid var(--line-soft);background:rgba(111,233,255,.04);transition:background var(--med) var(--ease),box-shadow var(--med) var(--ease),border-color var(--med) var(--ease)}
 .seg.on{background:linear-gradient(180deg,var(--cyan),rgba(111,233,255,.45));box-shadow:0 0 8px rgba(111,233,255,.5);border-color:transparent}
 .seg.edge{background:var(--cyan-hot);box-shadow:0 0 12px var(--cyan-hot)}
 .stats{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:9px}
 .stat{min-width:84px}
-.stat .k{font-size:8px;color:rgba(111,233,255,.45);letter-spacing:.13em}
-.stat .v{font-size:13px;color:var(--cyan-hot);text-shadow:var(--glow-soft);font-variant-numeric:tabular-nums;margin-top:2px}
+.stat .k{font-size:var(--fs-nano);color:rgba(111,233,255,.45);letter-spacing:.13em}
+.stat .v{font-size:var(--fs-lead);color:var(--cyan-hot);text-shadow:var(--glow-soft);font-variant-numeric:tabular-nums;margin-top:2px}
 .stat .v.am{color:var(--amber)}
 .readouts{display:grid;gap:9px;text-align:right}
-.readout .k{font-size:8px;color:rgba(111,233,255,.45);letter-spacing:.13em}
-.readout .v{font-size:15px;color:var(--cyan-hot);text-shadow:var(--glow-soft);font-variant-numeric:tabular-nums}
+.readout .k{font-size:var(--fs-nano);color:rgba(111,233,255,.45);letter-spacing:.13em}
+.readout .v{font-size:var(--fs-stat);color:var(--cyan-hot);text-shadow:var(--glow-soft);font-variant-numeric:tabular-nums}
 .readout .v.ok{color:var(--green)}
 .readout .v.am{color:var(--amber)}
 
@@ -355,6 +502,51 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
 #bootveil .bl{font-size:11px;color:var(--cyan);text-shadow:var(--glow);letter-spacing:.28em}
 #bootveil .bbar{width:min(340px,60vw);height:2px;background:rgba(111,233,255,.14);overflow:hidden}
 #bootveil .bbar i{display:block;height:100%;width:0;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+
+/* ================= THE LADDER =================
+   Three columns is right on a laptop and wrong everywhere else. Each
+   step below changes the shape of the page rather than only shrinking
+   it, because a column squeezed to 150px is not a narrower column, it
+   is an unusable one.                                                */
+
+/* ---- big desktop / 4K: stop the HUD stretching into a billboard ---- */
+@media (min-width:1700px){
+  :root{--pad:14px}
+  #shell{max-width:2300px;margin-inline:auto;gap:12px}
+  main{grid-template-columns:minmax(260px,19vw) minmax(0,1fr) minmax(260px,19vw);gap:14px}
+  .panel::before,.panel::after{width:12px;height:12px}
+}
+
+/* ---- tablet: three columns would be three slivers ------------------
+   The one-screen rule was written for a laptop. A tablet has a laptop's
+   width and nothing like its height, so the orb keeps the top of the
+   screen and the panels run underneath in two columns — scrolling,
+   because the alternative is hiding panels, and a HUD that hides the
+   reading you wanted is worse than one you scroll.                  */
+@media (min-width:761px) and (max-width:1100px){
+  html,body{overflow:auto;height:auto}
+  #shell{height:auto;min-height:100dvh}
+  main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+  .col-center{grid-column:1/-1}
+  .orbstage{height:min(38vh,340px);min-height:220px}
+  .col-left,.col-right{grid-template-rows:none;align-content:start}
+  .log{max-height:30vh}
+  .objgrid{gap:12px 18px}
+}
+
+/* ---- any touch device: hover states are a lie, size is not -------- */
+@media (hover:none){
+  .doors a,button.hud{min-height:42px;display:flex;align-items:center;justify-content:center}
+  .doors a{flex-direction:column;gap:2px}
+  .panel:hover{border-color:var(--line);box-shadow:inset 0 0 22px rgba(111,233,255,.05),0 0 10px rgba(111,233,255,.05)}
+  #brief .bhd .x{padding:8px 12px}
+}
+
+/* ---- phone in landscape: short and wide, the worst of both -------- */
+@media (max-width:900px) and (max-height:480px) and (orientation:landscape){
+  .brand .sub,.brand .obj,.contacts,.audiometa{display:none}
+  .orbstage{max-height:40vh}
+}
 
 @media (max-height:680px){
   :root{--pad:8px}
@@ -436,6 +628,16 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
 <div class="bg-scan"></div>
 <div class="bg-vignette"></div>
 
+<div id="toasts"></div>
+
+<div id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="box">
+    <input class="q" id="palQ" autocomplete="off" spellcheck="false" placeholder="Type a command, or ask her something…">
+    <div class="list" id="palList"></div>
+    <div class="foot"><span>↑↓ Move</span><span>⏎ Run</span><span>ESC Close</span></div>
+  </div>
+</div>
+
 <div id="bootveil">
   <div class="bl" id="bootline">INITIALISING F.R.I.D.A.Y.</div>
   <div class="bbar"><i id="bootbar"></i></div>
@@ -452,7 +654,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
     </div>
     <div class="pills" id="pills"></div>
     <div class="clockwrap">
-      <div class="clock" id="clock">00:00:00<span class="cs">.00</span></div>
+      <div class="clock" id="clock"><span id="clkHMS">00:00:00</span><span class="cs" id="clkCS">.00</span></div>
       <div class="meta"><span id="dateline">—</span> &nbsp;//&nbsp; SES <span id="sessionid">—</span></div>
     </div>
   </header>
@@ -479,7 +681,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
     <div class="col-center">
       <div class="orbstage boot" data-boot="3" id="orbstage" title="Click to talk — or hold SPACE">
         <canvas id="orb"></canvas>
-        <div class="hint" id="orbhint">Tap to talk &nbsp;//&nbsp; hold SPACE</div>
+        <div class="hint" id="orbhint">Tap to talk</div>
       </div>
       <div id="approval">
         <div class="hd">◆ Claude is asking permission</div>
@@ -495,7 +697,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
       <div class="controls boot" data-boot="5">
         <button class="hud" id="btnTalk">▲ Engage voice</button>
         <button class="hud" id="btnBrief">◆ Morning brief</button>
-        <button class="hud" id="btnAudio" title="Report exactly what is blocking the sound">◼ Audio check</button>
+        <button class="hud" id="btnPalette">Commands</button>
         <input id="ask" autocomplete="off" spellcheck="false" placeholder="Type a command…">
         <button class="hud" id="btnSend">Send ▸</button>
       </div>
@@ -919,6 +1121,16 @@ const DATA = {
    ================================================================ */
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+/* A Mac shows ⌘, a PC shows CTRL, and a phone shows neither, because it
+   has no modifier key to press — promising a shortcut that cannot be
+   typed is worse than promising nothing at all. */
+const TOUCH_ONLY = window.matchMedia('(hover:none)').matches;
+const IS_MAC = /mac|iphone|ipad|ipod/i.test(navigator.platform || navigator.userAgent);
+const PAL_KEY = TOUCH_ONLY ? '' : (IS_MAC ? '\u2318K' : 'CTRL+K');
+const IDLE_HINT = TOUCH_ONLY
+  ? 'Tap to talk  //  \u2630 for commands'
+  : 'Tap to talk  //  hold SPACE  //  ' + PAL_KEY + ' for commands';
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 const pad2 = (n) => String(n).padStart(2,'0');
 const rnd  = (a,b) => a + Math.random()*(b-a);
@@ -947,7 +1159,7 @@ function setState(s){
   STATE = s;
   const tag = $('#audioTag'), mode = $('#audioMode'), hint = $('#orbhint');
   const map = {
-    idle:      ['IDLE',      'MIC: STANDBY',   'Tap to talk // hold SPACE'],
+    idle:      ['IDLE',      'MIC: STANDBY',   IDLE_HINT],
     listening: ['LISTENING', 'MIC: OPEN',      'Listening…'],
     thinking:  ['PROCESSING','MIC: CLOSED',    'Processing…'],
     speaking:  ['OUTPUT',    'TTS: ACTIVE',    'Speaking…']
@@ -994,14 +1206,24 @@ function renderDoors(){
 }
 
 /* ---- 3.2 clock (hours : minutes : seconds . hundredths) -------- */
+/* Parsing a fresh innerHTML sixty times a second was costing more than
+   everything the orb draws. The three readings change at three different
+   rates — hundredths, seconds, days — so each one is written only when
+   it actually differs from what is already on screen. */
+const clkEls = { hms: null, cs: null, date: null };
+let lastHMS = '', lastCS = '', lastDate = '';
 function tickClock(){
+  if (!clkEls.hms){ clkEls.hms = $('#clkHMS'); clkEls.cs = $('#clkCS'); clkEls.date = $('#dateline'); }
   const d = new Date();
-  const cs = pad2(Math.floor(d.getMilliseconds()/10));
-  $('#clock').innerHTML = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}<span class="cs">.${cs}</span>`;
-  $('#dateline').textContent =
-    d.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase()
+  const cs = '.' + pad2(Math.floor(d.getMilliseconds()/10));
+  if (cs !== lastCS){ clkEls.cs.textContent = cs; lastCS = cs; }
+
+  const hms = pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+  if (hms !== lastHMS){ clkEls.hms.textContent = hms; lastHMS = hms; }
+
+  const date = d.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase()
     + ' ' + DATA.meta.timezoneLabel;
-  requestAnimationFrame(tickClock);
+  if (date !== lastDate){ clkEls.date.textContent = date; lastDate = date; }
 }
 
 /* ---- 3.3 system vitals ---------------------------------------- */
@@ -1420,21 +1642,98 @@ for (let i = 0; i < PARTICLES; i++){
   pts.push({ x: Math.cos(th)*r, y, z: Math.sin(th)*r, s: rnd(.55, 1.35) });
 }
 
-let ow = 0, oh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+let ow = 0, oh = 0, dpr = 1;
+
+/* ---- graphics budget -------------------------------------------
+   The same page runs on a 4K desktop and on a phone, and the orb is
+   the only thing on screen expensive enough to matter. Rather than
+   pick one particle count that is wasteful on one device and a slide
+   show on the other, the loop watches its own frame time and moves
+   between three tiers. Hysteresis on both edges, so it settles
+   instead of flickering between two tiers forever. */
+const GFX = {
+  tier: 2,                       // 2 full, 1 trimmed, 0 bare
+  particles: 920,
+  mirror: true,                  // the mirrored half of the vocoder ring
+  softGlow: true,                // the radial core gradient
+  arcGlow: true,                 // shadowBlur on the HUD arcs
+  ticks: [90, 60],
+  reduced: false
+};
+const TIERS = [
+  { particles: 300, mirror:false, softGlow:false, arcGlow:false, ticks:[45,30] },
+  { particles: 560, mirror:false, softGlow:true,  arcGlow:false, ticks:[60,40] },
+  { particles: 920, mirror:true,  softGlow:true,  arcGlow:true,  ticks:[90,60] }
+];
+function applyTier(n){
+  const t = TIERS[GFX.tier = clamp(n, 0, 2)];
+  GFX.particles = t.particles; GFX.mirror = t.mirror;
+  GFX.softGlow = t.softGlow; GFX.arcGlow = t.arcGlow; GFX.ticks = t.ticks;
+}
+
+/* Someone who has asked their system for less motion gets the HUD
+   without the drifting scanlines and with a calmer orb — not a static
+   page, which would read as broken. */
+const motionQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+function applyMotionPref(){
+  GFX.reduced = motionQ.matches;
+  document.documentElement.classList.toggle('calm', GFX.reduced);
+}
+applyMotionPref();
+motionQ.addEventListener ? motionQ.addEventListener('change', applyMotionPref)
+                         : motionQ.addListener(applyMotionPref);
+
 function sizeCanvas(cv, ctx){
   const rect = cv.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width)), h = Math.max(1, Math.floor(rect.height));
-  cv.width = w * dpr; cv.height = h * dpr;
+  const want = { w: Math.round(w*dpr), h: Math.round(h*dpr) };
+  /* Assigning width/height clears the canvas and reallocates its
+     backing store, so only do it when the size really changed —
+     a ResizeObserver fires far more often than the box moves. */
+  if (cv.width !== want.w || cv.height !== want.h){ cv.width = want.w; cv.height = want.h; }
   ctx.setTransform(dpr,0,0,dpr,0,0);
   return [w,h];
 }
 function resizeAll(){
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  /* A 4K screen at devicePixelRatio 2 means four times the pixels for
+     the same picture. Cap it by area rather than by ratio so a big
+     display stays sharp without quadrupling the fill cost. */
+  const raw = window.devicePixelRatio || 1;
+  const area = window.innerWidth * window.innerHeight;
+  dpr = Math.min(raw, area > 3200000 ? 1.25 : area > 2000000 ? 1.5 : 2);
   [ow, oh] = sizeCanvas(orb, octx);
   sizeCanvas(radar, rctx);
   sizeCanvas(wave, wctx);
 }
-window.addEventListener('resize', () => { resizeAll(); });
+
+/* Resize storms (a drag, a rotation, a keyboard opening) collapse into
+   one measurement on the next frame. */
+let resizeQueued = false;
+function queueResize(){
+  if (resizeQueued) return;
+  resizeQueued = true;
+  requestAnimationFrame(() => { resizeQueued = false; resizeAll(); });
+}
+window.addEventListener('resize', queueResize);
+window.addEventListener('orientationchange', queueResize);
+/* Called from boot, once the radar and waveform canvases further down
+   this file actually exist. The window is not the only thing that
+   resizes them: opening the briefing, or a panel changing height, moves
+   the boxes too. */
+function watchCanvasBoxes(){
+  if (!window.ResizeObserver) return;
+  const ro = new ResizeObserver(queueResize);
+  [orb, radar, wave].forEach(c => { if (c) ro.observe(c.parentElement || c); });
+}
+
+/* Scratch space for the buckets above, allocated once at startup —
+   a typed array reused every frame rather than nine hundred objects
+   per frame for the collector to clean up afterwards. */
+const ALPHA_STEPS = 7;                       // cyan steps; white gets the same again
+const BUCKETS = ALPHA_STEPS * 2;
+const BUCKET_CAP = PARTICLES;                // worst case: all in one bucket
+const bucketXY = new Float32Array(BUCKETS * BUCKET_CAP * 3);
+const bucketLen = new Uint16Array(BUCKETS);
 
 let spin = 0, ringA = 0, t0 = performance.now();
 
@@ -1444,25 +1743,28 @@ function drawOrb(now){
   /* energy: how excited the orb looks. Speaking/thinking pulse harder. */
   const targetE = liveLevel !== null ? clamp(.35 + liveLevel, 0, 1)
                 : STATE === 'speaking' ? 1 : STATE === 'thinking' ? .72 : STATE === 'listening' ? .5 : .16;
-  energy += (targetE - energy) * 0.06;
+  energy += (targetE - energy) * (1 - Math.pow(1 - 0.06, dt / 16.67));
 
   const pulse = 1 + energy * 0.16 * Math.sin(now / (STATE === 'speaking' ? 110 : 320));
   spin  += 0.00042 * dt * (1 + energy * 0.85);
   ringA += 0.00020 * dt;
 
   octx.clearRect(0,0,ow,oh);
+  if (ow < 12 || oh < 12) return;
   const cx = ow/2, cy = oh/2;
   const R = Math.min(ow, oh) * 0.325 * pulse;       // sphere radius
   const tilt = 0.42 + Math.sin(now/9000) * 0.12;
 
   /* --- soft core glow --- */
   const bass = spectrum ? (spectrum[0] + spectrum[1] + spectrum[2]) / 3 : 0;
+  if (GFX.softGlow){
   const g = octx.createRadialGradient(cx, cy, 0, cx, cy, R*(1.9 + bass*0.5));
   g.addColorStop(0,   `rgba(140,240,255,${0.16 + energy*0.20 + bass*0.28})`);
   g.addColorStop(0.35,`rgba(90,200,255,${0.08 + energy*0.10})`);
   g.addColorStop(1,   'rgba(10,40,70,0)');
   octx.fillStyle = g;
   octx.beginPath(); octx.arc(cx, cy, R*1.9, 0, Math.PI*2); octx.fill();
+  }
 
   /* --- particles ---
      Each one belongs to a frequency band, chosen by its height on the
@@ -1474,8 +1776,19 @@ function drawOrb(now){
   const cosX = Math.cos(tilt), sinX = Math.sin(tilt);
   const live = !!spectrum;
 
-  for (let i = 0; i < pts.length; i++){
-    const p = pts[i];
+  /* Every particle used to set its own fillStyle and run its own
+     fillRect — nine hundred canvas state changes a frame, which was
+     most of the cost of the whole page. They are sorted into a small
+     number of brightness buckets instead: one colour set and one fill
+     per bucket, and because brightness tracks depth, drawing the
+     buckets in order also sorts the sphere back-to-front for free. */
+  for (let b = 0; b < BUCKETS; b++) bucketLen[b] = 0;
+
+  const count = Math.min(GFX.particles, pts.length);
+  const stride = pts.length / count;              // thin evenly, never clump
+
+  for (let i = 0; i < count; i++){
+    const p = pts[(i * stride) | 0];
 
     /* band from latitude, so the deformation forms rings rather than noise */
     let push = 0, hot = 0;
@@ -1500,10 +1813,30 @@ function drawOrb(now){
     const size = p.s * (0.55 + depth*1.05) * (1 + energy*0.35 + hot*1.1);
 
     /* loud bands burn white, quiet ones stay cyan */
-    octx.fillStyle = (hot > 0.55 || depth > 0.86)
-      ? `rgba(${200 + hot*55},250,255,${clamp(a,0,1)})`
-      : `rgba(111,233,255,${clamp(a,0,1)})`;
-    octx.fillRect(sx - size/2, sy - size/2, size, size);
+    const white = hot > 0.55 || depth > 0.86;
+    const step = clamp(a, 0, 1) * (ALPHA_STEPS - 1) | 0;
+    const b = (white ? ALPHA_STEPS : 0) + step;
+    const n = bucketLen[b];
+    if (n < BUCKET_CAP){
+      const o = b * BUCKET_CAP * 3 + n * 3;
+      bucketXY[o] = sx - size/2; bucketXY[o+1] = sy - size/2; bucketXY[o+2] = size;
+      bucketLen[b] = n + 1;
+    }
+  }
+
+  for (let b = 0; b < BUCKETS; b++){
+    const n = bucketLen[b];
+    if (!n) continue;
+    const white = b >= ALPHA_STEPS;
+    const alpha = ((b % ALPHA_STEPS) + 0.5) / ALPHA_STEPS;
+    octx.fillStyle = white ? `rgba(226,250,255,${alpha})` : `rgba(111,233,255,${alpha})`;
+    octx.beginPath();
+    const base = b * BUCKET_CAP * 3;
+    for (let k = 0; k < n; k++){
+      const o = base + k*3;
+      octx.rect(bucketXY[o], bucketXY[o+1], bucketXY[o+2], bucketXY[o+2]);
+    }
+    octx.fill();
   }
 
   /* --- a ring of spectrum bars around the sphere, like a vocoder --- */
@@ -1523,6 +1856,7 @@ function drawOrb(now){
       octx.lineTo(cx + Math.cos(ang)*(rBar + len), cy + Math.sin(ang)*(rBar + len));
       octx.stroke();
       /* mirrored, so it reads as one instrument rather than a sweep */
+      if (!GFX.mirror) continue;
       const ang2 = -ang - Math.PI;
       octx.beginPath();
       octx.moveTo(cx + Math.cos(ang2)*rBar, cy + Math.sin(ang2)*rBar);
@@ -1535,8 +1869,8 @@ function drawOrb(now){
   /* --- two concentric HUD rings with tick marks --- */
   const R1 = Math.min(ow, oh) * 0.415;
   const R2 = Math.min(ow, oh) * 0.335;
-  drawRing(cx, cy, R1, ringA,        90, 0.26);
-  drawRing(cx, cy, R2, -ringA * 1.6, 60, 0.20);
+  drawRing(cx, cy, R1, ringA,        GFX.ticks[0], 0.26);
+  drawRing(cx, cy, R2, -ringA * 1.6, GFX.ticks[1], 0.20);
 
   /* --- slowly rotating arc segments --- */
   arc(cx, cy, R1 + 6,  ringA*2.2,        1.15, 1.6, .55);
@@ -1544,22 +1878,26 @@ function drawOrb(now){
   arc(cx, cy, R2 - 7, -ringA*3.1,        0.85, 1.2, .45);
   arc(cx, cy, R2 - 7, -ringA*3.1 + 2.2,  0.35, 1.2, .25);
   arc(cx, cy, R*1.35 , ringA*5.0,        0.30, 1.0, .30 + energy*.4);
-
-  requestAnimationFrame(drawOrb);
 }
+/* Ninety ticks used to mean ninety beginPath/stroke pairs. They come in
+   only two lengths, so two paths draw the lot. */
 function drawRing(cx, cy, r, rot, ticks, alpha){
   octx.save();
   octx.strokeStyle = `rgba(111,233,255,${alpha})`;
   octx.lineWidth = 1;
   octx.beginPath(); octx.arc(cx, cy, r, 0, Math.PI*2); octx.stroke();
-  for (let i = 0; i < ticks; i++){
-    const a = rot + (i/ticks) * Math.PI*2;
-    const long = i % 5 === 0;
-    const l = long ? 7 : 3.2;
+
+  for (let pass = 0; pass < 2; pass++){
+    const long = pass === 0, l = long ? 7 : 3.2;
     octx.globalAlpha = long ? 0.95 : 0.45;
     octx.beginPath();
-    octx.moveTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
-    octx.lineTo(cx + Math.cos(a)*(r+l), cy + Math.sin(a)*(r+l));
+    for (let i = long ? 0 : 1; i < ticks; i += long ? 5 : 1){
+      if (!long && i % 5 === 0) continue;
+      const a = rot + (i/ticks) * Math.PI*2;
+      const ca = Math.cos(a), sa = Math.sin(a);
+      octx.moveTo(cx + ca*r, cy + sa*r);
+      octx.lineTo(cx + ca*(r+l), cy + sa*(r+l));
+    }
     octx.stroke();
   }
   octx.restore();
@@ -1568,8 +1906,10 @@ function arc(cx, cy, r, start, len, lw, alpha){
   octx.save();
   octx.strokeStyle = `rgba(140,240,255,${clamp(alpha,0,1)})`;
   octx.lineWidth = lw;
-  octx.shadowColor = 'rgba(111,233,255,.8)';
-  octx.shadowBlur = 8;
+  /* A canvas shadow is a blur pass over the whole dirty region, which is
+     the most expensive thing per pixel on this page — the first thing a
+     struggling device gives up. */
+  if (GFX.arcGlow){ octx.shadowColor = 'rgba(111,233,255,.8)'; octx.shadowBlur = 8; }
   octx.beginPath(); octx.arc(cx, cy, r, start, start + len); octx.stroke();
   octx.restore();
 }
@@ -1579,9 +1919,12 @@ function arc(cx, cy, r, start, len, lw, alpha){
    ================================================================ */
 const radar = $('#radar'), rctx = radar.getContext('2d');
 let sweep = 0;
-function drawRadar(){
+function drawRadar(now, dt){
   const w = radar.width/dpr, h = radar.height/dpr;
-  const cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 4;
+  /* A canvas in a hidden or collapsed box measures zero, and a radius
+     of minus four throws on every arc for as long as it stays hidden. */
+  if (w < 12 || h < 12) return;
+  const cx = w/2, cy = h/2, R = Math.max(2, Math.min(w,h)/2 - 4);
   rctx.clearRect(0,0,w,h);
 
   rctx.strokeStyle = 'rgba(111,233,255,.22)';
@@ -1590,7 +1933,7 @@ function drawRadar(){
   rctx.beginPath(); rctx.moveTo(cx-R,cy); rctx.lineTo(cx+R,cy);
   rctx.moveTo(cx,cy-R); rctx.lineTo(cx,cy+R); rctx.stroke();
 
-  sweep += 0.016;
+  sweep += 0.00096 * dt;          // per millisecond, so the sweep is the same speed at any frame rate
   const grad = rctx.createRadialGradient(cx,cy,0,cx,cy,R);
   grad.addColorStop(0,'rgba(111,233,255,.30)');
   grad.addColorStop(1,'rgba(111,233,255,0)');
@@ -1616,7 +1959,6 @@ function drawRadar(){
       rctx.beginPath(); rctx.arc(x, y, 5 + (1-fresh)*22, 0, Math.PI*2); rctx.stroke();
     }
   });
-  requestAnimationFrame(drawRadar);
 }
 
 /* ================================================================
@@ -1624,14 +1966,18 @@ function drawRadar(){
    ================================================================ */
 const wave = $('#wave'), wctx = wave.getContext('2d');
 let wphase = 0, wamp = 0;
-function drawWave(){
+function drawWave(now, dt){
   const w = wave.width/dpr, h = wave.height/dpr, mid = h/2;
+  if (w < 8 || h < 8) return;
   wctx.clearRect(0,0,w,h);
 
   const target = liveLevel !== null ? clamp(liveLevel, .05, 1)
               : STATE === 'speaking' ? 1 : STATE === 'listening' ? .78 : STATE === 'thinking' ? .3 : 0;
-  wamp += (target - wamp) * 0.08;
-  wphase += STATE === 'speaking' ? 0.16 : 0.09;
+  /* Framerate-independent smoothing: the same approach per millisecond
+     rather than per frame, so the wave settles at the same speed on a
+     120Hz laptop and a struggling phone. */
+  wamp += (target - wamp) * (1 - Math.pow(1 - 0.08, dt / 16.67));
+  wphase += (STATE === 'speaking' ? 0.0096 : 0.0054) * dt;
 
   wctx.strokeStyle = 'rgba(111,233,255,.10)';
   wctx.lineWidth = 1;
@@ -1647,8 +1993,7 @@ function drawWave(){
       wctx.fillStyle = `rgba(${140 + v*115},240,255,${0.3 + v*0.6})`;
       wctx.fillRect(bnd * bw + 0.5, mid - bh/2, Math.max(1, bw - 1.5), bh);
     }
-    $('#audioLvl').textContent = 'LVL ' + pad2(Math.round((liveLevel||0) * 99));
-    requestAnimationFrame(drawWave);
+    setAudioLvl(Math.round((liveLevel||0) * 99));
     return;
   }
 
@@ -1670,8 +2015,16 @@ function drawWave(){
   wctx.stroke();
   wctx.shadowBlur = 0;
 
-  $('#audioLvl').textContent = 'LVL ' + pad2(Math.round(wamp * 99));
-  requestAnimationFrame(drawWave);
+  setAudioLvl(Math.round(wamp * 99));
+}
+
+/* The level readout changes about twice a second; it was being written
+   sixty times a second. */
+let lastLvl = -1, lvlEl = null;
+function setAudioLvl(n){
+  if (n === lastLvl) return;
+  lastLvl = n;
+  (lvlEl || (lvlEl = $('#audioLvl'))).textContent = 'LVL ' + pad2(n);
 }
 
 /* ================================================================
@@ -2469,10 +2822,27 @@ function runBrief(){
 $('#orbstage').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
 $('#btnTalk').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
 $('#btnBrief').addEventListener('click', runBrief);
-$('#btnAudio').addEventListener('click', () => FRIDAY.audioCheck());
+$('#btnPalette').addEventListener('click', openPalette);
 $('#briefClose').addEventListener('click', hideBrief);
+
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && $('#brief').classList.contains('on')) hideBrief();
+  const typing = document.activeElement === $('#ask') || document.activeElement === $('#palQ');
+
+  /* Command palette. Cmd on a Mac, Ctrl everywhere else. */
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')){
+    e.preventDefault();
+    PAL.open ? closePalette() : openPalette();
+    return;
+  }
+  /* "/" opens it too, the way a chat app does — but never while he is
+     already typing a sentence that happens to contain a slash. */
+  if (e.key === '/' && !typing && !PAL.open){ e.preventDefault(); openPalette(); return; }
+
+  if (e.key === 'Escape'){
+    if (PAL.open) return;                       // the palette handles its own
+    if ($('#brief').classList.contains('on')){ hideBrief(); return; }
+    if (document.activeElement === $('#ask')) $('#ask').blur();
+  }
 });
 $('#audioWarn').addEventListener('click', () => {
   if (pendingSpeech) releaseHeldSpeech();
@@ -2491,6 +2861,7 @@ $('#ask').addEventListener('keydown', (e) => { if (e.key === 'Enter'){ e.prevent
 /* Hold SPACE to talk (ignored while typing in the input). */
 window.addEventListener('keydown', (e) => {
   if (e.code !== 'Space' || e.repeat) return;
+  if (PAL.open) return;
   if (document.activeElement === $('#ask')) return;
   e.preventDefault();
   wantsToListen = true;
@@ -2498,6 +2869,7 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('keyup', (e) => {
   if (e.code !== 'Space') return;
+  if (PAL.open) return;
   if (document.activeElement === $('#ask')) return;
   e.preventDefault();
   wantsToListen = false;
@@ -2585,6 +2957,8 @@ function watchUpdates(db){
       if (!firstDelivery){
         const latest = fresh[fresh.length - 1];
         respondWith(latest.spoken || latest.text);
+        toast(fresh.length === 1 ? 'Claude: ' + latest.text
+                                 : fresh.length + ' updates from Claude', 'ok', 6000);
       }
       firstDelivery = false;
     },
@@ -2693,6 +3067,7 @@ function watchApprovals(db){
       if (!announcedApprovals.has(pendingApproval.id)){
         announcedApprovals.add(pendingApproval.id);
         telemetry('CLAUDE ▸ PERMISSION NEEDED — ' + (pendingApproval.question || ''), 'warnln');
+        toast('Claude needs your permission', 'warn', 9000);
         respondWith(pendingApproval.spoken || ('Claude needs your permission. ' + pendingApproval.question));
       }
     },
@@ -3498,6 +3873,275 @@ function startWorkFeed(){
 }
 
 /* ================================================================
+   ▓▓ 11g2. TRANSIENT NOTICES ▓▓
+   ================================================================ */
+/* The telemetry log is the record and it scrolls. A toast is for the
+   one thing that just happened and must not be missed — a permission
+   she needs answering, a job that finished while he was reading
+   something else. It never carries information that exists nowhere
+   else; everything here is also written to a feed. */
+function toast(text, kind, ms){
+  const box = $('#toasts');
+  if (!box) return;
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind ? ' ' + kind : '');
+  el.textContent = text;
+  box.appendChild(el);
+  /* More than three at once is a wall, not a notice. */
+  while (box.children.length > 3) box.removeChild(box.firstChild);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 260);
+  }, Math.max(1600, ms || 4200));
+}
+
+/* ================================================================
+   ▓▓ 11g3. THE COMMAND PALETTE ▓▓
+   ================================================================ */
+/* One keystroke to everything she can do. The actions here are the same
+   functions the buttons call — the palette is a second way in, never a
+   second implementation. Anything typed that is not a command is handed
+   to her as a question, so the box is never a dead end. */
+const PAL = { open:false, sel:0, rows:[], prev:null };
+
+function paletteActions(){
+  const acts = [
+    { ic:'▲', name: recognising ? 'Stop listening' : 'Talk to her',
+      hint:'SPACE', run: () => recognising ? stopListening() : startListening() },
+    { ic:'◆', name:'Morning brief', hint:'', run: runBrief },
+    { ic:'◼', name:'Audio check — what is blocking the sound', hint:'', run: () => FRIDAY.audioCheck() },
+    { ic:'♪', name:'Test her voice', hint:'', run: () => FRIDAY.testVoice() }
+  ];
+
+  /* Every office, as its own row — this is the thing he opens most. */
+  (DATA.offices || []).forEach(o => acts.push({
+    ic:'▸', name:'Open ' + o.label, hint:'OFFICE',
+    run: () => { if (!openOffice(o.label)) toast('No link for ' + o.label, 'warn'); }
+  }));
+
+  acts.push(
+    { ic:'↻', name:'Refresh every source', hint:'', run: refreshEverything },
+    { ic:'☀', name:'Weather in ' + (DATA.world && DATA.world.place || 'The Hague'), hint:'',
+      run: async () => { toast('Checking the weather…'); respondWith(weatherSentence(await getWeather())); } },
+    { ic:'▣', name: $('#brief').classList.contains('on') ? 'Close the briefing' : 'Show the last briefing',
+      hint:'ESC', run: () => $('#brief').classList.contains('on') ? hideBrief()
+                           : ($('#briefBody').textContent.trim() ? $('#brief').classList.add('on')
+                              : toast('No briefing yet', 'warn')) },
+    { ic:'◻', name:'Connection and voice status', hint:'', run: () => {
+        FRIDAY.status();
+        toast('Data ' + dataMode + ' · voice ' + DATA.voice.engine +
+              ' · brain ' + (DATA.brain.enabled ? 'claude' : 'local'), 'ok', 6000);
+      } }
+  );
+  return acts;
+}
+
+/* Subsequence matching, the way an editor's go-to-file box works: "mb"
+   finds Morning Brief, "opnov" finds Open Noviq Studios. Scored so a
+   run of adjacent letters beats the same letters scattered. */
+function fuzzy(needle, hay){
+  const n = needle.toLowerCase(), h = hay.toLowerCase();
+  if (!n) return 1;
+  let i = 0, score = 0, streak = 0;
+  for (let k = 0; k < h.length && i < n.length; k++){
+    if (h[k] !== n[i]) { streak = 0; continue; }
+    streak++;
+    score += 1 + streak * 2 + (k === 0 || h[k-1] === ' ' ? 3 : 0);
+    i++;
+  }
+  return i === n.length ? score : 0;
+}
+
+function paintPalette(){
+  const q = $('#palQ').value.trim();
+  const list = $('#palList');
+
+  PAL.rows = paletteActions()
+    .map(a => ({ a, score: fuzzy(q, a.name) }))
+    .filter(r => r.score > 0)
+    .sort((x, y) => y.score - x.score)
+    .map(r => r.a);
+
+  /* Nothing matched, but he typed something — then it is a question,
+     and the palette says so rather than showing him an empty box. */
+  if (!PAL.rows.length && q){
+    PAL.rows = [{ ic:'?', name:'Ask her: ' + q, hint:'⏎',
+                  run: () => handleUtterance(q) }];
+  }
+
+  PAL.sel = clamp(PAL.sel, 0, Math.max(0, PAL.rows.length - 1));
+  if (!PAL.rows.length){ list.innerHTML = '<div class="empty">Nothing matches that.</div>'; return; }
+
+  list.innerHTML = '';
+  PAL.rows.forEach((a, i) => {
+    const el = document.createElement('div');
+    el.className = 'it' + (i === PAL.sel ? ' sel' : '');
+    el.innerHTML = '<span class="ic"></span><span class="nm"></span><span class="hint"></span>';
+    el.children[0].textContent = a.ic;
+    el.children[1].textContent = a.name;
+    el.children[2].textContent = a.hint || '';
+    el.addEventListener('mouseenter', () => { PAL.sel = i; markSelected(); });
+    el.addEventListener('click', () => runPalette(i));
+    list.appendChild(el);
+  });
+  markSelected();
+}
+function markSelected(){
+  const items = $('#palList').children;
+  for (let i = 0; i < items.length; i++) items[i].classList.toggle('sel', i === PAL.sel);
+  const sel = items[PAL.sel];
+  if (sel && sel.scrollIntoView) sel.scrollIntoView({ block:'nearest' });
+}
+function runPalette(i){
+  const a = PAL.rows[i == null ? PAL.sel : i];
+  closePalette();
+  if (!a) return;
+  try { a.run(); } catch (err){ toast('That failed: ' + err.message, 'warn'); }
+}
+function openPalette(){
+  if (PAL.open) return;
+  PAL.open = true;
+  PAL.prev = document.activeElement;
+  PAL.sel = 0;
+  $('#palQ').value = '';
+  $('#palette').classList.add('on');
+  paintPalette();
+  $('#palQ').focus();
+}
+function closePalette(){
+  if (!PAL.open) return;
+  PAL.open = false;
+  $('#palette').classList.remove('on');
+  /* Put focus back where it was, or the next keystroke goes nowhere. */
+  if (PAL.prev && PAL.prev.focus) PAL.prev.focus();
+}
+
+(function labelPalette(){
+  const btn = $('#btnPalette');
+  btn.textContent = PAL_KEY ? PAL_KEY + '  Commands' : '\u2630  Commands';
+  btn.title = PAL_KEY ? 'Every command, from the keyboard (' + PAL_KEY + ')' : 'Every command';
+  /* The footer hints are keyboard instructions too. */
+  if (TOUCH_ONLY) $('#palette .foot').style.display = 'none';
+})();
+
+$('#palQ').addEventListener('input', () => { PAL.sel = 0; paintPalette(); });
+$('#palQ').addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown'){ e.preventDefault(); PAL.sel = (PAL.sel + 1) % Math.max(1, PAL.rows.length); markSelected(); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); PAL.sel = (PAL.sel - 1 + PAL.rows.length) % Math.max(1, PAL.rows.length); markSelected(); }
+  else if (e.key === 'Enter'){ e.preventDefault(); runPalette(); }
+  else if (e.key === 'Escape'){ e.preventDefault(); closePalette(); }
+});
+$('#palette').addEventListener('mousedown', (e) => { if (e.target === $('#palette')) closePalette(); });
+
+/* Everything she reads from the outside world, re-read on demand. Each
+   one is guarded: a source that is not configured is simply not there,
+   and must not take the others down with it. */
+function refreshEverything(){
+  toast('Re-reading every source…');
+  const jobs = [
+    ['dashboard', () => FRIDAY.refresh()],
+    ['live feed', () => (typeof fetchLive === 'function' && DATA.sources.enabled) && fetchLive()],
+    ['mailbox',   () => bridge.mcp && readMailbox(bridge.mcp)],
+    ['calendar',  () => bridge.mcp && readCalendar(bridge.mcp)],
+    ['work feed', () => pollCommits()],
+    ['board',     () => sync.on && syncPull()]
+  ];
+  let ran = 0;
+  jobs.forEach(([label, fn]) => {
+    try { const r = fn(); if (r !== false && r !== undefined) ran++; }
+    catch (err){ diagnostic('Refresh failed for ' + label + ': ' + err.message, 'warnln'); }
+  });
+  telemetry('Refreshed ' + ran + ' of ' + jobs.length + ' sources', 'sys');
+}
+
+/* ================================================================
+   ▓▓ 11h. THE FRAME LOOP ▓▓
+   ================================================================ */
+/* There were four independent animation callbacks — clock, orb, radar,
+   waveform — each asking the browser for its own frame. Four callbacks
+   means four chances to miss the frame budget and four separate places
+   where a slow one delays the rest. One loop drives all of them, in a
+   fixed order, off one timestamp. */
+let frameHandle = 0, lastFrame = 0, running = false;
+
+/* The rolling average the quality tier is decided on. A single slow
+   frame is meaningless — a garbage collection, a network callback — so
+   the decision is made on a run of them. */
+const frameTimes = new Float32Array(45);
+let frameIdx = 0, framesSeen = 0, sinceTierChange = 0;
+
+function frame(now){
+  frameHandle = requestAnimationFrame(frame);
+  /* Clamp the delta: coming back from a background tab or a locked
+     phone hands you a gap of minutes, and un-clamped that teleports
+     every animation instead of resuming it. */
+  const dt = Math.min(50, Math.max(1, now - lastFrame));
+  lastFrame = now;
+
+  tickClock();
+  drawOrb(now, dt);
+  drawRadar(now, dt);
+  drawWave(now, dt);
+
+  /* ---- did we make the budget? ---- */
+  frameTimes[frameIdx = (frameIdx + 1) % frameTimes.length] = dt;
+  if (framesSeen < frameTimes.length){ framesSeen++; return; }
+  sinceTierChange++;
+
+  let sum = 0;
+  for (let i = 0; i < frameTimes.length; i++) sum += frameTimes[i];
+  const avg = sum / frameTimes.length;
+
+  /* The thresholds are in milliseconds per frame, and the ceiling is
+     set by the display, not by us: a page keeping up perfectly on a
+     60Hz screen measures 16.7ms and never less, so "fast enough to add
+     detail back" has to mean "at or near vsync", not some smaller
+     number it can never reach.
+
+     Going down is urgent and going up is not. Twenty-five frames a
+     second is visibly stepping and acts at once; thirty-six is only a
+     bit short and has to persist before anything is given up; and
+     detail is put back only after a long clean run, which is what
+     stops it flipping between two tiers forever. */
+  const DIRE = 42, SLOW = 28, SMOOTH = 18.5;
+  if (GFX.tier > 0 && (avg > DIRE || (avg > SLOW && sinceTierChange >= 120))){
+    applyTier(GFX.tier - 1); sinceTierChange = 0;
+  } else if (avg < SMOOTH && GFX.tier < 2 && sinceTierChange >= 240){
+    applyTier(GFX.tier + 1); sinceTierChange = 0;
+  } else return;
+
+  /* At the bottom tier the page also sheds its most expensive
+     decorations, which are CSS rather than canvas: a full-viewport
+     layer recomposited every frame costs more than everything the orb
+     draws, so the shimmer stops moving before the HUD starts stepping. */
+  document.documentElement.classList.toggle('lean', GFX.tier === 0);
+  telemetry('Graphics tier ' + ['LEAN','BALANCED','FULL'][GFX.tier] +
+            ' — ' + Math.round(1000/avg) + ' fps', 'sys');
+  /* At the bottom tier the page also sheds its two most expensive
+     decorations, which are CSS rather than canvas. */
+  document.documentElement.classList.toggle('lean', GFX.tier === 0);
+}
+
+function startFrameLoop(){
+  if (running) return;
+  running = true;
+  lastFrame = performance.now();
+  framesSeen = 0; sinceTierChange = 0;
+  frameHandle = requestAnimationFrame(frame);
+}
+function stopFrameLoop(){
+  running = false;
+  cancelAnimationFrame(frameHandle);
+}
+
+/* A backgrounded tab still gets frames on some browsers, and on a phone
+   that is battery spent drawing something nobody is looking at. */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopFrameLoop();
+  else { startFrameLoop(); queueResize(); }
+});
+
+/* ================================================================
    ▓▓ 12. BOOT SEQUENCE ▓▓
    ================================================================ */
 const BOOT_LINES = [
@@ -3517,10 +4161,8 @@ function boot(){
   renderObjective(false);
   displayedCurrent = 0; paintCounter();   // so the arrival counter counts up
   resizeAll();
-  requestAnimationFrame(drawOrb);
-  requestAnimationFrame(drawRadar);
-  requestAnimationFrame(drawWave);
-  requestAnimationFrame(tickClock);
+  watchCanvasBoxes();
+  startFrameLoop();
   setState('idle');
 
   let i = 0;
