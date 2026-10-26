@@ -103,6 +103,43 @@ produces exactly the same result.
 Open the URL in a private window. You should get a Cloudflare login screen, and
 after signing in as that address, the dashboard. Any other address gets refused.
 
+## Step 3b — her brain, her voice, and sync across your devices
+
+Three secrets and one store turn her from a dashboard into an assistant.
+All four are optional and she degrades cleanly without each one.
+
+**Secrets** — the friday Worker → Settings → Variables and Secrets:
+
+| Name | What it buys | Without it |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | real conversation, on every device | the built-in keyword engine |
+| `ELEVEN_API_KEY` | Melania on every line she says | the five recorded lines, then the device voice |
+| `ELEVEN_VOICE_ID` | `tUxvnIoZrrcsUY1wdYot` (Melania) | as above |
+
+**Sync** — one board behind the Mac, the iPad and the phone:
+
+```bash
+npx wrangler kv namespace create FRIDAY_STATE
+```
+
+It prints an id. Put it in `wrangler.jsonc`:
+
+```jsonc
+"kv_namespaces": [
+  { "binding": "STATE", "id": "<the id it printed>" }
+]
+```
+
+Push, and `/api/health` starts reporting `sync: true`. Queue work on the
+MacBook and it is there on the phone; approve it on the iPad and the
+MacBook sees that too. Until the binding exists she says "sync not
+configured — this device only" in diagnostics and keeps working.
+
+**A note on the key.** It lives in the Worker, never in the app. Anything
+shipped to a device can be read off that device, so an app with a key
+baked in is a leaked key. The Worker holds it, Access guards the Worker,
+and the app never sees it.
+
 ## Step 4 — point her at the backend
 
 Once she's online, fill in the three config blocks at the top of `index.html`

@@ -36,19 +36,86 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    if (url.pathname.startsWith('/api/state')) return handleState(request, env, url);
     if (url.pathname === '/api/chat') return handleChat(request, env);
     if (url.pathname === '/api/tts')  return handleTts(request, env, ctx);
     if (url.pathname === '/api/health') {
       return json({
         ok: true,
         brain: !!env.ANTHROPIC_API_KEY,
-        voice: !!(env.ELEVEN_API_KEY && env.ELEVEN_VOICE_ID)
+        voice: !!(env.ELEVEN_API_KEY && env.ELEVEN_VOICE_ID),
+        sync: !!env.STATE
       });
     }
 
     return env.ASSETS.fetch(request);          // everything else is the page
   }
 };
+
+/* ---------- shared state across devices --------------------------------
+ * One store behind every device, so the Mac, the iPad and the phone are
+ * looking at the same board rather than three private copies. Access
+ * already gates this Worker, so the store is only reachable by someone
+ * through the login — it needs no auth of its own.
+ *
+ * Needs a KV namespace bound as STATE. Without it these endpoints answer
+ * 503 and the app falls back to this-device-only, which is exactly how it
+ * behaves today — nothing breaks while the binding is missing.
+ *
+ *   GET  /api/state                     -> the whole board
+ *   POST /api/state/append  {collection, row}
+ *   POST /api/state/update  {collection, id, patch}
+ * ---------------------------------------------------------------------- */
+const COLLECTIONS = ['commands', 'updates', 'approvals', 'projects'];
+const STATE_KEY = 'board';
+const MAX_ROWS = 200;                    // keeps one runaway loop from filling the store
+
+async function readBoard(env){
+  const raw = await env.STATE.get(STATE_KEY, 'json');
+  const board = raw && typeof raw === 'object' ? raw : {};
+  COLLECTIONS.forEach(c => { if (!Array.isArray(board[c])) board[c] = []; });
+  return board;
+}
+
+async function handleState(request, env, url){
+  if (!env.STATE) return json({ error: 'sync not configured' }, 503);
+
+  if (request.method === 'GET'){
+    const board = await readBoard(env);
+    return json({ board, at: Date.now() });
+  }
+
+  if (request.method !== 'POST') return json({ error: 'GET or POST' }, 405);
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'bad json' }, 400); }
+
+  const collection = String(body.collection || '');
+  if (!COLLECTIONS.includes(collection)) return json({ error: 'unknown collection' }, 400);
+
+  const board = await readBoard(env);
+
+  if (url.pathname.endsWith('/append')){
+    const row = (body.row && typeof body.row === 'object') ? body.row : {};
+    row.id = row.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+    row.at = row.at || Date.now();
+    board[collection] = [row, ...board[collection]].slice(0, MAX_ROWS);
+    await env.STATE.put(STATE_KEY, JSON.stringify(board));
+    return json({ ok: true, row });
+  }
+
+  if (url.pathname.endsWith('/update')){
+    const id = String(body.id || '');
+    const patch = (body.patch && typeof body.patch === 'object') ? body.patch : {};
+    const row = board[collection].find(r => r.id === id);
+    if (!row) return json({ error: 'no such row' }, 404);
+    Object.assign(row, patch, { updatedAt: Date.now() });
+    await env.STATE.put(STATE_KEY, JSON.stringify(board));
+    return json({ ok: true, row });
+  }
+
+  return json({ error: 'append or update' }, 404);
+}
 
 /* ---------- conversation ---------------------------------------------- */
 async function handleChat(request, env) {

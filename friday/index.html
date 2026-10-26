@@ -2442,10 +2442,17 @@ function watchUpdates(db){
 function watchProjects(db){
   db.collection('projects').orderBy('at', 'desc').limit(8).onSnapshot(
     (snap) => {
-      const box = $('#projects');
-      if (snap.empty){ bridge.projectsFromDb = false; box.classList.remove('on'); box.innerHTML = ''; return; }
 
       const rows = snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
+      paintProjects(rows);
+    },
+    (e) => diagnostic('Project listener died — ' + e.code, 'warnln')
+  );
+}
+
+function paintProjects(rows){
+      const box = $('#projects');
+      if (!rows.length){ bridge.projectsFromDb = false; box.classList.remove('on'); box.innerHTML = ''; return; }
       const live = rows.filter(r => r.status !== 'done').length;
       const blocked = rows.filter(r => r.status === 'blocked').length;
       bridge.projectsFromDb = true;
@@ -2487,9 +2494,6 @@ function watchProjects(db){
       desk.blocked = rows.filter(r => r.status === 'blocked')
                          .map(r => ({ name: r.name, office: r.office || 'General', note: r.note || '' }));
       renderDoors();
-    },
-    (e) => diagnostic('Project listener died — ' + e.code, 'warnln')
-  );
 }
 
 /* Permission requests. Rows in `approvals`:
@@ -2571,9 +2575,9 @@ function approvalIntent(text){
 
 async function resolveApproval(decision, spokenText){
   const item = pendingApproval;
-  if (!item || !bridge.db) return false;
+  if (!item || (!bridge.db && !sync.on)) return false;
   try {
-    await bridge.db.doc('approvals/' + item.id).update({
+    await boardUpdate('approvals', item.id, {
       status: decision,
       decidedAt: Date.now(),
       decidedBy: DATA.meta.operator,
@@ -2650,12 +2654,12 @@ function parseCommand(text){
 }
 
 async function fileCommand(cmd, spoken){
-  if (!bridge.db){
+  if (!bridge.db && !sync.on){
     respondWith('I can take that down, but I am not connected to the offices from here.');
     return false;
   }
   try {
-    await bridge.db.collection('commands').add({
+    await boardAppend('commands', {
       office: cmd.office, instruction: cmd.instruction,
       said: spoken, at: Date.now(), from: DATA.meta.operator, status: 'queued'
     });
@@ -2969,6 +2973,96 @@ function readMailbox(mcp){
 }
 
 /* ================================================================
+   ▓▓ 11f. SYNC — one board behind every device ▓▓
+   ----------------------------------------------------------------
+   The artifact has its own realtime store, which only exists inside
+   claude.ai. Installed on a Mac, an iPad and a phone, the app talks to
+   the Worker instead, so all three show the same board rather than
+   three private copies. Same collections, same shapes, so everything
+   above this line works either way.
+
+   Polling rather than sockets: the board changes a few times an hour,
+   and a socket that has to survive a phone sleeping, waking and
+   changing networks is a great deal of machinery for that.
+   ================================================================ */
+const sync = { on: false, timer: null, seen: { updates:new Set(), commands:new Set(), approvals:new Set() } };
+
+async function syncPull(){
+  if (!sync.on) return;
+  try {
+    const res = await fetch('/api/state', { cache: 'no-store' });
+    if (!res.ok) return;
+    const { board } = await res.json();
+    if (!board) return;
+    renderBoard(board);
+  } catch (_){ /* offline; the installed app keeps what it had */ }
+}
+
+/* The same rendering the artifact store drives, fed from the Worker. */
+function renderBoard(board){
+  const projects = board.projects || [];
+  if (projects.length){
+    bridge.projectsFromDb = true;
+    paintProjects(projects);
+  }
+
+  (board.updates || []).slice().reverse().forEach(u => {
+    if (sync.seen.updates.has(u.id)) return;
+    const first = sync.seen.updates.size === 0;
+    sync.seen.updates.add(u.id);
+    if (!u.text) return;
+    telemetry('CLAUDE ▸ ' + u.text, u.kind || 'okln');
+    if (!first) respondWith(u.spoken || u.text);
+  });
+
+  const pending = (board.approvals || []).filter(a => (a.status || 'pending') === 'pending');
+  pendingApproval = pending[0] || null;
+  const box = $('#approval');
+  if (pendingApproval){
+    $('#approvalText').textContent = pendingApproval.question || '';
+    box.classList.add('on');
+    if (!sync.seen.approvals.has(pendingApproval.id)){
+      sync.seen.approvals.add(pendingApproval.id);
+      telemetry('CLAUDE ▸ PERMISSION NEEDED — ' + pendingApproval.question, 'warnln');
+      respondWith(pendingApproval.spoken || pendingApproval.question);
+    }
+  } else box.classList.remove('on');
+
+  DATA.meta.queuedCommands = (board.commands || []).filter(c => (c.status||'queued') === 'queued').length;
+}
+
+/* Writing goes through whichever store this device actually has. */
+async function boardAppend(collection, row){
+  if (bridge.db){ await bridge.db.collection(collection).add(row); return true; }
+  if (!sync.on) return false;
+  const res = await fetch('/api/state/append', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ collection, row })
+  });
+  if (res.ok) syncPull();
+  return res.ok;
+}
+async function boardUpdate(collection, id, patch){
+  if (bridge.db){ await bridge.db.doc(collection + '/' + id).update(patch); return true; }
+  if (!sync.on) return false;
+  const res = await fetch('/api/state/update', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ collection, id, patch })
+  });
+  if (res.ok) syncPull();
+  return res.ok;
+}
+
+function startSyncLoop(){
+  if (!sync.on) return;
+  syncPull();
+  sync.timer = setInterval(syncPull, 45000);
+  /* A phone that has been asleep should catch up the moment it is opened. */
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) syncPull(); });
+  window.addEventListener('online', syncPull);
+}
+
+/* ================================================================
    ▓▓ 11e. THE CALENDAR ▓▓
    ================================================================ */
 const diary = { announced: new Set(), next: [] };
@@ -3127,6 +3221,13 @@ async function checkWorker(){
       (h.brain && h.voice) ? 'okln' : 'warnln');
     if (!h.brain) DATA.brain.enabled = false;         // do not waste a round trip
     if (!h.voice && DATA.voice.engine === 'elevenlabs') DATA.voice.engine = 'browser';
+    if (h.sync){
+      sync.on = true;
+      startSyncLoop();
+      diagnostic('Synced across your devices', 'okln');
+    } else {
+      diagnostic('Sync not configured — this device only', 'warnln');
+    }
   } catch (_){
     /* Not the Worker deployment — the artifact, or a local file. Quiet. */
     DATA.brain.enabled = !!bridge.sample;
