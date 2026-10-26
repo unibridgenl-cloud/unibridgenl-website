@@ -467,6 +467,23 @@ const DATA = {
        everywhere is the elevenlabs engine below.                          */
     browserVoice: '',
 
+    /* Her real voice, pre-rendered in Melania. These are the lines she says
+       most, so they come back instantly with no backend, no API key and no
+       speech synthesis — which also means they work on devices where the
+       browser refuses to speak at all.
+
+       Matching is on the exact text she is about to say. Anything else
+       falls through to the engine above, so arbitrary answers still get
+       spoken, just in the device voice. To have EVERY line in Melania,
+       deploy the Apps Script proxy and set engine to 'elevenlabs'.       */
+    melania: {
+      'Good morning, Harsh. Systems are online. Say morning brief, or hold space and ask me anything.': 'voice/greeting.mp3',
+      'Listening.': 'voice/listening.mp3',
+      'Approved. I will tell Claude to proceed.': 'voice/approved.mp3',
+      'Denied. I will tell Claude to hold off.': 'voice/denied.mp3',
+      'Voice check. If you can hear this, audio is working and you are hearing my real voice.': 'voice/voicecheck.mp3'
+    },
+
     /* Played ONLY when engine is 'clip'. It is a fixed recording, so mixing
        it with the browser voice made her change voice mid-conversation. */
     sampleClip: 'assets/voice-sample.mp3',
@@ -1112,7 +1129,7 @@ const FRIDAY = {
       showSay('This device has no speech voices installed, so I cannot speak here.', false);
       return false;
     }
-    respondWith('Voice check. If you can hear this, audio is working.');
+    respondWith('Voice check. If you can hear this, audio is working and you are hearing my real voice.');
     return true;
   },
 
@@ -1382,7 +1399,10 @@ if (SR){
   recog.continuous = false;
   recog.maxAlternatives = 1;
 
-  recog.onstart = () => { recognising = true; setState('listening'); diagnostic('Speech input opened','okln'); };
+  recog.onstart = () => {
+    recognising = true; setState('listening'); diagnostic('Speech input opened','okln');
+    speak('Listening.');                     // her own voice, instantly
+  };
   recog.onerror = (e) => {
     recognising = false;
     const msg = e.error === 'not-allowed' ? 'Microphone blocked — grant permission or use the text input.'
@@ -1563,6 +1583,13 @@ async function speakElevenLabs(text, onDone){
 let speakQueue = 0;
 function speak(text, onDone){
   const v = DATA.voice || { engine:'browser' };
+
+  /* If she has recorded this line herself, play it. Her own voice beats
+     any synthesiser, costs nothing per use, and plays as audio rather
+     than speech — so it survives browsers that block speech outright. */
+  const own = v.melania && v.melania[String(text).trim()];
+  if (own) return playAudioUrl(own, onDone);
+
   if (v.engine === 'elevenlabs' && v.elevenlabs && v.elevenlabs.proxyUrl)
     return speakElevenLabs(text, onDone);
   if (v.engine === 'clip' && v.clips && v.clips[text])
@@ -2537,6 +2564,16 @@ function revealPanels(){
     telemetry('Interface online. Awaiting instruction.', 'okln');
     renderObjective(true);                       // counter counts up on arrival
     const o = DATA.objective;
+    /* Exactly the line she has recorded, so the first thing Harsh hears is
+       her real voice rather than the device's. */
+    const recorded = 'Good morning, Harsh. Systems are online. Say morning brief, or hold space and ask me anything.';
+    if (DATA.voice.melania && DATA.voice.melania[recorded]){
+      showSay(recorded);
+      speak(recorded);
+      setTimeout(() => { const d = deskSummary(); if (d) respondWith(`Before anything else, ${DATA.meta.operator}. ` + d); }, 11000);
+      return;
+    }
+
     const greeting = `${DATA.brief.greeting.replace('{operator}', DATA.meta.operator)} ` +
       `${DATA.meta.company} systems are online. ` +
       (o.current === 0
