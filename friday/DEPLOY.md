@@ -112,9 +112,31 @@ All four are optional and she degrades cleanly without each one.
 
 | Name | What it buys | Without it |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | real conversation, on every device | the built-in keyword engine |
+| `ANTHROPIC_API_KEY` | real conversation **and web search**, on every device | the built-in keyword engine |
 | `ELEVEN_API_KEY` | Melania on every line she says | the five recorded lines, then the device voice |
 | `ELEVEN_VOICE_ID` | `tUxvnIoZrrcsUY1wdYot` (Melania) | as above |
+
+Two optional knobs on the same page, both plain variables rather than secrets:
+
+| Name | Default | What it does |
+|---|---|---|
+| `ANTHROPIC_MODEL` | `claude-opus-5` | which model answers |
+| `ANTHROPIC_EFFORT` | `medium` | `low` makes her quicker and less thorough |
+
+**What web search changes.** With the key in place she can look things
+up rather than answering from memory: Dutch tax and KvK rules, university
+deadlines, prices, anything with a date on it. She searches at most five
+times per question and prefers official sources. Two things follow from
+that. She answers a researched question a few seconds slower than a
+reading off your own board — set `ANTHROPIC_EFFORT` to `low` to trade
+some of that back. And each search is billed to your Anthropic account on
+top of the tokens, so the five-search ceiling is the cap on what one
+question can cost.
+
+When an answer is longer than the three sentences she says out loud, the
+rest appears in a **Briefing** panel at the bottom right, with the sources
+she used listed underneath — click one to check her. Escape or Close
+dismisses it; the next question clears it.
 
 **Sync** — one board behind the Mac, the iPad and the phone:
 

@@ -9,7 +9,7 @@
  * Nothing under /api/ is cached here. Those are live answers and a cached
  * reply would be a lie; the Worker does its own caching for the voice.
  */
-const VERSION = 'friday-v3';
+const VERSION = 'friday-v4';
 const SHELL = [
   './',
   './icons/icon-192.png',

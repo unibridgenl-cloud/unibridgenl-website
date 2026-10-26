@@ -117,7 +117,18 @@ async function handleState(request, env, url){
   return json({ error: 'append or update' }, 404);
 }
 
-/* ---------- conversation ---------------------------------------------- */
+/* ---------- conversation ----------------------------------------------
+ * She answers out loud, so the spoken half of every reply stays short.
+ * But a question like "how should I handle btw as a one-man company" has
+ * no short answer worth having, and no answer at all inside the dashboard
+ * data — so she is given the web search tool and splits her reply in two:
+ * the sentence she says, and a written brief the page can show with its
+ * sources. The marker below is how she separates them; if she forgets it,
+ * the split happens here instead, deterministically.
+ * -------------------------------------------------------------------- */
+const BRIEF_MARK = '===BRIEF===';
+const MAX_HOPS = 5;              // search rounds before we stop the turn
+
 async function handleChat(request, env) {
   if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
   if (!env.ANTHROPIC_API_KEY)    return json({ error: 'brain not configured' }, 503);
@@ -130,16 +141,39 @@ async function handleChat(request, env) {
 
   const operator = String(body.operator || 'Harsh').slice(0, 40);
   const snapshot = body.data ? JSON.stringify(body.data).slice(0, 6000) : '(none supplied)';
+  const today = new Date().toISOString().slice(0, 10);
 
   const system =
     `You are F.R.I.D.A.Y., mission control for ${operator}, who runs UniBridge NL (helping ` +
     `international students into Dutch universities), Noviq Studios, and a Resit Study Board for ` +
-    `his own university work.\n\n` +
-    `You speak aloud through a voice synthesiser: at most three short sentences, plain spoken prose. ` +
-    `No markdown, no lists, no emoji, no headings. Calm, dry, precise — a chief of staff, not a ` +
-    `chatbot. Address him as ${operator} only when it lands naturally.\n\n` +
-    `Ground every figure in the dashboard data below and never invent one. If something is not in ` +
-    `the data, say you do not have that reading rather than guessing. You have no web access.\n\n` +
+    `his own university work. He is based in The Hague, Netherlands. Today is ${today}.\n\n` +
+
+    `TWO KINDS OF QUESTION.\n` +
+    `Readings off his own board — pipeline, inbox, objective, vitals, offices — come only from the ` +
+    `dashboard data below. Never invent one of those figures; if it is not in the data, say you do ` +
+    `not have that reading.\n` +
+    `Everything else — Dutch tax and company rules, bookkeeping and auditing, pricing, hiring, ` +
+    `university deadlines and resit rules, study planning, market and competitor questions, news, ` +
+    `anything dated — you research with the web search tool before answering. Search rather than ` +
+    `answering from memory whenever the answer could have changed, carries a number, a rate, a ` +
+    `threshold or a deadline, or concerns a specific organisation. Prefer official sources: ` +
+    `belastingdienst.nl, kvk.nl, rijksoverheid.nl, the university's own pages. Say what you found ` +
+    `and name the source; if the sources disagree or you could not find it, say that plainly ` +
+    `instead of filling the gap.\n` +
+    `Never tell him you have no web access — you do.\n\n` +
+
+    `HOW TO ANSWER.\n` +
+    `Your reply is read aloud by a voice synthesiser, so the first part is at most three short ` +
+    `spoken sentences: plain prose, no markdown, no lists, no emoji, no URLs, no headings. Calm, ` +
+    `dry, precise — a chief of staff, not a chatbot. Address him as ${operator} only when it lands ` +
+    `naturally.\n` +
+    `If the answer has more to it than those three sentences — anything you researched, any ` +
+    `recommendation, plan, comparison or set of steps — then after the spoken part write a line ` +
+    `containing only ${BRIEF_MARK} and below it the full written answer for him to read on screen. ` +
+    `There you may use short lines and numbered steps, and you should give concrete figures, ` +
+    `dates and next actions. End a researched brief with the sources you used. Keep the brief ` +
+    `under 300 words. If the spoken sentences already say everything, leave the marker out.\n\n` +
+
     `Dashboard data: ${snapshot}`;
 
   const messages = [];
@@ -152,40 +186,110 @@ async function handleChat(request, env) {
   }
   messages.push({ role: 'user', content: text });
 
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: env.ANTHROPIC_MODEL || 'claude-opus-5',
-        max_tokens: 400,                      // she is speaking; long answers are a bug
-        output_config: { effort: 'low' },     // a spoken reply wants speed
-        system,
-        messages
-      })
-    });
+  const payload = {
+    model: env.ANTHROPIC_MODEL || 'claude-opus-5',
+    max_tokens: 2000,                 // spoken line + written brief + the searching
+    output_config: { effort: env.ANTHROPIC_EFFORT || 'medium' },
+    system,
+    tools: [{
+      type: 'web_search_20260209',
+      name: 'web_search',
+      max_uses: 5,                    // a ceiling on one question's search bill
+      /* Dutch results for a Dutch company, without him having to say so. */
+      user_location: { type: 'approximate', country: 'NL', city: 'The Hague', timezone: 'Europe/Amsterdam' }
+    }],
+    messages
+  };
 
-    if (!res.ok) {
-      const detail = (await res.text()).slice(0, 300);
-      return json({ error: `claude ${res.status}: ${detail}` }, 502);
+  const sources = [];
+  let searched = 0;
+  let out = '';
+  let note = '';
+
+  try {
+    /* The search runs on Anthropic's side, but a long turn comes back
+       paused rather than finished — so keep handing it back its own
+       output until it stops for a reason that is not a pause. */
+    for (let hop = 0; hop < MAX_HOPS; hop++) {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const detail = (await res.text()).slice(0, 300);
+        return json({ error: `claude ${res.status}: ${detail}` }, 502);
+      }
+
+      const data = await res.json();
+
+      // Safety classifiers decline with HTTP 200 — check before reading content.
+      if (data.stop_reason === 'refusal')
+        return json({ reply: `I cannot answer that one, ${operator}.` });
+
+      for (const block of (data.content || [])) {
+        if (block.type === 'text') out += block.text;
+        if (block.type !== 'web_search_tool_result') continue;
+        /* On a good search .content is a list of results. On a failed one
+           it is a single object carrying an error_code — and the request
+           still came back 200, so indexing it blindly would read
+           undefined and lose the reason. */
+        if (Array.isArray(block.content)) {
+          searched++;
+          for (const r of block.content) {
+            if (r && r.url && !sources.some(s => s.url === r.url))
+              sources.push({ url: String(r.url).slice(0, 300), title: String(r.title || r.url).slice(0, 160) });
+          }
+        } else if (block.content && block.content.error_code) {
+          note = block.content.error_code === 'max_uses_exceeded'
+            ? 'search limit reached on this question'
+            : 'web search failed: ' + block.content.error_code;
+        }
+      }
+
+      if (data.stop_reason !== 'pause_turn') break;
+
+      /* Paused: the whole turn so far goes back verbatim — thinking
+         blocks and search blocks included — or she loses her place. */
+      payload.messages = [...payload.messages, { role: 'assistant', content: data.content }];
+      if (hop === MAX_HOPS - 1) note = note || 'answer cut short — the research ran long';
     }
 
-    const data = await res.json();
+    out = out.trim();
+    if (!out) return json({ reply: 'I have nothing to add.', note });
 
-    // Safety classifiers decline with HTTP 200 — check before reading content.
-    if (data.stop_reason === 'refusal') return json({ reply: `I cannot answer that one, ${operator}.` });
-
-    const reply = (data.content || [])
-      .filter(b => b.type === 'text').map(b => b.text).join('').trim();
-
-    return json({ reply: reply || 'I have nothing to add.', usage: data.usage });
+    const split = splitReply(out);
+    return json({ reply: split.spoken, brief: split.brief, sources, searched, note });
   } catch (err) {
     return json({ error: 'chat failed: ' + err.message }, 502);
   }
+}
+
+/* Spoken half / written half. The marker is the intended route; the
+   sentence count is the fallback for when she answers in one long block,
+   because the alternative is the synthesiser reading a 300-word essay
+   out loud. */
+function splitReply(out) {
+  const at = out.indexOf(BRIEF_MARK);
+  if (at !== -1) {
+    const spoken = out.slice(0, at).trim();
+    const brief  = out.slice(at + BRIEF_MARK.length).trim();
+    if (spoken) return { spoken, brief: brief || '' };
+    return { spoken: firstSentences(brief, 3), brief };
+  }
+  if (out.length <= 320) return { spoken: out, brief: '' };
+  return { spoken: firstSentences(out, 3), brief: out };
+}
+
+function firstSentences(text, n) {
+  const parts = String(text).replace(/\s+/g, ' ').match(/[^.!?]+[.!?]+|\S[^.!?]*$/g) || [text];
+  const taken = parts.slice(0, n).join(' ').trim();
+  return taken.length > 400 ? taken.slice(0, 397).trimEnd() + '…' : taken;
 }
 
 /* ---------- her voice --------------------------------------------------- */

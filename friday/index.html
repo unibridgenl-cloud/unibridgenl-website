@@ -218,6 +218,47 @@ header{
 #approval .qs{font-size:10px;line-height:1.5;color:var(--cyan-hot)}
 #approval .hint2{margin-top:5px;font-size:8px;color:rgba(255,180,87,.75);letter-spacing:.1em}
 
+/* --- the briefing sheet ------------------------------------
+   She says three sentences; the research behind them lands here.
+   Fixed and self-scrolling, so a long brief never pushes the
+   dashboard into a page scroll.                              */
+#brief{
+  display:none;position:fixed;z-index:60;
+  right:calc(var(--pad) + 2px + env(safe-area-inset-right));
+  bottom:calc(var(--pad) + 2px + env(safe-area-inset-bottom));
+  width:min(420px,calc(100vw - var(--pad)*2 - 4px));max-height:min(62vh,520px);
+  flex-direction:column;
+  border:1px solid var(--line);background:rgba(4,12,22,.96);
+  box-shadow:inset 0 0 30px rgba(111,233,255,.06),0 0 26px rgba(3,7,15,.8);
+  backdrop-filter:blur(2px);
+}
+#brief.on{display:flex}
+#brief .bhd{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:7px 10px;border-bottom:1px solid var(--line-soft);
+  font-size:8px;letter-spacing:.18em;color:var(--cyan);text-transform:uppercase;flex:0 0 auto;
+}
+#brief .bhd .x{
+  cursor:pointer;border:1px solid var(--line);background:none;color:var(--cyan-dim);
+  font:inherit;font-size:8px;letter-spacing:.1em;padding:2px 7px;
+}
+#brief .bhd .x:hover{color:var(--cyan-hot);border-color:var(--cyan)}
+#brief .bbody{
+  padding:9px 11px;overflow-y:auto;font-size:10px;line-height:1.65;
+  color:rgba(185,246,255,.9);white-space:pre-wrap;word-break:break-word;flex:1 1 auto;
+}
+#brief .bsrc{
+  padding:7px 11px 9px;border-top:1px solid var(--line-soft);flex:0 0 auto;
+  max-height:112px;overflow-y:auto;
+}
+#brief .bsrc .lbl{font-size:7.5px;letter-spacing:.18em;color:rgba(111,233,255,.45);margin-bottom:4px}
+#brief .bsrc a{
+  display:block;font-size:8.5px;line-height:1.5;color:var(--cyan-dim);text-decoration:none;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#brief .bsrc a:hover{color:var(--cyan-hot);text-decoration:underline}
+#brief .bsrc a::before{content:'▸ ';color:rgba(111,233,255,.35)}
+
 /* --- center column ----------------------------------------- */
 .col-center{display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:8px;min-height:0}
 .orbstage{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -444,6 +485,11 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
         <div class="hd">◆ Claude is asking permission</div>
         <div class="qs" id="approvalText">—</div>
         <div class="hint2">Say “approve” or “deny” — or type it below</div>
+      </div>
+      <div id="brief">
+        <div class="bhd"><span id="briefTitle">Briefing</span><button class="x" id="briefClose">Close ✕</button></div>
+        <div class="bbody" id="briefBody"></div>
+        <div class="bsrc" id="briefSrc" style="display:none"><div class="lbl">Sources</div><div id="briefSrcList"></div></div>
       </div>
       <div class="saystage boot" data-boot="4"><div id="say">Standby.<span class="caret"></span></div></div>
       <div class="controls boot" data-boot="5">
@@ -2034,6 +2080,65 @@ function showSay(text, typeIt){
     }
   }, 14);
 }
+/* The written half of a researched answer. She has already said the
+   short version out loud by the time this appears, so it is never the
+   only copy of anything — closing it loses nothing. */
+function showBrief(text, sources, title){
+  const body = $('#briefBody');
+  if (!text || !text.trim()){ hideBrief(); return; }
+  $('#briefTitle').textContent = title || 'Briefing';
+  body.textContent = text.trim();
+  body.scrollTop = 0;
+
+  const box = $('#briefSrc'), list = $('#briefSrcList');
+  list.innerHTML = '';
+  const uniq = (Array.isArray(sources) ? sources : []).filter(s => s && s.url).slice(0, 12);
+  uniq.forEach(src => {
+    const a = document.createElement('a');
+    a.href = src.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    /* The host is what tells him whether to trust it at a glance —
+       belastingdienst.nl reads very differently from a forum. */
+    let host = '';
+    try { host = new URL(src.url).hostname.replace(/^www\./, ''); } catch { host = ''; }
+    a.textContent = host ? host + ' — ' + (src.title || src.url) : (src.title || src.url);
+    a.title = src.url;
+    list.appendChild(a);
+  });
+  box.style.display = uniq.length ? 'block' : 'none';
+  $('#brief').classList.add('on');
+}
+function hideBrief(){ $('#brief').classList.remove('on'); }
+
+/* Both brains use the same marker to separate the sentence she says
+   from the page she writes. The Worker splits server-side; this is the
+   same split for the artifact, where the answer arrives as one string.
+   The sentence count is the fallback for when she forgets the marker,
+   because the alternative is the synthesiser reading an essay aloud. */
+const BRIEF_MARK = '===BRIEF===';
+function splitSpoken(out){
+  const t = String(out || '').trim();
+  const at = t.indexOf(BRIEF_MARK);
+  if (at !== -1){
+    const spoken = t.slice(0, at).trim(), brief = t.slice(at + BRIEF_MARK.length).trim();
+    return spoken ? { spoken, brief } : { spoken: firstSentences(brief, 3), brief };
+  }
+  if (t.length <= 320) return { spoken: t, brief: '' };
+  return { spoken: firstSentences(t, 3), brief: t };
+}
+function firstSentences(text, n){
+  const parts = String(text).replace(/\s+/g, ' ').match(/[^.!?]+[.!?]+|\S[^.!?]*$/g) || [text];
+  const taken = parts.slice(0, n).join(' ').trim();
+  return taken.length > 400 ? taken.slice(0, 397).trimEnd() + '…' : taken;
+}
+
+/* His question, trimmed to a heading. */
+function shortLabel(text){
+  const t = String(text).replace(/\s+/g, ' ').trim();
+  return t.length > 36 ? t.slice(0, 35).trimEnd() + '…' : t;
+}
+
 function respondWith(text, alsoSpeak){
   showSay(text);
   telemetry('FRIDAY ▸ ' + text, 'sys');
@@ -2110,8 +2215,15 @@ function handleUtterance(text){
      Claude, who can also act through the tools above. */
   if (bridge.sample){
     remember('user', text);
+    hideBrief();
     return askViaSample(text)
-      .then(a => { remember('assistant', a); respondWith(a); relayToClaude(text, a); })
+      .then(raw => {
+        const { spoken, brief } = splitSpoken(raw);
+        remember('assistant', spoken);
+        respondWith(spoken);
+        if (brief) showBrief(brief, [], 'Briefing — ' + shortLabel(text));
+        relayToClaude(text, spoken);
+      })
       .catch(err => {
         diagnostic('Claude unavailable (' + (err.code || err.message) + ') — answering locally', 'warnln');
         const a = answer(text); remember('assistant', a); respondWith(a);
@@ -2139,6 +2251,7 @@ async function askClaude(text){
   const b = DATA.brain;
   const history = convo.slice();
   remember('user', text);
+  hideBrief();
   try {
     const res = await fetch(b.proxyUrl, {
       method: 'POST',
@@ -2164,6 +2277,17 @@ async function askClaude(text){
     if (!data.reply) throw new Error('empty reply');
     remember('assistant', data.reply);
     respondWith(data.reply);
+
+    /* She searched: say so in the log, so a figure on screen is never
+       mistaken for one of his own readings. */
+    if (data.searched)
+      telemetry('Researched the web — ' + data.searched +
+                (data.searched === 1 ? ' search, ' : ' searches, ') +
+                (data.sources || []).length + ' sources', 'sys');
+    if (data.note) diagnostic(data.note, 'warnln');
+
+    if (data.brief) showBrief(data.brief, data.sources, 'Briefing — ' + shortLabel(text));
+    else hideBrief();
   } catch (err) {
     diagnostic('Brain unavailable (' + err.message + ') — answering from local data', 'warnln');
     const a = answer(text);
@@ -2346,6 +2470,10 @@ $('#orbstage').addEventListener('click', () => { recognising ? stopListening() :
 $('#btnTalk').addEventListener('click', () => { recognising ? stopListening() : startListening(); });
 $('#btnBrief').addEventListener('click', runBrief);
 $('#btnAudio').addEventListener('click', () => FRIDAY.audioCheck());
+$('#briefClose').addEventListener('click', hideBrief);
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && $('#brief').classList.contains('on')) hideBrief();
+});
 $('#audioWarn').addEventListener('click', () => {
   if (pendingSpeech) releaseHeldSpeech();
   else FRIDAY.testVoice();
@@ -2854,8 +2982,15 @@ async function askViaSample(text){
     'permission request, run_morning_brief delivers the briefing, refresh_data re-reads the sources.\n\n' +
     'When he asks for something you can do, DO IT and then say what you did in one short line — never ' +
     'describe how he could do it himself, and never ask permission for something he just asked for. ' +
-    'Call a look-up tool rather than guessing; the snapshot below goes stale. You have no web access, ' +
-    'so say so plainly if something needs looking up outside this data.\n\n' +
+    'Call a look-up tool rather than guessing; the snapshot below goes stale.\n\n' +
+    'This page cannot search the web. For anything dated — a tax rate, a threshold, a deadline, a ' +
+    'price, a rule that may have changed — answer from what you know, say plainly that the figure ' +
+    'needs confirming, and tell him the installed app at ' + DATA.meta.directUrl + ' can look it up ' +
+    'properly. Never present an unchecked figure as current.\n\n' +
+    'If the answer runs past three spoken sentences — a plan, a comparison, a set of steps — write ' +
+    'the three sentences, then a line containing only ' + BRIEF_MARK + ', then the full written ' +
+    'answer below it for him to read on screen. Under 300 words. Leave the marker out when the ' +
+    'three sentences already say everything.\n\n' +
     'Dashboard snapshot: ' + context;
 
   const turns = convo.slice(-6).map(t => ({ role: t.role === 'assistant' ? 'assistant' : 'user', content: t.text }));
@@ -2866,7 +3001,12 @@ async function askViaSample(text){
   const { text: answerText } = await bridge.sample(turns, {
     modelTier: 'quick',              // she is speaking aloud; a fast round-trip matters
     tools: sampleTools(),
-    onText: ({ text }) => showSay(text, false)      // show the answer as it forms
+    /* Show the answer as it forms — but only the spoken half, or the
+       marker and the brief scroll past in the say line. */
+    onText: ({ text }) => {
+      const at = text.indexOf(BRIEF_MARK);
+      showSay(at === -1 ? text : text.slice(0, at).trim(), false);
+    }
   });
   return answerText;
 }
@@ -3329,7 +3469,7 @@ async function checkWorker(){
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const h = await res.json();
     diagnostic(
-      'Worker online — brain ' + (h.brain ? 'ready' : 'not configured') +
+      'Worker online — brain ' + (h.brain ? 'ready, web search on' : 'not configured') +
       ', voice ' + (h.voice ? 'ready' : 'not configured'),
       (h.brain && h.voice) ? 'okln' : 'warnln');
     if (!h.brain) DATA.brain.enabled = false;         // do not waste a round trip
