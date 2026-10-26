@@ -163,6 +163,19 @@ header{
 .log .ln.okln .tx{color:var(--green)}
 @keyframes linein{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
 
+/* --- the office doors -------------------------------------- */
+.doors{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;flex:0 0 auto}
+.doors a{
+  flex:1 1 auto;text-align:center;text-decoration:none;
+  font-size:8px;letter-spacing:.1em;color:var(--cyan-dim);
+  border:1px solid var(--line);background:rgba(111,233,255,.04);
+  padding:6px 4px;transition:background .18s,color .18s,box-shadow .18s;
+}
+.doors a:hover{background:rgba(111,233,255,.14);color:var(--cyan-hot);box-shadow:0 0 10px rgba(111,233,255,.25)}
+.doors a.needsyou{border-color:rgba(255,180,87,.55);color:var(--amber)}
+.doors a .n{display:block;font-size:7.5px;color:rgba(111,233,255,.4);margin-top:2px}
+.doors a.needsyou .n{color:rgba(255,180,87,.8)}
+
 /* --- claude project strip + approval banner ----------------- */
 .projects{flex:0 0 auto;margin-bottom:8px;display:none}
 .projects.on{display:block}
@@ -234,6 +247,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
   cursor:pointer;animation:blip 2s ease-in-out infinite;
 }
 .audiowarn.on{display:block}
+.micwarn{text-transform:none;letter-spacing:.02em;line-height:1.5;animation:none;cursor:default}
 
 /* --- objective card ---------------------------------------- */
 .objective{
@@ -395,6 +409,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
       <section class="panel boot" data-boot="2">
         <div class="panel-title"><span>Telemetry</span><span class="tag" id="panelTelemetryTag">FEED 01</span></div>
         <div class="panel-body">
+          <div class="doors" id="doors"></div>
           <div class="projects" id="projects"></div>
           <div class="log" id="telemetry"></div>
         </div>
@@ -437,6 +452,7 @@ button.hud:disabled{opacity:.35;cursor:not-allowed}
           <div class="canvasbox"><canvas id="wave"></canvas></div>
           <div class="audiometa"><span id="audioMode">MIC: STANDBY</span><span id="audioLvl">LVL 00</span></div>
           <div class="audiowarn" id="audioWarn">◼ VOICE BLOCKED — CLICK ANYWHERE TO ENABLE</div>
+          <div class="audiowarn micwarn" id="micWarn"></div>
         </div>
       </section>
       <section class="panel boot" data-boot="8">
@@ -503,7 +519,11 @@ const DATA = {
     objectiveLine: '[YOUR CURRENT GOAL]',
     sessionId: null,                    // null => auto-generated per load
     voiceLang: 'en-IE',                 // preferred speech-synthesis accent (Irish, like FRIDAY)
-    timezoneLabel: 'CET'
+    timezoneLabel: 'CET',
+    /* The page that can actually use a microphone. Inside the claude.ai
+       viewer the page is framed and the mic is not delegated to it, so
+       she points here instead of failing silently. */
+    directUrl: 'https://friday.unibridgenl.workers.dev'
   },
 
   /* ---- 1.1b VOICE OUTPUT --------------------------------------
@@ -661,6 +681,16 @@ const DATA = {
             'notifications@', 'notification@', 'mailer-daemon', 'postmaster',
             'accounts.google.com', 'github.com', 'stripe.com', 'cloudflare.com']
   },
+
+  /* ---- 1.1g THE AGENT OFFICES ---------------------------------
+     Each office is its own artifact where the work actually happens.
+     FRIDAY is the front desk: she reports what is blocked, takes your
+     instructions, and opens the room when you want to go in yourself. */
+  offices: [
+    { id:'unibridge', label:'UNIBRIDGE NL',      url:'https://claude.ai/artifact/KNEPzov6Hw6bVMja46b6s7' },
+    { id:'noviq',     label:'NOVIQ STUDIOS',     url:'https://claude.ai/artifact/FBpvS94tThYEpRq34QoGbP' },
+    { id:'resit',     label:'RESIT STUDY BOARD', url:'https://claude.ai/artifact/2GFcfAxPgVX8919twJPLt9' }
+  ],
 
   /* ---- 1.2 STATUS PILLS ---------------------------------------
      Header chips. state: 'ok' | 'warn' | 'cy' (drives the dot).   */
@@ -838,6 +868,24 @@ function renderHeader(){
     + `<div class="pill ${dataMode === 'LIVE' ? '' : 'warn'}" id="pillData" title="">
          <i class="dot"></i>DATA ${dataMode}
        </div>`;
+}
+
+/* ---- 3.1b the office doors ------------------------------------
+   One tap from the dashboard into the room where that office's work
+   happens. The badge is whatever is blocked on Harsh there, so a door
+   that needs him looks different from one that does not.           */
+function renderDoors(){
+  const box = $('#doors');
+  if (!box || !DATA.offices) return;
+  box.innerHTML = DATA.offices.map(o => {
+    const waiting = (desk.blocked || []).filter(b =>
+      (b.office || '').toUpperCase().replace(/[^A-Z]/g,'').includes(o.label.replace(/[^A-Z]/g,'').slice(0,6))
+    ).length;
+    const el = document.createElement('div'); el.textContent = o.label;
+    return `<a href="${o.url}" target="_blank" rel="noopener" class="${waiting ? 'needsyou' : ''}" ` +
+           `title="Open the ${o.label} office">${el.innerHTML}` +
+           `<span class="n">${waiting ? waiting + ' ON YOU' : 'OPEN'}</span></a>`;
+  }).join('');
 }
 
 /* ---- 3.2 clock (hours : minutes : seconds . hundredths) -------- */
@@ -1165,6 +1213,10 @@ const FRIDAY = {
       a.pause();
     } catch (e) { clipOk = 'blocked (' + (e.name || e.message) + ')'; }
     ok('audio clip can play', clipOk);
+
+    const mic = await ensureMic();
+    ok('microphone', mic === 'granted' ? 'granted' : 'blocked (' + mic + ')');
+    if (mic !== 'granted') showMicWarning(micHelp(mic));
 
     /* Does speech actually start? */
     const spoke = await new Promise((resolve) => {
@@ -1536,11 +1588,13 @@ if (SR){
   };
   recog.onerror = (e) => {
     recognising = false;
-    const msg = e.error === 'not-allowed' ? 'Microphone blocked — grant permission or use the text input.'
-              : e.error === 'no-speech'   ? 'No speech detected.'
+    const msg = e.error === 'not-allowed' ? micHelp('NotAllowedError')
+              : e.error === 'no-speech'   ? 'I did not catch anything. Try again.'
+              : e.error === 'network'     ? 'Speech recognition needs a network connection and could not reach it.'
               : 'Speech input error: ' + e.error;
     diagnostic(msg, 'warnln');
-    if (e.error === 'not-allowed') respondWith(msg, false);
+    if (e.error === 'not-allowed'){ respondWith(msg, false); showMicWarning(msg); }
+    else if (e.error !== 'no-speech') respondWith(msg, false);
     setState('idle');
   };
   recog.onend = () => {
@@ -1564,12 +1618,69 @@ if (SR){
   DATA.pills.push({ label:'VOICE N/A', state:'warn' });
 }
 
-function startListening(){
-  if (!recog){ respondWith('Speech recognition is not available in this browser. Use the text input below.'); return; }
+/* Ask for the microphone directly. SpeechRecognition asks implicitly and
+   fails quietly when refused, which is indistinguishable from a broken
+   button; getUserMedia raises a named error we can actually explain. */
+async function ensureMic(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return 'unsupported';
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(t => t.stop());        // we only wanted the grant
+    return 'granted';
+  } catch (err) {
+    return err && err.name ? err.name : 'failed';
+  }
+}
+
+const framed = () => { try { return window.self !== window.top; } catch(_) { return true; } };
+
+function micHelp(reason){
+  const here = DATA.meta.directUrl;
+  if (reason === 'unsupported')
+    return `This browser has no microphone access for web pages. Open ${here} in Chrome or Safari instead.`;
+  if (framed())
+    return `The microphone is blocked because this page is embedded. Open ${here} directly and it will work.`;
+  if (reason === 'NotAllowedError' || reason === 'SecurityError')
+    return 'The microphone is blocked for this site. Allow it in the padlock menu next to the address bar, then try again.';
+  if (reason === 'NotFoundError')
+    return 'No microphone is connected to this device.';
+  if (reason === 'NotReadableError')
+    return 'Another app is holding the microphone. Close it and try again.';
+  return 'The microphone could not be opened: ' + reason + '.';
+}
+
+async function startListening(){
+  if (!recog){
+    const msg = framed()
+      ? `Speech recognition is not available inside this embedded page. Open ${DATA.meta.directUrl} to talk to me.`
+      : 'Speech recognition is not available in this browser. Chrome or Safari will work. Use the text box meanwhile.';
+    respondWith(msg, false);
+    showMicWarning(msg);
+    return;
+  }
   if (recognising) return;
+
+  const grant = await ensureMic();
+  if (grant !== 'granted'){
+    const msg = micHelp(grant);
+    diagnostic('Microphone refused — ' + grant, 'warnln');
+    respondWith(msg, false);
+    showMicWarning(msg);
+    return;
+  }
+  hideMicWarning();
+
   try { window.speechSynthesis.cancel(); recog.start(); }
   catch(_){ /* already starting */ }
 }
+
+function showMicWarning(msg){
+  const el = $('#micWarn');
+  if (!el) return;
+  el.textContent = '◼ ' + msg;
+  el.classList.add('on');
+}
+function hideMicWarning(){ const el = $('#micWarn'); if (el) el.classList.remove('on'); }
 function stopListening(){
   wantsToListen = false;
   if (recog && recognising){ try { recog.stop(); } catch(_){} }
@@ -2029,6 +2140,16 @@ function answer(qRaw){
           ? `Nothing is blocked on you across ${desk.offices.join(', ')}.`
           : 'No offices are reporting in yet.');
 
+  if (has('open the','take me to','go to','show me the office'))
+    return (() => {
+      const q2 = q;
+      const hit = (DATA.offices || []).find(o =>
+        o.label.toLowerCase().split(' ').some(w => w.length > 3 && q2.includes(w)));
+      if (!hit) return 'Which office? I have ' + (DATA.offices||[]).map(o=>o.label.toLowerCase()).join(', ') + '.';
+      window.open(hit.url, '_blank', 'noopener');
+      return `Opening ${hit.label.toLowerCase()}.`;
+    })();
+
   if (has('queued','instruction','instructions','sent to','told'))
     return DATA.meta.queuedCommands
       ? `${DATA.meta.queuedCommands} ${DATA.meta.queuedCommands === 1 ? 'instruction is' : 'instructions are'} queued for the offices, not yet picked up.`
@@ -2278,6 +2399,7 @@ function watchProjects(db){
       desk.offices = offices.map(o => o.name);
       desk.blocked = rows.filter(r => r.status === 'blocked')
                          .map(r => ({ name: r.name, office: r.office || 'General', note: r.note || '' }));
+      renderDoors();
     },
     (e) => diagnostic('Project listener died — ' + e.code, 'warnln')
   );
@@ -2760,6 +2882,7 @@ const BOOT_LINES = [
 function boot(){
   applyStoredConnection();      // before anything reads DATA.sources / voice / brain
   renderHeader();
+  renderDoors();
   renderVitals();
   renderContacts();
   renderObjective(false);
