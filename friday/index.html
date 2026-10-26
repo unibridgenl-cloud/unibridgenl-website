@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>F.R.I.D.A.Y. — UniBridge NL Mission Control</title>
+
+<!-- Installable as an app on a desktop and a phone, from the same page.
+     On a laptop: the install icon in the address bar, or the browser menu.
+     On iOS: Share, then Add to Home Screen. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#03070f">
+<meta name="application-name" content="FRIDAY">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FRIDAY">
+<!-- translucent so the HUD runs under the notch rather than behind a white bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 /* ============================================================
    F.R.I.D.A.Y. MISSION CONTROL — all styles inline, no CDN.
@@ -69,7 +83,11 @@ body{
   position:relative;z-index:1;height:100vh;height:100dvh;
   display:grid;
   grid-template-rows:auto minmax(0,1fr) auto;
-  gap:8px;padding:10px 12px;
+  gap:8px;
+  /* Installed, the page owns the whole screen including under the notch
+     and the home indicator, so the safe areas are respected here. */
+  padding:calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right))
+          calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
 }
 main{
   display:grid;
@@ -3211,8 +3229,32 @@ function revealPanels(){
   setTimeout(() => $('#bootveil').remove(), after + 800);
 }
 
+/* Installed-app plumbing. Harmless anywhere it does not apply: inside the
+   claude.ai viewer there is no service worker to register and the call
+   simply fails, which is caught. */
+function installPlumbing(){
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    navigator.serviceWorker.register('sw.js').then(
+      () => diagnostic('Installed-app shell registered', 'sys'),
+      (e) => diagnostic('No app shell here — ' + (e.message || e), 'sys')
+    );
+  }
+
+  /* Launched from a home-screen shortcut: do the thing straight away. */
+  const want = new URLSearchParams(location.search).get('do');
+  if (want === 'brief') setTimeout(runBrief, 2600);
+  if (want === 'talk')  setTimeout(() => startListening(), 2600);
+
+  /* Running as an installed app rather than a browser tab. */
+  if (window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true){
+    document.documentElement.dataset.installed = 'yes';
+    diagnostic('Running as an installed app', 'okln');
+  }
+}
+
 let booted = false;
-function bootOnce(){ if (booted) return; booted = true; boot(); }
+function bootOnce(){ if (booted) return; booted = true; boot(); installPlumbing(); }
 document.addEventListener('DOMContentLoaded', bootOnce);
 if (document.readyState !== 'loading') bootOnce();
 </script>
