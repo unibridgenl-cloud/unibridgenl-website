@@ -735,6 +735,22 @@ const DATA = {
     warnDays: 7
   },
 
+  /* ---- 1.1i THE WORLD OUTSIDE ---------------------------------
+     Claude has no live web access, so questions about right now — the
+     weather being the obvious one — need a real source. Open-Meteo is
+     free, needs no key, and allows browser requests, so the page can
+     ask it directly.
+
+     Set `place` to wherever you actually are. The default is The Hague,
+     since that is where the university and the business both sit.     */
+  world: {
+    weather: true,
+    place: 'The Hague',
+    lat: 52.0705,
+    lon: 4.3007,
+    units: 'celsius'
+  },
+
   /* ---- 1.2 STATUS PILLS ---------------------------------------
      Header chips. state: 'ok' | 'warn' | 'cy' (drives the dot).   */
   pills: [
@@ -2104,7 +2120,17 @@ function handleUtterance(text){
 
   const b = DATA.brain || {};
   if (b.enabled && b.proxyUrl) return askClaude(text);
-  setTimeout(() => { remember('user', text); const a = answer(text); remember('assistant', a); respondWith(a); }, 420);
+  setTimeout(async () => {
+    remember('user', text);
+    let a = answer(text);
+    /* A couple of answers need a round trip; the engine marks them. */
+    if (a === '__ASYNC_WEATHER__'){
+      showSay('Checking…', false);
+      a = weatherSentence(await getWeather());
+    }
+    remember('assistant', a);
+    respondWith(a);
+  }, 420);
 }
 
 /* Conversational reply via YOUR proxy. Falls back to the keyword engine
@@ -2236,6 +2262,9 @@ function answer(qRaw){
   if (has('eta','how long','days left'))
     return `${m.daysLeft} days remain until ${new Date(o.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'long'})}. ` +
            (m.needed ? `You need ${m.needed} more to hit target.` : 'Target already met.');
+
+  if (has('weather','rain','raining','temperature','cold','hot','forecast','umbrella','jacket','outside'))
+    return '__ASYNC_WEATHER__';
 
   if (has('time','clock','what time'))
     return `It is ${new Date().toLocaleTimeString('en-GB')} ${DATA.meta.timezoneLabel}, ` +
@@ -2744,6 +2773,11 @@ function sampleTools(){
 
     /* ---- the ones that act ---- */
     {
+      name: 'get_weather',
+      description: 'The current weather and today\'s forecast where Harsh is. Use this for anything about weather, rain, temperature or what to wear — you have no other live information about the outside world.',
+      execute: async () => getWeather()
+    },
+    {
       name: 'open_office',
       description: 'Open one of the agent offices in a new tab for Harsh to work in. Offices: "UniBridge NL", "Noviq Studios", "Resit Study Board". Use this whenever he asks to open, see, visit or be taken to an office.',
       inputSchema: { type:'object', properties:{ office:{ type:'string', description:'Office name, or how he said it' } }, required:['office'] },
@@ -2970,6 +3004,85 @@ function readMailbox(mcp){
     },
     { refetchInterval: Math.max(1, DATA.gmail.refetchMinutes) * 60 * 1000 }
   );
+}
+
+/* ================================================================
+   ▓▓ 11g. THE WEATHER ▓▓
+   ----------------------------------------------------------------
+   Written without being able to see a live response: this environment
+   blocks outbound weather calls, so rather than assume the shape, every
+   field is checked before it is used and a reply that does not match is
+   reported as unreadable instead of being turned into a wrong number.
+   A wrong temperature said confidently is worse than no temperature.
+   ================================================================ */
+const WMO = {
+  0:'clear', 1:'mostly clear', 2:'partly cloudy', 3:'overcast',
+  45:'foggy', 48:'freezing fog', 51:'light drizzle', 53:'drizzle', 55:'heavy drizzle',
+  56:'freezing drizzle', 57:'freezing drizzle', 61:'light rain', 63:'rain', 65:'heavy rain',
+  66:'freezing rain', 67:'freezing rain', 71:'light snow', 73:'snow', 75:'heavy snow',
+  77:'snow grains', 80:'light showers', 81:'showers', 82:'violent showers',
+  85:'snow showers', 86:'heavy snow showers', 95:'thunderstorms',
+  96:'thunderstorms with hail', 99:'thunderstorms with hail'
+};
+
+async function getWeather(){
+  const w = DATA.world;
+  if (!w || !w.weather) return { error: 'weather is switched off' };
+
+  const url = 'https://api.open-meteo.com/v1/forecast' +
+    `?latitude=${encodeURIComponent(w.lat)}&longitude=${encodeURIComponent(w.lon)}` +
+    '&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m' +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+    '&forecast_days=2&timezone=auto';
+
+  let data;
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) return { error: 'weather service returned ' + res.status };
+    data = await res.json();
+  } catch (err) {
+    return { error: 'could not reach the weather service: ' + err.message };
+  }
+
+  /* Check before trusting. If the shape is not what this expects, say so
+     rather than reading undefined as a number. */
+  const cur = data && data.current;
+  if (!cur || typeof cur.temperature_2m !== 'number'){
+    return { error: 'the weather service replied in a shape I could not read' };
+  }
+
+  const out = {
+    place: w.place,
+    now: Math.round(cur.temperature_2m),
+    feelsLike: typeof cur.apparent_temperature === 'number' ? Math.round(cur.apparent_temperature) : null,
+    sky: WMO[cur.weather_code] || null,
+    windKph: typeof cur.wind_speed_10m === 'number' ? Math.round(cur.wind_speed_10m) : null,
+    raining: typeof cur.precipitation === 'number' ? cur.precipitation > 0 : null
+  };
+
+  const d = data.daily;
+  if (d && Array.isArray(d.temperature_2m_max) && typeof d.temperature_2m_max[0] === 'number'){
+    out.todayHigh = Math.round(d.temperature_2m_max[0]);
+    out.todayLow  = Math.round(d.temperature_2m_min[0]);
+    if (Array.isArray(d.precipitation_probability_max)) out.rainChance = d.precipitation_probability_max[0];
+    if (Array.isArray(d.temperature_2m_max) && typeof d.temperature_2m_max[1] === 'number'){
+      out.tomorrowHigh = Math.round(d.temperature_2m_max[1]);
+      out.tomorrowSky = WMO[d.weather_code && d.weather_code[1]] || null;
+    }
+  }
+  return out;
+}
+
+/* Spoken, for when she answers without Claude in the loop. */
+function weatherSentence(w){
+  if (w.error) return 'I could not get the weather: ' + w.error + '.';
+  const bits = [`It is ${w.now} degrees in ${w.place}`];
+  if (w.sky) bits.push(`and ${w.sky}`);
+  let line = bits.join(' ') + '.';
+  if (w.feelsLike !== null && Math.abs(w.feelsLike - w.now) >= 2) line += ` Feels like ${w.feelsLike}.`;
+  if (typeof w.todayHigh === 'number') line += ` High of ${w.todayHigh}, low of ${w.todayLow}.`;
+  if (typeof w.rainChance === 'number' && w.rainChance >= 30) line += ` ${w.rainChance} percent chance of rain.`;
+  return line;
 }
 
 /* ================================================================
