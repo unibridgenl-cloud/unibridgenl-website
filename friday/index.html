@@ -1994,6 +1994,15 @@ function remember(role, text){
   while (convo.length > cap) convo.shift();
 }
 
+/* Opening a room is an action, however it is phrased. "Can you open
+   university NL", "pull up the studios", "take me to the resit board" —
+   all the same request. */
+function openIntent(text){
+  const q = String(text).toLowerCase();
+  if (!/\b(open|launch|show|bring up|pull up|take me|go to|enter|visit|access|jump to|get me)\b/.test(q)) return null;
+  return findOffice(q);
+}
+
 function handleUtterance(text){
   /* A pending permission request takes precedence: while one is on the
      banner, yes or no is an answer to it, not a question for Claude. */
@@ -2003,6 +2012,16 @@ function handleUtterance(text){
       showSay('… ' + text, false);
       return resolveApproval(decision, text);
     }
+  }
+
+  /* Opening an office, in any phrasing. */
+  const wants = openIntent(text);
+  if (wants){
+    showSay('… ' + text, false);
+    telemetry('YOU ▸ ' + text, 'usr');
+    return openOffice(wants)
+      ? respondWith(`Opening ${wants}. It should be in a new tab.`)
+      : respondWith(`I know ${wants} but I do not have a link for it.`);
   }
 
   /* An instruction aimed at an office is an action, not a question. */
@@ -2027,8 +2046,9 @@ function handleUtterance(text){
     return setTimeout(runBrief, 300);
   }
 
-  /* Claude through the artifact runtime is free to you and needs no
-     deployment, so it wins when present. */
+  /* Claude is the assistant; the keyword engine exists only for when she
+     cannot reach him. Anything not already handled as an action goes to
+     Claude, who can also act through the tools above. */
   if (bridge.sample){
     remember('user', text);
     return askViaSample(text)
@@ -2139,16 +2159,6 @@ function answer(qRaw){
       : (desk.offices.length
           ? `Nothing is blocked on you across ${desk.offices.join(', ')}.`
           : 'No offices are reporting in yet.');
-
-  if (has('open the','take me to','go to','show me the office'))
-    return (() => {
-      const q2 = q;
-      const hit = (DATA.offices || []).find(o =>
-        o.label.toLowerCase().split(' ').some(w => w.length > 3 && q2.includes(w)));
-      if (!hit) return 'Which office? I have ' + (DATA.offices||[]).map(o=>o.label.toLowerCase()).join(', ') + '.';
-      window.open(hit.url, '_blank', 'noopener');
-      return `Opening ${hit.label.toLowerCase()}.`;
-    })();
 
   if (has('queued','instruction','instructions','sent to','told'))
     return DATA.meta.queuedCommands
@@ -2512,22 +2522,54 @@ async function resolveApproval(decision, spokenText){
    which the session working that office reads and acts on. She confirms
    what she filed and where, so a misheard office name is obvious
    immediately rather than three days later.                         */
+/* Speech recognition mangles proper nouns, and these three get mangled
+   the same ways every time: UniBridge comes back as "university NL",
+   Noviq as "nova"/"novic"/"no week", Resit as "recent"/"reset"/"re-sit".
+   Matching only the correct spelling means she refuses work that was
+   aimed at her perfectly clearly, so the misses are listed as aliases. */
 const OFFICE_WORDS = [
-  { office: 'UniBridge NL',      words: ['unibridge','uni bridge','university','universities','students','uni'] },
-  { office: 'Noviq Studios',     words: ['noviq','novic','noviq studios','studios','studio'] },
-  { office: 'Resit Study Board', words: ['resit','resits','study board','faculty','exam','exams','assignment','assignments'] }
+  { office: 'UniBridge NL', words: [
+    'unibridge','uni bridge','unibridgenl','unibridge nl','university nl','universitynl',
+    'uni bridge nl','unibrigde','unibritch','uni','university','universities','students','student'] },
+  { office: 'Noviq Studios', words: [
+    'noviq','novic','novique','noviq studios','nova','nova studios','novak','no week','nowiq',
+    'novi','studios','studio'] },
+  { office: 'Resit Study Board', words: [
+    'resit','resits','re sit','recent study','recent','reset','receipt','resit board','study board',
+    'studyboard','faculty','exam','exams','assignment','assignments','revision'] }
 ];
+
+/* Longest alias first, so "university nl" beats a bare "uni". */
+function findOffice(text){
+  const q = String(text).toLowerCase();
+  let best = null, bestLen = 0;
+  OFFICE_WORDS.forEach(o => o.words.forEach(w => {
+    if (q.includes(w) && w.length > bestLen){ best = o.office; bestLen = w.length; }
+  }));
+  return best;
+}
+function officeUrl(name){
+  const o = (DATA.offices || []).find(x =>
+    x.label.toLowerCase().replace(/[^a-z]/g,'') === String(name).toLowerCase().replace(/[^a-z]/g,''));
+  return o ? o.url : null;
+}
+function openOffice(name){
+  const url = officeUrl(name);
+  if (!url) return false;
+  window.open(url, '_blank', 'noopener');
+  telemetry('Opening ' + name, 'okln');
+  return true;
+}
 
 function parseCommand(text){
   /* Match case-insensitively but slice the ORIGINAL string, so "4K" and
      proper nouns survive into the instruction another session will act on. */
   const m = text.match(/^\s*(?:tell|ask|get|have)\s+(.+?)\s+(?:to|that)\s+(.+)$/i);
   if (!m) return null;
-  const who = m[1].toLowerCase();
   const what = m[2].trim();
-  const hit = OFFICE_WORDS.find(o => o.words.some(w => who.includes(w)));
+  const hit = findOffice(m[1]);
   if (!hit) return { unknownOffice: m[1].trim(), instruction: what };
-  return { office: hit.office, instruction: what };
+  return { office: hit, instruction: what };
 }
 
 async function fileCommand(cmd, spoken){
@@ -2617,6 +2659,58 @@ function sampleTools(){
         telemetry: Array.from(document.querySelectorAll('#telemetry .tx')).slice(-12).map(e => e.textContent),
         diagnostics: Array.from(document.querySelectorAll('#diagnostics .tx')).slice(-6).map(e => e.textContent)
       })
+    },
+
+    /* ---- the ones that act ---- */
+    {
+      name: 'open_office',
+      description: 'Open one of the agent offices in a new tab for Harsh to work in. Offices: "UniBridge NL", "Noviq Studios", "Resit Study Board". Use this whenever he asks to open, see, visit or be taken to an office.',
+      inputSchema: { type:'object', properties:{ office:{ type:'string', description:'Office name, or how he said it' } }, required:['office'] },
+      execute: async ({ office }) => {
+        const name = findOffice(office) || office;
+        const ok = openOffice(name);
+        return ok ? { opened: name } : { error: 'No office matches "' + office + '". I have ' + (DATA.offices||[]).map(o=>o.label).join(', ') };
+      }
+    },
+    {
+      name: 'file_instruction',
+      description: 'Give an office a piece of work. It is queued for the Claude session that runs that office. Use for "tell Noviq to…", "have UniBridge draft…", or any instruction aimed at an office rather than a question for you.',
+      inputSchema: { type:'object', properties:{
+        office:{ type:'string' }, instruction:{ type:'string', description:'What to do, in full, as Harsh would want it written down' }
+      }, required:['office','instruction'] },
+      execute: async ({ office, instruction }) => {
+        const name = findOffice(office) || office;
+        if (!bridge.db) return { error: 'not connected to the offices from this page' };
+        await bridge.db.collection('commands').add({
+          office: name, instruction, said: 'via FRIDAY', at: Date.now(),
+          from: DATA.meta.operator, status: 'queued'
+        });
+        telemetry(`YOU ▸ ${name}: ${instruction}`, 'usr');
+        return { queued: { office: name, instruction } };
+      }
+    },
+    {
+      name: 'answer_pending_approval',
+      description: 'Approve or deny the permission request currently on the banner, if there is one. Only use when Harsh clearly decides.',
+      inputSchema: { type:'object', properties:{
+        decision:{ type:'string', enum:['approved','denied'] }, note:{ type:'string' }
+      }, required:['decision'] },
+      execute: async ({ decision, note }) => {
+        if (!pendingApproval) return { error: 'nothing is pending' };
+        const q = pendingApproval.question;
+        await resolveApproval(decision, note || decision);
+        return { decided: decision, on: q };
+      }
+    },
+    {
+      name: 'run_morning_brief',
+      description: 'Deliver the full spoken morning briefing: the objective, what is blocked across the offices, the inbox, and the recommendations.',
+      execute: async () => { setTimeout(runBrief, 150); return { started: true }; }
+    },
+    {
+      name: 'refresh_data',
+      description: 'Re-read the live sources now instead of waiting for the next poll.',
+      execute: async () => { fetchLive(); pollCommits(); return { refreshing: true }; }
     }
   ];
 }
@@ -2638,10 +2732,15 @@ async function askViaSample(text){
     'voice synthesiser: at most three short sentences, plain spoken prose, no markdown, no lists, ' +
     'no emoji. Calm, dry, precise. Ground every figure in the dashboard data and never invent one; ' +
     'if it is not there, say you do not have that reading.\n\n' +
-    'You have tools: get_dashboard for the live numbers, get_recent_work for what Claude has actually ' +
-    'shipped from the git history, get_in_flight for work in progress and pending permissions, and ' +
-    'get_recent_activity for the feeds. Call them rather than guessing — the snapshot below can be stale. ' +
-    'You have no web access, so if something needs looking up outside this data, say so plainly.\n\n' +
+    'You can DO things, not only report them. To look: get_dashboard for the live numbers, ' +
+    'get_recent_work for what Claude actually shipped from the git history, get_in_flight for work in ' +
+    'progress and pending permissions, get_recent_activity for the feeds. To act: open_office opens an ' +
+    'office in a new tab, file_instruction queues work for an office, answer_pending_approval settles a ' +
+    'permission request, run_morning_brief delivers the briefing, refresh_data re-reads the sources.\n\n' +
+    'When he asks for something you can do, DO IT and then say what you did in one short line — never ' +
+    'describe how he could do it himself, and never ask permission for something he just asked for. ' +
+    'Call a look-up tool rather than guessing; the snapshot below goes stale. You have no web access, ' +
+    'so say so plainly if something needs looking up outside this data.\n\n' +
     'Dashboard snapshot: ' + context;
 
   const turns = convo.slice(-6).map(t => ({ role: t.role === 'assistant' ? 'assistant' : 'user', content: t.text }));
