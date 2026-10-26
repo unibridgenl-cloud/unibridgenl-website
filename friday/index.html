@@ -705,6 +705,18 @@ const DATA = {
     { id:'resit',     label:'RESIT STUDY BOARD', url:'https://claude.ai/artifact/2GFcfAxPgVX8919twJPLt9' }
   ],
 
+  /* ---- 1.1h THE CALENDAR --------------------------------------
+     Read through your own Google Calendar connector. Deadlines are the
+     one thing a dashboard should never be quiet about, so anything
+     inside `warnDays` is announced rather than merely listed.        */
+  calendar: {
+    enabled: true,
+    server: 'Google Calendar',
+    refetchMinutes: 30,
+    lookaheadDays: 21,
+    warnDays: 7
+  },
+
   /* ---- 1.2 STATUS PILLS ---------------------------------------
      Header chips. state: 'ok' | 'warn' | 'cy' (drives the dot).   */
   pills: [
@@ -2194,7 +2206,16 @@ function answer(qRaw){
   if (has('recommend','advice','what should i','priority','focus','next'))
     return 'Top priority: ' + DATA.recommendations[0];
 
-  if (has('deadline','eta','how long','days left','when'))
+  if (has('calendar','diary','schedule','coming up','next week','deadline','due'))
+    return (() => {
+      if (!diary.next.length) return 'Nothing on the calendar in the next three weeks.';
+      const e = diary.next[0];
+      const when = e.days <= 0 ? 'today' : e.days === 1 ? 'tomorrow' : `in ${e.days} days`;
+      const rest = diary.next.length - 1;
+      return `Next up: ${e.title}, ${when}.` + (rest ? ` ${rest} more in the next three weeks.` : '');
+    })();
+
+  if (has('eta','how long','days left'))
     return `${m.daysLeft} days remain until ${new Date(o.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'long'})}. ` +
            (m.needed ? `You need ${m.needed} more to hit target.` : 'Target already met.');
 
@@ -2244,6 +2265,14 @@ function runBrief(){
       lines.push(`At ${b.office}: ${b.name}. ${b.note}`));
   } else if (desk.offices.length){
     lines.push(`Nothing is blocked on you across ${desk.offices.length === 1 ? 'the office' : 'the offices'}.`);
+  }
+
+  /* A deadline inside the week outranks almost everything else. */
+  const soon = diary.next.filter(e => e.days <= 7);
+  if (soon.length){
+    const e = soon[0];
+    const when = e.days <= 0 ? 'today' : e.days === 1 ? 'tomorrow' : `in ${e.days} days`;
+    lines.push(`Deadline ${when}: ${e.title}.`);
   }
 
   /* The inbox is the whole business right now, so it leads the brief. */
@@ -2338,6 +2367,10 @@ async function initBridge(){
     if (mcp && DATA.gmail && DATA.gmail.enabled){
       try { readMailbox(mcp); }
       catch (e){ diagnostic('Could not open the mailbox — ' + (e.code || e.message), 'warnln'); }
+    }
+    if (mcp && DATA.calendar && DATA.calendar.enabled){
+      try { readCalendar(mcp); }
+      catch (e){ diagnostic('Could not open the calendar — ' + (e.code || e.message), 'warnln'); }
     }
 
     if (sample){
@@ -2797,7 +2830,7 @@ function readMailbox(mcp){
   return mcp.watchTool(
     g.server, 'search_threads',
     { query: g.query, pageSize: 50, view: 'THREAD_VIEW_METADATA_ONLY' },
-    (ev) => {
+    async (ev) => {
       if (ev.type === 'error'){
         diagnostic('Mailbox unavailable — ' + (ev.error && ev.error.code), 'warnln');
         return;
@@ -2809,6 +2842,7 @@ function readMailbox(mcp){
 
       let people = 0, answered = 0, awaiting = 0, newThisWeek = 0, oldestWait = 0;
       const waitingOn = [];
+      const truncated = [];        // threads whose preview may be cut short
 
       threads.forEach(t => {
         const msgs = t.messages || [];
@@ -2820,15 +2854,17 @@ function readMailbox(mcp){
 
         people++;
 
-        /* Who spoke LAST is the only question that matters. "Have I ever
-           replied in this thread" marks a live conversation as handled the
-           moment you answer once — which is exactly backwards for an
-           ongoing exchange where they have come back to you. Sort by time
-           rather than trusting the array order. */
+        /* Who spoke LAST is the only question that matters — but the search
+           preview returns only the OLDEST few messages of a thread, so on
+           any real conversation the "last" message here is not the last
+           message at all. That mistake told Harsh he owed a reply he had
+           already sent. Threads long enough to be truncated are therefore
+           re-read in full below, and this is only a first guess. */
         const byTime = msgs.slice().sort((a, b) =>
           (Number(a.internalDate) || Date.parse(a.date) || 0) -
           (Number(b.internalDate) || Date.parse(b.date) || 0));
         const last = byTime[byTime.length - 1];
+        if (msgs.length >= 4) truncated.push({ id: t.id, guess: last });
         const lastFrom = String(last.sender || '').toLowerCase();
         const lastIsMine = lastFrom.includes(me) || (last.labelIds || []).includes('SENT');
 
@@ -2840,22 +2876,52 @@ function readMailbox(mcp){
           const waited = (now - lastAt) / 3600000;
           if (waited > oldestWait) oldestWait = waited;
           waitingOn.push({
+            id: t.id,
             who: (lastFrom.match(/<([^>]+)>/) || [null, lastFrom])[1] || lastFrom,
             hours: waited
           });
         }
       });
 
+      /* Correct the guesses before anything is shown. A wrong "you owe a
+         reply" is worse than a slow one: it sends Harsh chasing a
+         conversation he already finished. */
+      if (truncated.length && bridge.mcp){
+        for (const t of truncated.slice(0, 8)){
+          try {
+            const res = await bridge.mcp.callTool(g.server, 'get_thread',
+              { threadId: t.id, messageFormat: 'METADATA_ONLY' });
+            const full = (res && (res.payload || res)) || {};
+            const all = full.messages || [];
+            if (!all.length) continue;
+            const realLast = all[all.length - 1];
+            const mineNow = String(realLast.sender || '').toLowerCase().includes(me) ||
+                            (realLast.labelIds || []).includes('SENT');
+            const guessedMine = String(t.guess.sender || '').toLowerCase().includes(me) ||
+                                (t.guess.labelIds || []).includes('SENT');
+            if (mineNow === guessedMine) continue;      // the guess held
+
+            if (mineNow){ awaiting--; answered++; }     // he had already replied
+            else { awaiting++; answered--; }
+            const idx = waitingOn.findIndex(w => w.id === t.id);
+            if (mineNow && idx >= 0) waitingOn.splice(idx, 1);
+          } catch (err) {
+            diagnostic('Could not re-read a thread — ' + (err.code || err.message), 'warnln');
+          }
+        }
+        oldestWait = waitingOn.reduce((m, w) => Math.max(m, w.hours), 0);
+      }
+
       applyLive({
         stats: {
           emailsIn: people,
-          awaitingReply: awaiting,
-          replyRate: people ? Math.round((answered / people) * 100) : 0
+          awaitingReply: Math.max(0, awaiting),
+          replyRate: people ? Math.round((Math.max(0, answered) / people) * 100) : 0
         },
-        proximity: { awaitingReply: awaiting, newEnquiries: newThisWeek, openThreads: people },
+        proximity: { awaitingReply: Math.max(0, awaiting), newEnquiries: newThisWeek, openThreads: people },
         vitals: {
-          inboxClear: people ? Math.round(((people - awaiting) / people) * 100) : 100,
-          replySpeed: awaiting === 0 ? 100 : Math.max(0, Math.round(100 - ((oldestWait - 2) / 46) * 100)),
+          inboxClear: people ? Math.round(((people - Math.max(0, awaiting)) / people) * 100) : 100,
+          replySpeed: awaiting <= 0 ? 100 : Math.max(0, Math.round(100 - ((oldestWait - 2) / 46) * 100)),
           leadFlow: Math.min(100, Math.round((newThisWeek / 10) * 100))
         }
       });
@@ -2881,6 +2947,52 @@ function readMailbox(mcp){
       DATA.meta.waitingOn = waitingOn;
     },
     { refetchInterval: Math.max(1, DATA.gmail.refetchMinutes) * 60 * 1000 }
+  );
+}
+
+/* ================================================================
+   ▓▓ 11e. THE CALENDAR ▓▓
+   ================================================================ */
+const diary = { announced: new Set(), next: [] };
+
+function readCalendar(mcp){
+  const c = DATA.calendar;
+  return mcp.watchTool(
+    c.server, 'list_events',
+    { pageSize: 25, orderBy: 'startTime' },
+    (ev) => {
+      if (ev.type === 'error'){
+        diagnostic('Calendar unavailable — ' + (ev.error && ev.error.code), 'warnln');
+        return;
+      }
+      const payload = ev.result && (ev.result.payload || ev.result);
+      const events = (payload && payload.events) || [];
+      const now = Date.now();
+      const horizon = now + c.lookaheadDays * 86400000;
+
+      const upcoming = events.map(e => {
+        const startsAt = Date.parse((e.start && (e.start.dateTime || e.start.date)) || '');
+        return { id: e.id, title: e.summary || '(untitled)', startsAt,
+                 days: Math.ceil((startsAt - now) / 86400000) };
+      }).filter(e => e.startsAt && e.startsAt > now - 3600000 && e.startsAt < horizon)
+        .sort((a, b) => a.startsAt - b.startsAt);
+
+      diary.next = upcoming;
+      DATA.meta.nextEvent = upcoming[0] || null;
+
+      /* Calls on the calendar are a real pipeline number, not a guess. */
+      const week = now + 7 * 86400000;
+      applyLive({ proximity: { callsAhead: upcoming.filter(e => e.startsAt < week).length } });
+      FRIDAY.refresh();
+
+      upcoming.filter(e => e.days <= c.warnDays).forEach(e => {
+        if (diary.announced.has(e.id)) return;
+        diary.announced.add(e.id);
+        const when = e.days <= 0 ? 'today' : e.days === 1 ? 'tomorrow' : `in ${e.days} days`;
+        telemetry(`Deadline ${when} — ${e.title}`, e.days <= 2 ? 'warnln' : 'sys');
+      });
+    },
+    { refetchInterval: Math.max(5, c.refetchMinutes) * 60 * 1000 }
   );
 }
 
