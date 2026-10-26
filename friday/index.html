@@ -1832,6 +1832,13 @@ function answer(qRaw){
       ? `Last change Claude shipped was ${gh.lastSha}. The recent ones are in telemetry on the left.`
       : 'I have not seen anything land in the repository yet this session.';
 
+  if (has('blocked','waiting on me','stuck','on me','office','offices','agent','my plate','to do'))
+    return desk.blocked.length
+      ? deskSummary() + ' ' + desk.blocked.slice(0,3).map(b => `${b.office}: ${b.name}`).join('; ') + '.'
+      : (desk.offices.length
+          ? `Nothing is blocked on you across ${desk.offices.join(', ')}.`
+          : 'No offices are reporting in yet.');
+
   if (has('recommend','advice','what should i','priority','focus','next'))
     return 'Top priority: ' + DATA.recommendations[0];
 
@@ -1876,6 +1883,15 @@ function runBrief(){
     : `Primary objective, ${o.name.toLowerCase()}: ${o.current} of ${o.target}, ${m.pct.toFixed(0)} percent complete, ${m.daysLeft} days to deadline. ` +
       (m.onTrack ? 'You are on pace.' : `You are behind pace and need ${m.needed} more at ${(m.needed/Math.max(1,m.daysLeft)*7).toFixed(1)} per week.`));
   lines.push('Key numbers: ' + DATA.stats.map(s => `${s.key.toLowerCase()} ${fmtNum(s.value, s.format)}`).join(', ') + '.');
+
+  /* Across the offices first: a PA opens with what only you can unblock. */
+  if (desk.blocked.length){
+    lines.push(deskSummary());
+    desk.blocked.slice(0, 3).forEach(b =>
+      lines.push(`At ${b.office}: ${b.name}. ${b.note}`));
+  } else if (desk.offices.length){
+    lines.push(`Nothing is blocked on you across ${desk.offices.length === 1 ? 'the office' : 'the offices'}.`);
+  }
 
   /* The inbox is the whole business right now, so it leads the brief. */
   const owed = (DATA.proximity.find(c => c.id === 'awaitingReply') || {count:0}).count;
@@ -2026,17 +2042,45 @@ function watchProjects(db){
 
       const rows = snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
       const live = rows.filter(r => r.status !== 'done').length;
+      const blocked = rows.filter(r => r.status === 'blocked').length;
       bridge.projectsFromDb = true;
       box.classList.add('on');
-      box.innerHTML = '<div class="ph">CLAUDE — ' + live + ' IN FLIGHT</div>' +
-        rows.map(r => {
-          const st = r.status === 'done' ? 'done' : r.status === 'blocked' ? 'blocked' : 'active';
-          const tag = st === 'done' ? 'DONE' : st === 'blocked' ? 'BLOCKED' : 'ACTIVE';
-          const el = document.createElement('div');
-          el.textContent = r.name || '(unnamed)';
-          return `<div class="pr ${st}"><i class="st"></i><span class="nm">${el.innerHTML}</span><span class="tg">${tag}</span></div>`;
-        }).join('');
-      $('#panelTelemetryTag').textContent = live ? live + ' ACTIVE' : 'FEED 01';
+
+      /* Work is grouped by office — the separate businesses and workstreams
+         Claude runs for Harsh. A row without one falls under GENERAL, so
+         older rows keep rendering. */
+      const offices = [];
+      rows.forEach(r => {
+        const name = (r.office || 'GENERAL').toUpperCase();
+        let group = offices.find(o => o.name === name);
+        if (!group){ group = { name, rows: [] }; offices.push(group); }
+        group.rows.push(r);
+      });
+      /* Offices with something blocked rise to the top — that is where
+         Harsh is the bottleneck. */
+      offices.sort((a, b) =>
+        (b.rows.some(r => r.status === 'blocked') ? 1 : 0) -
+        (a.rows.some(r => r.status === 'blocked') ? 1 : 0));
+
+      const esc = (t) => { const el = document.createElement('div'); el.textContent = t || ''; return el.innerHTML; };
+
+      box.innerHTML = offices.map(o => {
+        const openHere = o.rows.filter(r => r.status !== 'done').length;
+        return `<div class="ph">${esc(o.name)} — ${openHere ? openHere + ' OPEN' : 'CLEAR'}</div>` +
+          o.rows.map(r => {
+            const st = r.status === 'done' ? 'done' : r.status === 'blocked' ? 'blocked' : 'active';
+            const tag = st === 'done' ? 'DONE' : st === 'blocked' ? 'YOU' : 'ACTIVE';
+            return `<div class="pr ${st}" title="${esc(r.note)}"><i class="st"></i>` +
+                   `<span class="nm">${esc(r.name || '(unnamed)')}</span><span class="tg">${tag}</span></div>`;
+          }).join('');
+      }).join('');
+
+      $('#panelTelemetryTag').textContent =
+        blocked ? blocked + ' ON YOU' : live ? live + ' ACTIVE' : 'FEED 01';
+
+      desk.offices = offices.map(o => o.name);
+      desk.blocked = rows.filter(r => r.status === 'blocked')
+                         .map(r => ({ name: r.name, office: r.office || 'General', note: r.note || '' }));
     },
     (e) => diagnostic('Project listener died — ' + e.code, 'warnln')
   );
@@ -2048,6 +2092,21 @@ function watchProjects(db){
    "approve" or "deny" resolves.                                     */
 let pendingApproval = null;
 const announcedApprovals = new Set();
+
+/* What a PA actually tracks: not "work exists" but "work is stuck on you".
+   Kept current by the project listener so the greeting, the brief and her
+   answers all read from the same place. */
+const desk = { blocked: [], offices: [] };
+
+function deskSummary(){
+  if (!desk.blocked.length) return '';
+  const byOffice = {};
+  desk.blocked.forEach(b => { (byOffice[b.office] ||= []).push(b.name); });
+  const parts = Object.keys(byOffice).map(o =>
+    `${byOffice[o].length} at ${o}`);
+  return `${desk.blocked.length} ${desk.blocked.length === 1 ? 'thing is' : 'things are'} waiting on you — ` +
+         parts.join(', ') + '.';
+}
 
 function watchApprovals(db){
   db.collection('approvals').orderBy('at', 'desc').limit(10).onSnapshot(
@@ -2484,6 +2543,12 @@ function revealPanels(){
         ? `${o.name.toLowerCase()} is still the objective, and we are at zero. `
         : `Primary objective stands at ${o.current} of ${o.target}, ${objectiveMaths().pct.toFixed(0)} percent. `) +
       'Say morning brief, or hold space and ask me anything.';
+
+    /* If something is stuck on him, that leads — everything else can wait. */
+    setTimeout(() => {
+      const d = deskSummary();
+      if (d) respondWith(`Before anything else, ${DATA.meta.operator}. ` + d);
+    }, 9000);
     showSay(greeting);
     /* If a voice sample is configured, the greeting is spoken by that
        clip; otherwise the selected engine renders the text.          */
