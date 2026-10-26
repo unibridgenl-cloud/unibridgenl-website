@@ -52,7 +52,9 @@
  *                           e.g. "UniBridge" — leave unset to skip Calendar
  *        STRIPE_SECRET_KEY  (optional) sk_live_... — leave unset to skip Stripe
  *        ELEVEN_API_KEY     (optional) ElevenLabs key, for her real voice
- *        ELEVEN_VOICE_ID    (optional) the voice id to speak with
+ *        ELEVEN_VOICE_ID    (optional) the voice id to speak with. Harsh's
+ *                           pick: tUxvnIoZrrcsUY1wdYot (Melania, Southern
+ *                           British, quietly confident)
  *        ELEVEN_MODEL_ID    (optional) defaults to eleven_turbo_v2_5
  *        ANTHROPIC_API_KEY  (optional) sk-ant-... , for conversational replies
  *        ANTHROPIC_MODEL    (optional) defaults to claude-opus-5
