@@ -544,7 +544,9 @@ const DATA = {
      as the greeting; the orb and waveform are driven by its REAL
      amplitude, not a simulation. Set it to null to disable.        */
   voice: {
-    engine: 'browser',
+    /* elevenlabs → the Worker; it falls back to the device voice by
+       itself if the endpoint is missing or unconfigured. */
+    engine: 'elevenlabs',
 
     /* Pin the browser voice by name so she sounds the same every time.
        Leave empty and she picks the best available once, then remembers it.
@@ -576,8 +578,10 @@ const DATA = {
        it with the browser voice made her change voice mid-conversation. */
     sampleClip: 'assets/voice-sample.mp3',
     elevenlabs: {
-      proxyUrl: '',                     // same /exec URL as DATA.sources.endpoint
-      token: '',                        // same FRIDAY_TOKEN
+      /* The Worker's own endpoint. With ELEVEN_API_KEY set there, every
+         line she says is Melania, not only the five recorded ones. */
+      proxyUrl: '/api/tts',
+      token: '',
       /* Harsh picked Melania — Southern British, quietly confident. The id is
          here for reference; the backend reads ELEVEN_VOICE_ID from Script
          Properties, so change it there, not in this file.
@@ -628,9 +632,18 @@ const DATA = {
      reason she falls back to the keyword engine rather than going
      silent.                                                          */
   brain: {
-    enabled: false,
-    proxyUrl: '',              // same /exec URL
-    token: '',                 // same FRIDAY_TOKEN
+    /* Same-origin by default. On the Cloudflare deployment this is the
+       Worker's own endpoint, so she thinks there too — no Apps Script, no
+       token in the page, and the microphone works because it is a real
+       origin rather than a frame. Inside the claude.ai viewer this path
+       does not exist, but the `sample` capability does and takes
+       precedence anyway, so nothing is wasted either way.
+
+       If the Worker has no ANTHROPIC_API_KEY set, the call fails and she
+       falls back to the built-in keyword engine. Nothing breaks. */
+    enabled: true,
+    proxyUrl: '/api/chat',
+    token: '',
     historyTurns: 6            // how much of the conversation she remembers
   },
 
@@ -2074,7 +2087,20 @@ async function askClaude(text){
     const res = await fetch(b.proxyUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'chat', token: b.token || '', text, history, operator: DATA.meta.operator })
+      body: JSON.stringify({
+        action: 'chat', token: b.token || '', text, history,
+        operator: DATA.meta.operator,
+        data: {
+          objective: { name: DATA.objective.name, current: DATA.objective.current,
+                       target: DATA.objective.target, percent: Math.round(objectiveMaths().pct),
+                       daysLeft: objectiveMaths().daysLeft },
+          stats: DATA.stats.map(x => ({ name: x.key, value: x.value })),
+          vitals: DATA.vitals.map(v => ({ name: v.key, percent: Math.round(v.value) })),
+          blocked: desk.blocked,
+          offices: (DATA.offices || []).map(o => o.label),
+          dataSource: dataMode
+        }
+      })
     });
     if (!res.ok) throw new Error('proxy ' + res.status);
     const data = await res.json();
@@ -2958,6 +2984,26 @@ async function pollPulls(){
   }
 }
 
+/* Ask the Worker what it is configured for, so the diagnostics say
+   something true rather than leaving Harsh to guess why she is terse. */
+async function checkWorker(){
+  try {
+    const res = await fetch('/api/health', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const h = await res.json();
+    diagnostic(
+      'Worker online — brain ' + (h.brain ? 'ready' : 'not configured') +
+      ', voice ' + (h.voice ? 'ready' : 'not configured'),
+      (h.brain && h.voice) ? 'okln' : 'warnln');
+    if (!h.brain) DATA.brain.enabled = false;         // do not waste a round trip
+    if (!h.voice && DATA.voice.engine === 'elevenlabs') DATA.voice.engine = 'browser';
+  } catch (_){
+    /* Not the Worker deployment — the artifact, or a local file. Quiet. */
+    DATA.brain.enabled = !!bridge.sample;
+    if (DATA.voice.engine === 'elevenlabs') DATA.voice.engine = 'browser';
+  }
+}
+
 function startWorkFeed(){
   const g = DATA.github;
   if (!g || !g.enabled || !g.owner || !g.repo) return;
@@ -3015,6 +3061,7 @@ function revealPanels(){
     startFeeds();
     startSync();
     initBridge();
+    checkWorker();
     startWorkFeed();
     diagnostic('Boot complete — ' + SESSION_ID, 'okln');
     telemetry('Interface online. Awaiting instruction.', 'okln');
