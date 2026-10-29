@@ -16,3 +16,4 @@ exclude:
   - friday
   - .company
   - .claude
+  - site-worker

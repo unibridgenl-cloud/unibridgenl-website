@@ -1,0 +1,28 @@
+{
+  // Cloudflare Worker for the PUBLIC site, unibridgenl.com.
+  //
+  // This is separate from the FRIDAY Worker (wrangler.jsonc in the repo root).
+  // In Workers Builds, connect this repo to a Worker named "unibridgenl-site"
+  // with Root directory = site-worker, Build command = bash build.sh,
+  // Deploy command = npx wrangler deploy. See site-worker/SETUP.md.
+  //
+  // Static pages are served straight from Cloudflare's edge. The Worker code only
+  // runs for /api/*, which is where the booking and quiz forms are rate limited.
+  "name": "unibridgenl-site",
+  "main": "index.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": ["/api/*"]
+  },
+  "ratelimits": [
+    // Per visitor: 3 form posts a minute. Counts are per Cloudflare location
+    // and approximate; the Apps Script backend keeps the hard daily caps.
+    { "name": "FORM_LIMIT", "namespace_id": "4101", "simple": { "limit": 3, "period": 60 } },
+    // Everyone together: 30 a minute. A flood stops here, not in Gmail.
+    { "name": "FORM_LIMIT_ALL", "namespace_id": "4102", "simple": { "limit": 30, "period": 60 } }
+  ],
+  "observability": { "enabled": true }
+}
