@@ -26,6 +26,7 @@ function CancelScreen({ go }) {
   const ready = name.trim() && email.includes("@") && !sending;
 
   const submit = async () => {
+    if (ubFormGuard("cancel")) { setError(true); return; }
     setSending(true);
     setError(false);
     const stamp = new Date().toISOString();
@@ -49,7 +50,7 @@ function CancelScreen({ go }) {
         })
       });
       const data = await res.json();
-      if (data.success) { setSent(true); setToast(true); } else { setError(true); }
+      if (data.success) { ubFormDone("cancel"), setSent(true); setToast(true); } else { setError(true); }
     } catch (e) { setError(true); }
     finally { setSending(false); }
   };

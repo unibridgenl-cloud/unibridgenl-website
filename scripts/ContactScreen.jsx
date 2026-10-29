@@ -20,6 +20,7 @@ function ContactScreen({ go }) {
   const [message, setMessage] = React.useState("");
 
   const submit = async () => {
+    if (ubFormGuard("contact")) { setError(true); return; }
     setSending(true);
     setError(false);
     try {
@@ -35,7 +36,7 @@ function ContactScreen({ go }) {
         })
       });
       const data = await res.json();
-      if (data.success) { setSent(true); } else { setError(true); }
+      if (data.success) { ubFormDone("contact"), setSent(true); } else { setError(true); }
     } catch (e) { setError(true); }
     finally { setSending(false); }
   };

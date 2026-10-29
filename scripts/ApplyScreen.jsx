@@ -36,6 +36,7 @@ function ApplyScreen({ go }) {
   const steps = [{label:"About you",meta:"2 min"},{label:"Study plan",meta:"1 min"},{label:"Services",meta:"30 sec"}];
 
   const submit = async () => {
+    if (ubFormGuard("apply")) { setError(true); return; }
     setSubmitting(true);
     setError(false);
     const services = [
@@ -75,7 +76,7 @@ Privacy statement agreed: ${agreed ? "Yes" : "No"}`;
         })
       });
       const data = await res.json();
-      if (data.success) { setSent(true); } else { setError(true); }
+      if (data.success) { ubFormDone("apply"), setSent(true); } else { setError(true); }
     } catch (e) {
       setError(true);
     } finally {

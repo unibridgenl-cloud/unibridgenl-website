@@ -466,6 +466,7 @@ function QuizScreen({ go }) {
     if (stage !== "result" || !lead.consent || sendRef.current) return;
     if (!bestNiche) return;
     sendRef.current = true;
+    if (ubFormGuard("quiz", { minMs: 0 })) return;
     const progs = (bestNiche.progs || []).map(([p,u]) => `${p}, ${u}`).join("\n");
     const body = `New Find my field result via unibridgenl.com
 
@@ -496,7 +497,7 @@ ${progs}`;
         why: bestNiche.why,
         programmes: (bestNiche.progs || []).map(([p,u]) => ({ name: p, university: u }))
       })
-    }).then(r => r.json()).then(d => { if (d && d.ok) setSent(true); }).catch(() => {
+    }).then(r => r.json()).then(d => { if (d && d.ok) { ubFormDone("quiz"); setSent(true); } }).catch(() => {
       /* Endpoint down: fall back to the old advisor-only notification so the lead is never lost. */
       fetch("https://api.web3forms.com/submit", {
         method: "POST",

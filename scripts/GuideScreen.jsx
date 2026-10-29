@@ -89,6 +89,7 @@ function GuideScreen({ go }) {
   };
 
   const submit = async () => {
+    if (ubFormGuard("guide")) { setError(true); return; }
     setSending(true);
     setError(false);
     try {
@@ -104,7 +105,7 @@ function GuideScreen({ go }) {
         })
       });
       const data = await res.json();
-      if (data.success) { setSent(true); setToast(true); } else { setError(true); }
+      if (data.success) { ubFormDone("guide"), setSent(true); setToast(true); } else { setError(true); }
     } catch (e) { setError(true); }
     finally { setSending(false); }
   };

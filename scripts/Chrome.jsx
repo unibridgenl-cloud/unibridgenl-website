@@ -191,3 +191,36 @@ function CookieBanner({ go }) {
 }
 
 Object.assign(window, { BTW_ID, UB_URLS, SkipLink, SiteHeader, HeaderSpacer, SiteFooter, Section, Placeholder, CookieBanner, HandbookCover });
+
+
+/* ---------------------------------------------------------------------------
+   Form guard. A browser-side speed bump, not the real defence: the real limits
+   live on the server (the Apps Script backend and Web3Forms). This stops the
+   two cheap cases: bots that fill and post a form within a second of loading
+   the page, and the same browser resubmitting a form again and again.
+   Only successful sends are counted, so a real person whose first try failed
+   on a bad connection can retry straight away.
+   --------------------------------------------------------------------------- */
+const UB_LOADED_AT = Date.now();
+const UB_GUARD = { minMs: 2500, gapMs: 60000, perHour: 3 };
+function ubFormGuard(name, opts) {
+  const o = Object.assign({}, UB_GUARD, opts || {});
+  if (Date.now() - UB_LOADED_AT < o.minMs) return "too-fast";
+  try {
+    const now = Date.now();
+    const list = JSON.parse(localStorage.getItem("ub_sent_" + name) || "[]")
+      .filter(t => now - t < 3600000);
+    if (list.length && now - list[list.length - 1] < o.gapMs) return "cooldown";
+    if (list.length >= o.perHour) return "hourly";
+  } catch (e) { /* storage blocked: fall through, the server still limits */ }
+  return null;
+}
+function ubFormDone(name) {
+  try {
+    const now = Date.now();
+    const list = JSON.parse(localStorage.getItem("ub_sent_" + name) || "[]")
+      .filter(t => now - t < 3600000);
+    list.push(now);
+    localStorage.setItem("ub_sent_" + name, JSON.stringify(list));
+  } catch (e) {}
+}

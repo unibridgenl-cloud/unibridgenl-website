@@ -64,6 +64,7 @@ function BookCallScreen({ go }) {
   const active = DAYS[day];
 
   const submitBooking = async () => {
+    if (ubFormGuard("booking")) { setError(true); return; }
     setSubmitting(true);
     setError(false);
     const message = `New call booking via unibridgenl.com
@@ -90,7 +91,7 @@ Time: ${slot} Amsterdam time`;
       });
       const data = await res.json();
       if (data && data.ok) {
-        setBooked(true);
+        ubFormDone("booking"), setBooked(true);
       } else {
         throw new Error("endpoint declined");
       }
@@ -110,7 +111,7 @@ Time: ${slot} Amsterdam time`;
           })
         });
         const data2 = await res2.json();
-        if (data2.success) { setBooked(true); } else { setError(true); }
+        if (data2.success) { ubFormDone("booking"), setBooked(true); } else { setError(true); }
       } catch (e2) {
         setError(true);
       }
